@@ -45,13 +45,13 @@ def ask():
         conversation_history[ip_address].pop(0)
 
     try:
-        loop = asyncio.new_event_loop()
+        loop = asyncio.new_event_loop()    
         asyncio.set_event_loop(loop)
         response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Liaobots, messages=conversation_history[ip_address]))
     except Exception as e:
         # If Liaobots fails, try with Phind
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.ChatBase, messages=conversation_history[ip_address]))
+            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.GPTalk, messages=conversation_history[ip_address]))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
