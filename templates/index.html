@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Chatbot</title>
+    <meta name="viewport" content="width=device-width">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ChatGPT">
+      <link href="https://gamelist1990.github.io/gamelist1990/gamesite/images/logo.png" rel="icon" />
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+    }
+    h1 {
+        background-color: #333;
+        color: #fff;
+        padding: 10px 0;
+        margin: 0;
+        text-align: center;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    input, button {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    input {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+    pre {
+        background-color: #f2f2f2;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    #answer {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        color: #333; /* テキストの色を変更 */
+        font-weight: bold; /* テキストを太字に */
+        border: 2px solid #333; /* ボーダーを追加 */
+    }
+    #error {
+        color: red; /* エラーメッセージの色を赤に */
+    }
+  </style>
+  <script>
+    var button;
+    function askQuestion() {
+        var text = document.getElementById('question').value;
+        button = document.querySelector('button');
+        button.disabled = true;
+        button.innerText = '質問中...';
+        fetch('/ask?text=' + encodeURIComponent(text))
+            .then(response => response.json())
+            .then(data => {
+                var decodedData = unicodeToUtf8(data);
+                document.getElementById('answer').innerText = decodedData;
+                button.innerText = '質問する';
+                setTimeout(function() {
+                    button.disabled = false;
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('error').innerText = 'エラーが起きました'; /* エラーメッセージを表示 */
+                button.innerText = '質問する';
+                button.disabled = false;
+            });
+    }
+
+    function unicodeToUtf8(unicode) {
+        return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function(match, grp) {
+            return String.fromCharCode(parseInt(grp, 16)); 
+        });
+    }
+
+  </script>
+  </head>
+  <body>
+  <h1>AIライブラリへようこそ！</h1>
+  <div class="container">
+    <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれますただ<br>このサイトではLiaobotsとChatBaseを搭載しているのですがメインで答えてくれるのはLiaobots[GPT-4]ですたまにエラーで起動できない場合には自動でChatBase[GPT-3.5]が使用されます。</p>
+    <input id="question" type="text" placeholder="ここに質問を入れる">
+    <button onclick="askQuestion()">質問する</button>
+    <div id="answer"></div>
+    <div id="error"></div> <!-- エラーメッセージを表示するための要素を追加 -->
+    <h2>サンプルコード</h2>
+    <p>以下に、このサイトを利用するためのサンプルコードを挙げときますこのpyとjsにはUTF-8にデコードする機能も付いています：</p>
+    <h3>Python</h3>
+    <p>
+      import requests
+      def callFlaskAPI(userMessage):
+          url = "https://2d773fb3-8162-49ea-a4f0-149615c666e7-00-dk8vul44wy2t.pike.replit.dev/ask"
+          params = {"text": userMessage}
+          response = requests.get(url, params=params)
+          unicodeResponse = response.json()
+          utf8Response = unicodeToUtf8(unicodeResponse)
+          return utf8Response
+
+      def unicodeToUtf8(unicode):
+          return unicode.encode('utf-8')
+
+  </p>
+    <h3>JavaScript</h3>
+    <p>
+      fetch('https://2d773fb3-8162-49ea-a4f0-149615c666e7-00-dk8vul44wy2t.pike.replit.dev/ask?text=' + encodeURIComponent('ここに質問を入れる'))
+        .then(response => response.json())
+        .then(data => {
+          var decodedData = unicodeToUtf8(data);
+          console.log(decodedData);
+        })
+        .catch(error => console.error('Error:', error));
+
+      function unicodeToUtf8(unicode) {
+          return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function(match, grp) {
+              return String.fromCharCode(parseInt(grp, 16)); 
+          });
+      }
+
+    </p>
+  </div>
+  </body>
+  </html>
