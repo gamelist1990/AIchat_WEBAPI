@@ -44,8 +44,8 @@ def ask():
     # Add the new message to the conversation history
     conversation_history[ip_address].append({"role": "user", "content": text})
 
-    # If the conversation history exceeds 5 messages, remove the oldest message
-    if len(conversation_history[ip_address]) > 5:
+    # If the conversation history exceeds 10 messages, remove the oldest message
+    if len(conversation_history[ip_address]) > 10:
         conversation_history[ip_address].pop(0)
 
     try:
