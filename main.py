@@ -3,6 +3,13 @@ import g4f
 import os
 import json
 import asyncio
+from g4f.Provider import (
+    Bing,
+    Liaobots,
+    OpenaiChat,
+    MyShell,
+    PerplexityAi,
+)
 
 g4f.debug.logging = True  # Enable debug logging
 g4f.debug.version_check = False  # Disable automatic version checking
@@ -51,7 +58,7 @@ def ask():
     except Exception as e:
         # If Liaobots fails, try with Phind
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, messages=conversation_history[ip_address]))
+            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.MyShell, messages=conversation_history[ip_address]))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
