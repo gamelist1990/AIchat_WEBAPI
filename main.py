@@ -49,15 +49,22 @@ def ask():
         asyncio.set_event_loop(loop)
         response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Liaobots, messages=conversation_history[ip_address]))
     except Exception as e:
+        print(f"Liaobots error: {str(e)}")  # Print the error message
         # If Liaobots fails, try with Phind
         try:
             response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, messages=conversation_history[ip_address]))
         except Exception as e:
+            print(f"Phind error: {str(e)}")  # Print the error message
             return jsonify({"error": str(e)}), 500
 
     # Decode the Unicode escaped string
-    decoded_response = json.loads(json.dumps(response))
-    return jsonify(decoded_response), 200, {'Content-Type': 'application/json; charset=utf-8'}
+    try:
+        decoded_response = json.loads(json.dumps(response))
+    except json.decoder.JSONDecodeError:
+        print("Invalid JSON response:", response.text)
+        return jsonify({"error": "Invalid JSON response"}), 500
+    else:
+        return jsonify(decoded_response), 200, {'Content-Type': 'application/json; charset=utf-8'}
 
 
 if __name__ == '__main__':
