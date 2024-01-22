@@ -12,8 +12,10 @@ app = Flask(__name__)
 # Initialize the conversation history
 conversation_history = {}
 
-# Set up logging
-logging.basicConfig(filename='flask.log', level=logging.DEBUG)
+# Set up logging to console
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    handlers=[logging.StreamHandler()])
 
 @app.route('/', methods=['GET'])
 def home():
@@ -53,7 +55,7 @@ def ask():
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, messages=conversation_history[ip_address]))
+            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aichat, messages=conversation_history[ip_address]))
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return jsonify({"error": str(e)}), 500
