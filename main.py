@@ -47,7 +47,7 @@ def ask():
     try:
         loop = asyncio.new_event_loop()    
         asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Liaobots, messages=conversation_history[ip_address]))
+        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, messages=conversation_history[ip_address]))
     except Exception as e:
         # If Liaobots fails, try with Phind
         try:
