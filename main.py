@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from g4f import set_cookies
 import g4f
 import json
 import asyncio
@@ -16,6 +17,10 @@ from pathlib import Path
 import re
 import logging
 import glob
+
+set_cookies(".bing", {
+  "_U": "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0FMyN-aIUFx9aOYSDcCC6SUWjFMpz83jsmjmDCqiU9uyITa4z-xzu5BdxPp8zVNIj4o9nAnJTVQSFGeDhRC7r1Ge5t2xA_h946daH1GEfe9XCpHIawXez3RMokifNtyDXMgnPD-nPJnNxO-qXA"
+})
 
 
 logging.basicConfig(level=logging.INFO)
@@ -85,7 +90,7 @@ def ask():
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default,  messages=conversation_history[ip_address]))
+            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Opchatgpts,  messages=conversation_history[ip_address]))
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return jsonify({"error": str(e)}), 500
