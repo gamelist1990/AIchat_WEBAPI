@@ -49,9 +49,6 @@ def cleanup_directories(root_dir, delay):
 # Start the cleanup task in a separate thread
 threading.Thread(target=cleanup_directories, args=('.', 5*60)).start()
 
-
-
-
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
@@ -60,37 +57,41 @@ def home():
 def ask():
     global conversation_history
     text = None
+    user_id = None
     if request.method == 'POST':
         if request.json:
             text = request.json.get('text')
+            user_id = request.json.get('user_id')  # Get the user ID from the request
     else:
         text = request.args.get('text')
+        user_id = request.args.get('user_id')  # Get the user ID from the request
+
+    # If no user_id is provided, use the IP address as the identifier
+    if not user_id:
+        user_id = request.remote_addr
 
     if not text:
         return jsonify({"response": "No question asked"}), 200
 
-    # Get the IP address of the client
-    ip_address = request.remote_addr
-
-    # If this IP address is new, initialize a new conversation history for it
-    if ip_address not in conversation_history:
-        conversation_history[ip_address] = []
+    # If this user ID is new, initialize a new conversation history for it
+    if user_id not in conversation_history:
+        conversation_history[user_id] = []
 
     # Add the new message to the conversation history
-    conversation_history[ip_address].append({"role": "user", "content": text})
+    conversation_history[user_id].append({"role": "user", "content": text})
 
     # If the conversation history exceeds 5 messages, remove the oldest message
-    if len(conversation_history[ip_address]) > 5:
-        conversation_history[ip_address].pop(0)
+    if len(conversation_history[user_id]) > 5:
+        conversation_history[user_id].pop(0)
 
     try:
         loop = asyncio.new_event_loop()    
         asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.gpt_4_turbo, provider=g4f.Provider.Bing,   messages=conversation_history[ip_address]))
+        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.gpt_4, provider=g4f.Provider.Liaobots, messages=conversation_history[user_id]))
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.ChatForAi,  messages=conversation_history[ip_address]))
+            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.ChatForAi,  messages=conversation_history[user_id]))
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return jsonify({"error": str(e)}), 500
@@ -181,7 +182,7 @@ def generate_image():
         return jsonify({"images": base64_images}), 200, {'Content-Type': 'application/json; charset=utf-8'}
     else:
         logging.error('Failed to generate images')
-        return jsonify({"error": "サーバー側のエラーで画像が生成できませんでした"}), 500
+        return jsonify({"error": "Failed to generate images"}), 500
 
 
 
