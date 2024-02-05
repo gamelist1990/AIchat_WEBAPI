@@ -86,7 +86,7 @@ def ask():
     try:
         loop = asyncio.new_event_loop()    
         asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aura,   messages=conversation_history[ip_address]))
+        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.gpt_4_turbo, provider=g4f.Provider.Bing,   messages=conversation_history[ip_address]))
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
@@ -181,7 +181,7 @@ def generate_image():
         return jsonify({"images": base64_images}), 200, {'Content-Type': 'application/json; charset=utf-8'}
     else:
         logging.error('Failed to generate images')
-        return jsonify({"error": "Failed to generate images"}), 500
+        return jsonify({"error": "サーバー側のエラーで画像が生成できませんでした"}), 500
 
 
 
