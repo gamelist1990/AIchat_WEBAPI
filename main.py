@@ -87,7 +87,7 @@ def ask():
     try:
         loop = asyncio.new_event_loop()    
         asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.gpt_4, provider=g4f.Provider.Liaobots, messages=conversation_history[user_id]))
+        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aura, messages=conversation_history[user_id]))
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
