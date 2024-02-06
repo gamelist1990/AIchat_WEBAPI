@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify, render_template
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 import g4f
 import json
 import asyncio
@@ -17,15 +19,22 @@ import re
 import logging
 import glob
 from concurrent.futures import ThreadPoolExecutor
+import uvicorn
 
 g4f.debug.logging = True  # Enable debug logging
 g4f.debug.version_check = False  # Disable automatic version checking
+
 
 logging.basicConfig(level=logging.INFO)
 
 Token = "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0FMyN-aIUFx9aOYSDcCC6SUWjFMpz83jsmjmDCqiU9uyITa4z-xzu5BdxPp8zVNIj4o9nAnJTVQSFGeDhRC7r1Ge5t2xA_h946daH1GEfe9XCpHIawXez3RMokifNtyDXMgnPD-nPJnNxO-qXA"
 
-app = Flask(__name__)
+app = FastAPI()
+
+# ここにエンドポイントを定義します
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5000)
 
 # Initialize the conversation history
 conversation_history = {}
@@ -46,29 +55,23 @@ def cleanup_directories(root_dir, delay):
 # Start the cleanup task in a separate thread
 threading.Thread(target=cleanup_directories, args=('.', 5*60)).start()
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template('index.html')
+@app.get('/')
+def home(request: Request):
+    templates = Jinja2Templates(directory="templates")
+    return templates.TemplateResponse("index.html", {"request": request})
 
-@app.route('/ask', methods=['GET', 'POST'])
-def ask():
+@app.get('/ask')
+async def ask(request: Request):
     global conversation_history
-    text = None
-    user_id = None
-    if request.method == 'POST':
-        if request.json:
-            text = request.json.get('text')
-            user_id = request.json.get('user_id')  # Get the user ID from the request
-    else:
-        text = request.args.get('text')
-        user_id = request.args.get('user_id')  # Get the user ID from the request
+    text = request.query_params.get('text')
+    user_id = request.query_params.get('user_id')  # Get the user ID from the request
 
     # If no user_id is provided, use the IP address as the identifier
     if not user_id:
-        user_id = request.remote_addr
+        user_id = request.client.host
 
     if not text:
-        return jsonify({"response": "No question asked"}), 200
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
 
     # If this user ID is new, initialize a new conversation history for it
     if user_id not in conversation_history:
@@ -82,16 +85,14 @@ def ask():
         conversation_history[user_id].pop(0)
 
     try:
-        loop = asyncio.new_event_loop()    
-        asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aura, messages=conversation_history[user_id]))
+        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aura, messages=conversation_history[user_id])
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = loop.run_until_complete(g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.ChatForAi,  messages=conversation_history[user_id]))
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.ChatForAi,  messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
-            return jsonify({"error": str(e)}), 500
+            return JSONResponse(content={"error": str(e)}, status_code=500)
 
     # Decode the Unicode escaped string
     try:
@@ -99,19 +100,20 @@ def ask():
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
         logging.error(f"{error_message}: {response.text}")
-        return jsonify({"error": error_message}), 500
+        return JSONResponse(content={"error": error_message}, status_code=500)
     else:
-        return jsonify(decoded_response), 200, {'Content-Type': 'application/json; charset=utf-8'}
+        return JSONResponse(content=decoded_response, status_code=200)
 
-@app.route('/generate_image', methods=['GET'])
-def generate_image():
+
+@app.get('/generate_image')
+async def generate_image(request: Request):
     logging.info('generate_image function called')
     # Get the prompt from the request parameters
-    prompt = request.args.get('prompt')
+    prompt = request.query_params.get('prompt')
 
     if not prompt:
         logging.error('No prompt provided')
-        return jsonify({"error": "No prompt provided"}), 400
+        return JSONResponse(content={"error": "No prompt provided"}, status_code=400)
 
     # Generate a unique ID for this request
     request_id = str(uuid.uuid4())
@@ -169,7 +171,7 @@ def generate_image():
 
     except Exception as e:
         logging.error(f'Exception occurred: {str(e)}')
-        return jsonify({"error": str(e)}), 500 
+        return JSONResponse(content={"error": str(e)}, status_code=500)
     finally:
         # Remove the directory for this request
         shutil.rmtree(request_id)
@@ -178,10 +180,7 @@ def generate_image():
     # Return the base64 encoded images
     if base64_images:
         logging.info('Returning base64 encoded images')
-        return jsonify({"images": base64_images}), 200, {'Content-Type': 'application/json; charset=utf-8'}
+        return JSONResponse(content={"images": base64_images}, status_code=200)
     else:
         logging.error('Failed to generate images')
-        return jsonify({"error": "Failed to generate images"}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        return JSONResponse(content={"error": "Failed to generate images"}, status_code=500)

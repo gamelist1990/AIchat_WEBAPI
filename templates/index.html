@@ -125,38 +125,34 @@
     <div id="answer"></div>
     <div id="error"></div>
     <h2>サンプルコード</h2>
-    <p>以下のコードはこのサイトを利用するためのサンプルコードです：</p>
+    <p>以下のコードはこのサイトを利用するためのサンプルコードです：userIDを設定していない場合は自動でIPが使用されます</p>
     <h3>Python</h3>
     <p>
-      import requests
-      def callFlaskAPI(userMessage):
-          url = "https://2d773fb3-8162-49ea-a4f0-149615c666e7-00-dk8vul44wy2t.pike.replit.dev/ask"
-          params = {"text": userMessage}
-          response = requests.get(url, params=params)
-          unicodeResponse = response.json()
-          utf8Response = unicodeToUtf8(unicodeResponse)
-          return utf8Response
+        import requests
 
-      def unicodeToUtf8(unicode):
-          return unicode.encode('utf-8')
-
+        url = "https://webapi-8trs.onrender.com/ask"
+        params = {"text": "こんにちは", "user_id": "123"}
+        
+        response = requests.get(url, params=params)
+        
+        print(response.json())
+        
   </p>
     <h3>JavaScript</h3>
     <p>
-      fetch('https://2d773fb3-8162-49ea-a4f0-149615c666e7-00-dk8vul44wy2t.pike.replit.dev/ask?text=' + encodeURIComponent('ここに質問を入れる'))
-        .then(response => response.json())
-        .then(data => {
-          var decodedData = unicodeToUtf8(data);
-          console.log(decodedData);
-        })
-        .catch(error => console.error('Error:', error));
+        const axios = require('axios');
 
-      function unicodeToUtf8(unicode) {
-          return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function(match, grp) {
-              return String.fromCharCode(parseInt(grp, 16)); 
+        const url = 'https://webapi-8trs.onrender.com/ask';
+        const params = { text: 'こんにちは', user_id: '123' };
+        
+        axios.get(url, { params })
+          .then(response => {
+            console.log(response.data);
+          })
+          .catch(error => {
+            console.error(error);
           });
-      }
-
+        
     </p>
   </div>
   </body>

@@ -22,5 +22,5 @@ undetected-chromedriver
 brotli
 beautifulsoup4
 setuptools
-g4f
 BingImageCreator
+uvicorn
