@@ -31,10 +31,7 @@ Token = "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0F
 
 app = FastAPI()
 
-# ここにエンドポイントを定義します
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
 
 # Initialize the conversation history
 conversation_history = {}
@@ -184,3 +181,7 @@ async def generate_image(request: Request):
     else:
         logging.error('Failed to generate images')
         return JSONResponse(content={"error": "Failed to generate images"}, status_code=500)
+# ここにエンドポイントを定義します
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5000)
