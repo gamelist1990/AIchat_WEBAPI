@@ -3,157 +3,67 @@
 <head>
     <meta charset="UTF-8" />
     <title>AI Chatbot</title>
-    <meta name="viewport" content="width=device-width">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-touch-fullscreen" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="ChatGPT">
-      <link href="https://gamelist1990.github.io/gamelist1990/gamesite/images/logo.png" rel="icon" />
-  <style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f0f0f0;
-    }
-    h1 {
-        background-color: #333;
-        color: #fff;
-        padding: 10px 0;
-        margin: 0;
-        text-align: center;
-    }
-    .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    input, button {
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-    }
-    input {
-        flex-grow: 1;
-        margin-right: 10px;
-    }
-    pre {
-        background-color: #f2f2f2;
-        padding: 10px;
-        border-radius: 5px;
-    }
-    #answer {
-        margin-top: 20px;
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #f2f2f2;
-        color: #333; /* テキストの色を変更 */
-        font-weight: bold; /* テキストを太字に */
-        border: 2px solid #333; /* ボーダーを追加 */
-    }
-    #error {
-        color: red; /* エラーメッセージの色を赤に */
-    }
-  </style>
-  <script>
-    var button;
-    function askQuestion() {
-        var text = document.getElementById('question').value;
-        button = document.querySelector('button');
-        button.disabled = true;
-        button.innerText = '質問中...';
-
-        // Clear the previous answer and images
-        document.getElementById('answer').innerText = '';
-        document.getElementById('error').innerText = '';
-
-        if (text.startsWith('!image ')) {
-            var imagePrompt = text.slice(7);
-            fetch('/generate_image?prompt=' + encodeURIComponent(imagePrompt))
-                .then(response => response.json())
-                .then(data => {
-                    data.images.forEach(imageData => {
-                        var img = document.createElement('img');
-                        img.src = 'data:image/png;base64,' + imageData;
-                        img.style.width = '300px';  // 画像の幅を300pxに制限
-                        document.getElementById('answer').appendChild(img);
-                    });
-                    button.innerText = '質問する';
-                    setTimeout(function() {
-                        button.disabled = false;
-                    }, 3000);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('error').innerText = 'エラーが起きました';
-                    button.innerText = '質問する';
-                    button.disabled = false;
-                });
-        } else {
-            fetch('/ask?text=' + encodeURIComponent(text))
-                .then(response => response.json())
-                .then(data => {
-                    var decodedData = unicodeToUtf8(data);
-                    document.getElementById('answer').innerText = decodedData;
-                    button.innerText = '質問する';
-                    setTimeout(function() {
-                        button.disabled = false;
-                    }, 3000);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('error').innerText = 'エラーが起きました';
-                    button.innerText = '質問する';
-                    button.disabled = false;
-                });
-        }
-    }
-
-    function unicodeToUtf8(unicode) {
-        return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function(match, grp) {
-            return String.fromCharCode(parseInt(grp, 16)); 
-        });
-    }
-</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="ChatGPT">
+    <link rel="icon" href="https://gamelist1990.github.io/gamelist1990/gamesite/images/logo.png"  />
+    <link rel="stylesheet" href="/home/css/home.css">
+    <script src="/home/js/main.js"></script>
 </head>
 <body>
-<h1>AIライブラリへようこそ！</h1>
-<div class="container">
-    <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。ただ、本来は自動でGPT-4(BING)が機能するはずなんですが(回答に時間が掛かる場合があるよ！)、サーバーの問題で予備のGPT-3.5が使用されるかもしれません。<br />新機能:!image 生成したい画像 で画像を生成できるよ！</p>
-    <input id="question" type="text" placeholder="ここに質問を入れる">
-    <button onclick="askQuestion()">質問</button>
-    <div id="answer"></div>
-    <div id="error"></div>
-    <h2>サンプルコード</h2>
-    <p>以下のコードはこのサイトを利用するためのサンプルコードです：userIDを設定していない場合は自動でIPが使用されます</p>
-    <h3>Python</h3>
-    <p>
-        import requests
+    <h1 style="font-family: Hannari;">AIライブラリへようこそ！</h1>
+    <div class="container">
+        <h2>AIチャットボットについて</h2>
+        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。本来は自動でGPT-4が機能しますが、サーバーの問題でエラーが起きた時は予備のGPT-3.5が使用されるかもしれません。通常の会話なら3秒で回答されます。</p>
+        <h2>新機能: 画像生成</h2>
+        <p>!image 生成したい画像 で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。</p>
+        <h2>更新:少しスタイル変えました</h2>
+        <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
+        <button onclick="askQuestion()">質問</button>
+        <div id="answer"></div>
+        <div id="error"></div>
+        <h2>サンプルコード</h2>
+        <p>以下のコードはこのサイトを利用するためのサンプルコードです：userIDを設定していない場合は自動でIPが使用されます</p>
+        <h3>Python</h3>
+        <pre>
+            import requests
 
-        url = "https://webapi-8trs.onrender.com/ask"
-        params = {"text": "こんにちは", "user_id": "123"}
-        
-        response = requests.get(url, params=params)
-        
-        print(response.json())
-        
-  </p>
-    <h3>JavaScript</h3>
-    <p>
-        const axios = require('axios');
+            url = "https://webapi-8trs.onrender.com/ask"
+            params = {"text": "こんにちは", "user_id": "123"}
+            
+            response = requests.get(url, params=params)
+            
+            print(response.json())
+        </pre>
+        <h3>JavaScript</h3>
+        <pre>
+            const axios = require('axios');
 
-        const url = 'https://webapi-8trs.onrender.com/ask';
-        const params = { text: 'こんにちは', user_id: '123' };
-        
-        axios.get(url, { params })
-          .then(response => {
-            console.log(response.data);
-          })
-          .catch(error => {
-            console.error(error);
-          });
-        
-    </p>
-  </div>
-  </body>
-  </html>
+            const url = 'https://webapi-8trs.onrender.com/ask';
+            const params = { text: 'こんにちは', user_id: '123' };
+            
+            axios.get(url, { params })
+              .then(response => {
+                console.log(response.data);
+              })
+              .catch(error => {
+                console.error(error);
+              });
+        </pre>
+    </div>
+    <widgetbot
+  server="1069498529866842173"
+  channel="1069498529866842173"
+  width="auto"
+  height="auto"
+></widgetbot>
+<script src='https://cdn.jsdelivr.net/npm/@widgetbot/crate@3' async defer>
+    new Crate({
+        server: '1069498529866842173', // 
+        channel: '1069498532068872193' // htmlコードを勝手に使わないでね
+    })
+</script>
+</body>
+</html>
