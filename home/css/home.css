@@ -1,0 +1,84 @@
+body {
+    font-family: 'Hannari' sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5; /* 薄色のグレーに変更 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+h1 {
+    background-color: #fff;
+    font-family: 'Hannari', sans-serif;
+    color: #333;
+    padding: 10px 0;
+    margin: 0;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+textarea, button {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+    outline: none;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+textarea {
+    flex-grow: 1;
+    margin-right: 10px;
+    resize: vertical;
+    overflow: auto;
+    width: 100%;
+    border-radius: 10px;
+    word-wrap: break-word;
+}
+
+button {
+    background-color: #007aff;
+    color: white;
+    border-radius: 10px;
+    padding: 10px 20px;
+    border: none;
+    transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+   background-color: #0051a1;
+   cursor: pointer;
+}
+
+pre {
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+}
+
+#answer {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+    border: 2px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+#error {
+    color: red;
+}
