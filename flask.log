@@ -1,17 +1,1 @@
-INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5000
- * Running on http://172.16.5.4:5000
-INFO:werkzeug:[33mPress CTRL+C to quit[0m
-INFO:werkzeug: * Restarting with stat
-WARNING:werkzeug: * Debugger is active!
-INFO:werkzeug: * Debugger PIN: 137-616-869
-INFO:werkzeug:127.0.0.1 - - [22/Jan/2024 10:55:20] "GET / HTTP/1.1" 200 -
-DEBUG:asyncio:Using selector: EpollSelector
-ERROR:root:Error occurred: 401, message='Unauthorized', url=URL('https://liaobots.work/api/user')
-INFO:werkzeug:127.0.0.1 - - [22/Jan/2024 10:55:40] "GET /ask?text=こんにちは自己紹介をしてください HTTP/1.1" 200 -
-DEBUG:asyncio:Using selector: EpollSelector
-ERROR:root:Error occurred: 401, message='Unauthorized', url=URL('https://liaobots.work/api/user')
-INFO:werkzeug:127.0.0.1 - - [22/Jan/2024 10:56:08] "POST /ask HTTP/1.1" 200 -
-INFO:werkzeug: * Detected change in '/workspaces/api/main.py', reloading
-INFO:werkzeug: * Restarting with stat
+uvicorn main:app --reload
