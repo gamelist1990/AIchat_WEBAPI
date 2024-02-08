@@ -2,19 +2,20 @@ body {
     font-family: 'Hannari' sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f5f5f5; /* 薄色のグレーに変更 */
+    background-color: #dcdcdc; /* 薄色のグレーに変更 */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); /* 影を加える */
 }
 
 h1 {
-    background-color: #fff;
-    font-family: 'Hannari', sans-serif;
-    color: #333;
+    background-color: #282626cb;
+    font-family: "Dela Gothic One", sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    color: #fdfdfd;
     padding: 10px 0;
     margin: 0;
     text-align: center;
     border-bottom: 1px solid #ccc;
-    font-weight: 500;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
 }
 

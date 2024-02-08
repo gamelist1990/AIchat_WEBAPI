@@ -183,7 +183,7 @@ async def generate_image(request: Request):
         return JSONResponse(content={"images": base64_images}, status_code=200)
     else:
         logging.error('Failed to generate images')
-        return JSONResponse(content={"error": "Failed to generate images"}, status_code=500)
+        return JSONResponse(content={"error": "画像生成ができませんでした(画像生成側エラーもしくはリクエストの送りすぎです[一日最大でも100枚])"}, status_code=500)
 # ここにエンドポイントを定義します
 
 if __name__ == "__main__":
