@@ -39,6 +39,8 @@ app.mount("/home", StaticFiles(directory="home"), name="home")
 # Initialize the conversation history
 conversation_history = {}
 
+geminis = {}
+
 # Set up logging to console
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -63,8 +65,10 @@ def home(request: Request):
 @app.get('/ask')
 async def ask(request: Request):
     global conversation_history
+    global geminis
     text = request.query_params.get('text')
     user_id = request.query_params.get('user_id')  # Get the user ID from the request
+    
 
     # If no user_id is provided, use the IP address as the identifier
     if not user_id:
@@ -80,12 +84,17 @@ async def ask(request: Request):
     # Add the new message to the conversation history
     conversation_history[user_id].append({"role": "user", "content": text})
 
+    if user_id not in geminis:
+        geminis[user_id] = []
+
+    geminis[user_id].append({"role":"user", "content": text})
+
     # If the conversation history exceeds 5 messages, remove the oldest message
     if len(conversation_history[user_id]) > 5:
         conversation_history[user_id].pop(0)
 
     try:
-        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Gemini, messages=conversation_history[user_id],cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"})
+        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Gemini, messages=geminis[user_id],cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"})
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
