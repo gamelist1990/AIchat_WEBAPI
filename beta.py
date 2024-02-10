@@ -22,6 +22,10 @@ import glob
 from concurrent.futures import ThreadPoolExecutor
 import uvicorn
 
+# Load cookies from a JSON file
+with open('cookies.json', 'r') as f:
+    cookies = json.load(f)
+
 g4f.debug.logging = True  # Enable debug logging
 g4f.debug.version_check = False  # Disable automatic version checking
 
@@ -94,7 +98,7 @@ async def ask(request: Request):
         conversation_history[user_id].pop(0)
 
     try:
-        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Gemini, messages=geminis[user_id],cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"})
+        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Gemini, messages=geminis[user_id],set_cookies=cookies)
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
@@ -195,5 +199,5 @@ async def generate_image(request: Request):
         return JSONResponse(content={"error": "画像生成ができませんでした(画像生成側エラーもしくはリクエストの送りすぎです[一日最大でも100枚])"}, status_code=500)
 # ここにエンドポイントを定義します
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+#if __name__ == "__main__":
+    #uvicorn.run(app, host="0.0.0.0", port=5000)

@@ -1,0 +1,29 @@
+[
+    
+    {
+        "domain": ".google.com",
+        "expirationDate": 1742028698.520724,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "__Secure-1PSID",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+    },
+    {
+        "domain": ".google.com",
+        "expirationDate": 1739079542.251259,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "__Secure-1PSIDCC",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "ABTWhQGq1We17chi8p6tgjwtDg-UYmoX1hNaHF-ZLFss_Mtg7DS7RUPH7dXbGNnz-5FghpQ67Q"
+    }
+]
