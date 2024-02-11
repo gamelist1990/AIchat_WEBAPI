@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from g4f import set_cookies
 import g4f
 import json
 import asyncio
@@ -22,9 +23,14 @@ import glob
 from concurrent.futures import ThreadPoolExecutor
 import uvicorn
 
+
 # Load cookies from a JSON file
 with open('cookies.json', 'r') as f:
     cookies = json.load(f)
+
+    set_cookies(".google.com", {
+  "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+})
 
 g4f.debug.logging = True  # Enable debug logging
 g4f.debug.version_check = False  # Disable automatic version checking
