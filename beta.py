@@ -24,13 +24,11 @@ from concurrent.futures import ThreadPoolExecutor
 import uvicorn
 
 
-# Load cookies from a JSON file
-with open('cookies.json', 'r') as f:
-    cookies = json.load(f)
 
-    set_cookies(".google.com", {
-  "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
-})
+
+
+
+    
 
 g4f.debug.logging = True  # Enable debug logging
 g4f.debug.version_check = False  # Disable automatic version checking
@@ -45,7 +43,9 @@ app = FastAPI()
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
 
-
+# ファイルからクッキーデータを読み込む
+with open('cookies.json', 'r') as f:
+    test = json.load(f)
 # Initialize the conversation history
 conversation_history = {}
 
@@ -78,7 +78,6 @@ async def ask(request: Request):
     global geminis
     text = request.query_params.get('text')
     user_id = request.query_params.get('user_id')  # Get the user ID from the request
-    
 
     # If no user_id is provided, use the IP address as the identifier
     if not user_id:
@@ -104,7 +103,16 @@ async def ask(request: Request):
         conversation_history[user_id].pop(0)
 
     try:
-        response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Gemini, messages=geminis[user_id],set_cookies=cookies)
+        cookies = {
+            "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+        }
+        
+        response = await g4f.ChatCompletion.create_async(
+          model=g4f.models.default,
+          provider=g4f.Provider.Gemini,
+          messages=geminis[user_id],
+          set_cookies=cookies
+        )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
@@ -122,6 +130,7 @@ async def ask(request: Request):
         return JSONResponse(content={"error": error_message}, status_code=500)
     else:
         return JSONResponse(content=decoded_response, status_code=200)
+
 
 
 @app.get('/generate_image')
@@ -205,5 +214,5 @@ async def generate_image(request: Request):
         return JSONResponse(content={"error": "画像生成ができませんでした(画像生成側エラーもしくはリクエストの送りすぎです[一日最大でも100枚])"}, status_code=500)
 # ここにエンドポイントを定義します
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+#if __name__ == "__main__":
+    #uvicorn.run(app, host="0.0.0.0", port=5000)
