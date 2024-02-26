@@ -2,10 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from g4f import set_cookies
+from g4f.client import Client
+from g4f.Provider import BingCreateImages, OpenaiChat, Gemini
 import g4f
 import json
-import asyncio
 import logging
 import subprocess
 import os
@@ -15,10 +15,8 @@ import shutil
 from PIL import Image
 import threading
 import time
-import shutil
 from pathlib import Path
 import re
-import logging
 import glob
 from concurrent.futures import ThreadPoolExecutor
 import uvicorn
@@ -131,9 +129,13 @@ async def ask(request: Request):
     else:
         return JSONResponse(content=decoded_response, status_code=200)
 
-
-
+client = Client(
+    provider=OpenaiChat,
+    image_provider=Gemini,
+)
 @app.get('/generate_image')
+
+
 async def generate_image(request: Request):
     logging.info('generate_image function called')
     # Get the prompt from the request parameters
