@@ -214,5 +214,5 @@ async def generate_image(request: Request):
         return JSONResponse(content={"error": "画像生成ができませんでした(画像生成側エラーもしくはリクエストの送りすぎです[一日最大でも100枚])"}, status_code=500)
 # ここにエンドポイントを定義します
 
-#if __name__ == "__main__":
-    #uvicorn.run(app, host="0.0.0.0", port=5000)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5000)
