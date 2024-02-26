@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from g4f.cookies import set_cookies
+
 import g4f
 import json
 import logging
@@ -19,11 +21,11 @@ import glob
 from concurrent.futures import ThreadPoolExecutor
 import uvicorn
 
-
-
-
-
-
+#GOOGLE
+cookies = {
+            "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+        }
+        
     
 
 g4f.debug.logging = True  # Enable debug logging
@@ -40,8 +42,8 @@ app.mount("/home", StaticFiles(directory="home"), name="home")
 
 
 # ファイルからクッキーデータを読み込む
-with open('cookies.json', 'r') as f:
-    test = json.load(f)
+#with open('cookies.json', 'r') as f:
+    #test = json.load(f)
 # Initialize the conversation history
 conversation_history = {}
 
@@ -98,15 +100,15 @@ async def ask(request: Request):
     if len(conversation_history[user_id]) > 5:
         conversation_history[user_id].pop(0)
 
+    
     try:
-        cookies = {
-            "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
-        }
+        
         
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
           messages=geminis[user_id],
+          #cookies=set_cookies
           set_cookies=cookies
         )      
     except Exception as e:
