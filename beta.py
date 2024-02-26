@@ -2,8 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from g4f.client import Client
-from g4f.Provider import BingCreateImages, OpenaiChat, Gemini
 import g4f
 import json
 import logging
@@ -129,10 +127,6 @@ async def ask(request: Request):
     else:
         return JSONResponse(content=decoded_response, status_code=200)
 
-client = Client(
-    provider=OpenaiChat,
-    image_provider=Gemini,
-)
 @app.get('/generate_image')
 
 
