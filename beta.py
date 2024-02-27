@@ -2,7 +2,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from g4f.cookies import set_cookies
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from PIL import Image
+
+
+
 
 import g4f
 import json
@@ -12,19 +17,11 @@ import os
 import base64
 import uuid
 import shutil
-from PIL import Image
 import threading
 import time
-from pathlib import Path
 import re
 import glob
-from concurrent.futures import ThreadPoolExecutor
-import uvicorn
-
-#GOOGLE
-cookies = {
-            "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
-        }
+#import uvicorn
         
     
 
@@ -102,6 +99,9 @@ async def ask(request: Request):
 
     
     try:
+        cookies = {
+            "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+        }
         
         
         response = await g4f.ChatCompletion.create_async(
@@ -212,5 +212,5 @@ async def generate_image(request: Request):
         return JSONResponse(content={"error": "画像生成ができませんでした(画像生成側エラーもしくはリクエストの送りすぎです[一日最大でも100枚])"}, status_code=500)
 # ここにエンドポイントを定義します
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+#if __name__ == "__main__":
+    #uvicorn.run(app, host="0.0.0.0", port=5000)
