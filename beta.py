@@ -8,8 +8,7 @@ from g4f.image import ImageResponse
 
 
 
-import g4f
-import json
+import g4f, json
 import logging
 import shutil
 import threading
@@ -118,9 +117,6 @@ async def ask(request: Request):
 
     
     try:
-        
-        
-        
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
@@ -130,7 +126,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, cookies=cookies, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Koala, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
