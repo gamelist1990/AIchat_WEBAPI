@@ -126,7 +126,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Koala, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
