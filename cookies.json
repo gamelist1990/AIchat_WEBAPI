@@ -341,5 +341,17 @@
         "session": true,
         "storeId": null,
         "value": "C=315083ffb4abed7c&N=dagada"
+    },
+    {
+        "domain":".google.com",
+        "hostOnly": false,
+        "httpOnly": false,
+        "name":"__Secure-1PSID",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value":"g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
     }
 ]

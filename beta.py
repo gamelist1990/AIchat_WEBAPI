@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional
 from g4f.image import ImageResponse
-from g4f.cookies import set_cookies
+
 
 
 import g4f
@@ -17,19 +17,23 @@ import time
 import re
 import uvicorn
 
-# ファイルからクッキーデータを読み込む
-with open('cookies.json', 'r') as f:
-    test = json.load(f)
+with open('cookies.json', 'r') as file:
+    data = json.load(file)
+
+cookies={}
+for cookie in data:
+    cookies[cookie["name"]] = cookie["value"]
 
 
 
-cookie = {
+token2 = {
             "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
         }
 
 token = {
             "_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"
         }
+
 #set_cookies(".bing.com", {
 #  "_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"
 #})
@@ -121,12 +125,12 @@ async def ask(request: Request):
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
           messages=geminis[user_id],
-          set_cookies=cookie
+          cookies=cookies,
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, cookies={"_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"}, messages=conversation_history[user_id],set_cookies=test)
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, cookies=cookies, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
