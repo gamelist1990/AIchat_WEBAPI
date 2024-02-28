@@ -117,6 +117,9 @@ async def ask(request: Request):
 
     
     try:
+        cookies={}
+        for cookie in data:
+            cookies[cookie["name"]] = cookie["value"]
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
@@ -126,7 +129,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing,cookies=cookies, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Aura, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -152,7 +155,7 @@ async def generate_image(prompt: Optional[str] = None):
         model=g4f.models.default, # Using the default model
         provider=g4f.Provider.Bing, # Specifying the provider as OpenaiChat
         messages=[{"role": "user", "content": f"Create images with {prompt}"}],
-        cookies=cookies
+        cookies=cookies,
     )
 
     # Get image links from response
