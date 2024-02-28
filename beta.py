@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional
 from g4f.image import ImageResponse
-from g4f.cookies import set_cookies
+
 
 
 
@@ -120,18 +120,17 @@ async def ask(request: Request):
 
     
     try:
+        
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
-          provider=g4f.Provider.Gemini,
-          #cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
-          #set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
+          provider=g4f.Provider.GeminiPro,
           messages=geminis[user_id],
-          cookies=cookies,
+          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bard, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.gpt_4, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)

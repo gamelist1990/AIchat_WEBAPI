@@ -1,18 +1,15 @@
-import g4f
-import json
-
-# ファイルからクッキーデータを読み込む
-with open('cookies.json', 'r') as f:
-    test = json.load(f)
+from g4f.client import Client
+from g4f.Provider.GeminiPro import GeminiPro
 
 
-response = g4f.ChatCompletion.create(
-    model=g4f.models.default, # Using the default model
-    provider=g4f.Provider.Bing, # Specifying the provider as Gemini
-    messages=[{"role": "user", "content": "猫の画像を生成してください"}],
-    set_cookies=test
-    
+comment = input("comment :")
+client = Client(
+    api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
+    provider=GeminiPro
 )
 
-# Displaying the response
-print(response)
+response = client.chat.completions.create_async(
+    model="gemini-pro",
+    messages=[{"role": "user", "content": comment}],
+)
+print(response.choices[0].message.content)
