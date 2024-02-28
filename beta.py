@@ -18,7 +18,6 @@ import uvicorn
 
 with open('cookies.json', 'r') as file:
     data = json.load(file)
-
 cookies={}
 for cookie in data:
     cookies[cookie["name"]] = cookie["value"]
@@ -119,12 +118,9 @@ async def ask(request: Request):
     try:
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
+          set_cookies=cookies,
           provider=g4f.Provider.Gemini,
-          cookies=cookies,
           messages=geminis[user_id],
-          #cookies={
-        #"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
-   # }
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
