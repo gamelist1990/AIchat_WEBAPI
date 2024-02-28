@@ -5,10 +5,11 @@ import subprocess
 
 # pip install コマンドを実行
 #subprocess.check_call(['pip', 'install', '-U', 'g4f[all]'])
+#subprocess.check_call(['pip', 'install', '--upgrade', 'pip'])
 
-subprocess.check_call(['pip', 'uninstall', 'undetected_chromedriver'])
+#subprocess.check_call(['pip', 'uninstall', 'undetected_chromedriver'])
 
-subprocess.check_call(['pip', 'uninstall', 'browser_cookie3'])
+#subprocess.check_call(['pip', 'uninstall', 'browser_cookie3'])
 
 print("SERVERを起動します・・・")
 
