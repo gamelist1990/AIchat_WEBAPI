@@ -8,8 +8,7 @@ from g4f.image import ImageResponse
 
 
 
-
-import g4f, json
+import g4f, json,asyncio
 import logging
 import shutil
 import threading
@@ -96,7 +95,7 @@ async def ask(request: Request):
     if user_id not in geminis:
         geminis[user_id] = []
 
-    geminis[user_id].append({"role":"user", "content": text,"cookies": data})
+    geminis[user_id].append({"role":"user", "content": text})
 
     # If the conversation history exceeds 5 messages, remove the oldest message
     if len(conversation_history[user_id]) > 5:
@@ -104,17 +103,17 @@ async def ask(request: Request):
 
     
     try:
-        
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
           api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
           provider=g4f.Provider.GeminiPro,
           messages=geminis[user_id],
+          timeout=120
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.gpt_4l, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.gpt_35_turbo, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
