@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional
 from g4f.image import ImageResponse
+from g4f.cookies import set_cookies
 
 
 
@@ -16,11 +17,7 @@ import time
 import re
 import uvicorn
 
-with open('cookies.json', 'r') as file:
-    data = json.load(file)
-cookies={}
-for cookie in data:
-    cookies[cookie["name"]] = cookie["value"]
+
 
 
 
@@ -118,14 +115,15 @@ async def ask(request: Request):
     try:
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
-          set_cookies=cookies,
           provider=g4f.Provider.Gemini,
+          #cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
+          set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
           messages=geminis[user_id],
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Koala, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bard, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -151,7 +149,7 @@ async def generate_image(prompt: Optional[str] = None):
         model=g4f.models.default, # Using the default model
         provider=g4f.Provider.Bing, # Specifying the provider as OpenaiChat
         messages=[{"role": "user", "content": f"Create images with {prompt}"}],
-        cookies=cookies,
+        
     )
 
     # Get image links from response
