@@ -2,7 +2,7 @@ import os
 import subprocess
 
 # ディレクトリを変更
-os.chdir('g4f')
+os.chdir('gpt4')
 
 # 依存関係をインストール
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'])

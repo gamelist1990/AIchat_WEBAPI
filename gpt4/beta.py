@@ -5,10 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from PIL import Image
-
-
-
-
 import g4f
 import json
 import logging
