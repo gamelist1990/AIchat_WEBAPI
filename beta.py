@@ -30,11 +30,13 @@ cookies = {
 token = {
             "_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"
         }
-set_cookies(".bing.com", {
-  "_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"
-})
+#set_cookies(".bing.com", {
+#  "_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"
+#})
 
-        
+#set_cookies(".google.com", {
+#  "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+#})  
     
 
 g4f.debug.logging = True  # Enable debug logging
@@ -119,12 +121,12 @@ async def ask(request: Request):
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
           messages=geminis[user_id],
-          set_cookies=cookies,
+          set_cookies=(".google.com", {"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"}) 
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, set_cookies=set_cookies, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, set_cookies=(".bing.com",{"_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"}), messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
