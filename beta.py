@@ -23,7 +23,7 @@ with open('cookies.json', 'r') as f:
 
 
 
-cookies = {
+cookie = {
             "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
         }
 
@@ -35,7 +35,7 @@ token = {
 #})
 
 #set_cookies(".google.com", {
-#  "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
+# "__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"
 #})  
     
 
@@ -121,12 +121,12 @@ async def ask(request: Request):
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
           messages=geminis[user_id],
-          cookies=set_cookies(".google.com", {"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"}) 
+          set_cookies=cookie
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, cookies=set_cookies(".bing.com",{"_U": "1Yxs6UfNiQTfZMB9a_0xBTDSU6Y2-AlBDrFNcsxSXpJv7TbNkpmyS3WwVUeO2__NyVfZzCxYni3Zm-nFwBCvnLjWzPjJOb8_bWqbhC0dx80kfMf4LBpUm2Wp1dNiQNL2j0FsZ8sgr84FKm4x4NBkac46t7Ab5kh4kXDyr8wb-ytTnMi9xaX6rChTG-BD9qwGtGsgOghYemnowQaABLZgXKQ"}), messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, provider=g4f.Provider.Bing, cookies=test, messages=conversation_history[user_id],set_cookies=test)
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -170,5 +170,5 @@ async def generate_image(prompt: Optional[str] = None):
 
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+#if __name__ == "__main__":
+    #uvicorn.run(app, host="0.0.0.0", port=5000)
