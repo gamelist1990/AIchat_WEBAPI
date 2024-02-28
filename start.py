@@ -1,11 +1,10 @@
-import os
-import subprocess
+from flask import Flask, redirect
 
-# ディレクトリを変更
-os.chdir('gpt4')
+app = Flask(__name__)
 
-# 依存関係をインストール
-subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
+@app.route('/')
+def redirect_to_another_url():
+    return redirect("http://www.another_url.com", code=302)
 
-# スクリプトを実行
-subprocess.run(['python', 'beta.py'])
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8080)
