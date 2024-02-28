@@ -50,6 +50,13 @@ app = FastAPI()
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
+with open('cookies.json', 'r') as file:
+    data = json.load(file)
+
+cookies={}
+for cookie in data:
+    cookies[cookie["name"]] = cookie["value"]
+
 
 
 
@@ -105,7 +112,7 @@ async def ask(request: Request):
     if user_id not in geminis:
         geminis[user_id] = []
 
-    geminis[user_id].append({"role":"user", "content": text})
+    geminis[user_id].append({"role":"user", "content": text,"cookies": data})
 
     # If the conversation history exceeds 5 messages, remove the oldest message
     if len(conversation_history[user_id]) > 5:
@@ -116,9 +123,10 @@ async def ask(request: Request):
         response = await g4f.ChatCompletion.create_async(
           model=g4f.models.default,
           provider=g4f.Provider.Gemini,
-          #cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
-          set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
+          cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
+          #set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076"},
           messages=geminis[user_id],
+          cookies=cookies,
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
