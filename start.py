@@ -1,10 +1,12 @@
-from flask import Flask, redirect
+import os
+import subprocess
 
-app = Flask(__name__)
 
-@app.route('/')
-def redirect_to_another_url():
-    return redirect("http://www.another_url.com", code=302)
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080)
+# pip install コマンドを実行
+subprocess.check_call(['pip', 'install', '-U', 'g4f[all]'])
+
+print("SERVERを起動します・・・")
+
+# uvicornを起動
+subprocess.check_call(['uvicorn', 'beta:app', '--reload', '--host', '0.0.0.0', '--port', '5000'])
