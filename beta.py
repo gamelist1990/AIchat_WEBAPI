@@ -101,7 +101,10 @@ async def ask(request: Request):
     if len(conversation_history[user_id]) > 5:
         conversation_history[user_id].pop(0)
 
-    
+    # Ensure the last message is from the user or a function response
+    if geminis[user_id][-1]['role'] != 'user':
+        geminis[user_id].append({"role": "user", "content": ""})
+
     try:
         response = await g4f.ChatCompletion.create_async(
           model="",
@@ -126,6 +129,7 @@ async def ask(request: Request):
         return JSONResponse(content={"error": error_message}, status_code=500)
     else:
         return JSONResponse(content=decoded_response, status_code=200)
+
     
 @app.get("/generate_image")
 async def generate_image(prompt: Optional[str] = None):
