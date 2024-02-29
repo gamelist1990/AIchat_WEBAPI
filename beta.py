@@ -104,16 +104,16 @@ async def ask(request: Request):
     
     try:
         response = await g4f.ChatCompletion.create_async(
-          model=g4f.models.default,
-          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
-          provider=g4f.Provider.GeminiPro,
+          model="",
           messages=geminis[user_id],
+          provider=g4f.Provider.GeminiPro,
+          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
           timeout=120
         )      
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model= g4f.models.gpt_35_turbo, messages=conversation_history[user_id])
+            response = await g4f.ChatCompletion.create_async(model= g4f.models.default, messages=conversation_history[user_id])
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
