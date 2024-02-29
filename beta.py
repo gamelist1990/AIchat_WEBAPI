@@ -44,9 +44,8 @@ for cookie in data:
 
 
 # Initialize the conversation history
-conversation_history = {}
+    
 
-geminis = {}
 
 
 
@@ -71,6 +70,9 @@ def home(request: Request):
     templates = Jinja2Templates(directory="templates")
     return templates.TemplateResponse("index.html", {"request": request})
 
+conversation_history = {}
+
+geminis = {}
 @app.get('/ask')
 async def ask(request: Request):
     global conversation_history
@@ -92,33 +94,49 @@ async def ask(request: Request):
     # Add the new message to the conversation history
     conversation_history[user_id].append({"role": "user", "content": text})
 
-    if user_id not in geminis:
-        geminis[user_id] = []
-
-    geminis[user_id].append({"role":"user", "content": text})
+    # Initialize a new conversation for geminis[user_id] for each request
+    geminis[user_id] = [{"role":"user", "content": text}]
 
     # If the conversation history exceeds 5 messages, remove the oldest message
     if len(conversation_history[user_id]) > 5:
         conversation_history[user_id].pop(0)
 
-    # Ensure the last message is from the user or a function response
-    if geminis[user_id][-1]['role'] != 'user':
-        geminis[user_id].append({"role": "user", "content": ""})
-
     try:
         response = await g4f.ChatCompletion.create_async(
-          model="",
+          model="gemini-pro",
           messages=geminis[user_id],
           provider=g4f.Provider.GeminiPro,
           api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
-        )      
+        )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-            response = await g4f.ChatCompletion.create_async(model="",provider=g4f.Provider.GeminiPro,api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM", messages=conversation_history[user_id])
+          response = await g4f.ChatCompletion.create_async(model="gpt-3.5-turbo", messages=conversation_history[user_id])
         except Exception as e:
+         if 'candidates' in str(e):
+            logging.error("A 'candidates' error occurred. Please check your input and try again.")
+            return JSONResponse(content={"error": "A 'candidates' エラーが起きましたこのエラーは修正まだしてません、一応修正パッチ出してるけど効いてない[しりとりなどで起きます]"}, status_code=500)
+        else:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
+        # Check if the response is a dictionary
+        if isinstance(response, dict):
+            # Check if the response is a reply to the user's message
+            if response['role'] == 'assistant' and geminis[user_id][-1]['role'] == 'user':
+                # Add the assistant's response to the conversation history
+                conversation_history[user_id].append({"role": "assistant", "content": response['content']})
+            else:
+                # Handle the case where the AI initiates the conversation
+                conversation_history[user_id].append({"role": "assistant", "content": ""})
+                geminis[user_id].append({"role": "assistant", "content": ""})
+        elif isinstance(response, str):
+            # If the response is a string, convert it to a dictionary
+            response_dict = {"role": "assistant", "content": response}
+            conversation_history[user_id].append(response_dict)
+            geminis[user_id].append(response_dict)
+        else:
+            logging.error(f"Unexpected response type: {type(response)}")
+
 
     # Decode the Unicode escaped string
     try:
@@ -130,6 +148,11 @@ async def ask(request: Request):
     else:
         return JSONResponse(content=decoded_response, status_code=200)
 
+
+
+
+
+
     
 @app.get("/generate_image")
 async def generate_image(prompt: Optional[str] = None):
@@ -139,8 +162,8 @@ async def generate_image(prompt: Optional[str] = None):
 
     # Create the image
     chunks = await g4f.ChatCompletion.create_async(
-        model=g4f.models.default, # Using the default model
-        provider=g4f.Provider.Bing, # Specifying the provider as OpenaiChat
+        model="gemini-pro-vision", # Using the default model
+        provider=g4f.Provider.GeminiPro, # Specifying the provider as OpenaiChat
         messages=[{"role": "user", "content": f"Create images with {prompt}"}],
         
     )
@@ -160,5 +183,4 @@ async def generate_image(prompt: Optional[str] = None):
 
 
 
-#if __name__ == "__main__":
- #   uvicorn.run(app, host="0.0.0.0", port=5000)
+
