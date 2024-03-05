@@ -35,7 +35,6 @@ app.mount("/home", StaticFiles(directory="home"), name="home")
 
 with open('cookies.json', 'r') as file:
     data = json.load(file)
-
 cookies={}
 for cookie in data:
     cookies[cookie["name"]] = cookie["value"]
@@ -103,10 +102,11 @@ async def ask(request: Request):
 
     try:
         response = await g4f.ChatCompletion.create_async(
-          model="gemini-pro",
+          model="default",
           messages=geminis[user_id],
-          provider=g4f.Provider.GeminiPro,
-          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
+          provider=g4f.Provider.Gemini,
+          cookies=cookies,
+          #api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -179,7 +179,6 @@ async def generate_image(prompt: Optional[str] = None):
 
     # Return the images in a JSON response
     return {"images": images}
-
 
 
 
