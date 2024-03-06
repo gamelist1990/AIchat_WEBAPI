@@ -103,11 +103,11 @@ async def ask(request: Request):
 
     try:
         response = await g4f.ChatCompletion.create_async(
-          model="default",
-          messages=geminis[user_id],
-          provider=g4f.Provider.Gemini,
-          set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076",}
-          #api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
+          model="gemini-pro",
+          messages=conversation_history[user_id],
+          provider=g4f.Provider.GeminiPro,
+          #set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076",}
+          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
