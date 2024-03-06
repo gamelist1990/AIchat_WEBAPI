@@ -35,6 +35,7 @@ app.mount("/home", StaticFiles(directory="home"), name="home")
 
 with open('cookies.json', 'r') as file:
     data = json.load(file)
+
 cookies={}
 for cookie in data:
     cookies[cookie["name"]] = cookie["value"]
@@ -105,13 +106,13 @@ async def ask(request: Request):
           model="default",
           messages=geminis[user_id],
           provider=g4f.Provider.Gemini,
-          cookies=cookies,
+          set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076",}
           #api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-          response = await g4f.ChatCompletion.create_async(model="gemini-pro",provider=g4f.Provider.GeminiPro,api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM", messages=conversation_history[user_id])
+          response = await g4f.ChatCompletion.create_async(model="gpt-3.5-turbo", messages=conversation_history[user_id])
         except Exception as e:
          if 'candidates' in str(e):
             logging.error("A 'candidates' error occurred. Please check your input and try again.")
