@@ -190,11 +190,10 @@ async def ask(request: Request):
     bing[user_id].append({"comment": text, "user_id": user_id})
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with SydneyClient(style="precise", session=session) as sydney:
-                logging.info("SydneyClient has started.")
-                response = await sydney.ask(f"{text}", citations=False)
-                logging.info("SydneyClient is processing.")
+        async with SydneyClient(style="precise") as sydney:
+            logging.info("SydneyClient has started.")
+            response = await sydney.ask(f"{text}", citations=False)
+            logging.info("SydneyClient is processing.")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         return JSONResponse(content={"response": f"An error occurred while processing your request: {str(e)}."}, status_code=500)
@@ -202,6 +201,7 @@ async def ask(request: Request):
     logging.info("SydneyClient has finished processing.")
     print(f"AI:{response}")
     return JSONResponse(content={"response":response}, status_code=200)
+
 
 
 
