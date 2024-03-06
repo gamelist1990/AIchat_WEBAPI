@@ -1,13 +1,9 @@
-import requests
+from sydney import SydneyClient
+import asyncio
 
-url = "https://webapi-8trs.onrender.com/ask"
-
-while True:
-    user = input("comment :")
-    ask = {"text": user}
-
-    try:
-        response = requests.get(url, ask)
-        print(response.json())
-    except Exception as err:
-        print(f'Error occurred: {err}')
+async def main():
+ async with SydneyClient() as sydney:
+    response = await sydney.ask("HELLO?", citations=True)
+    print(response)
+if __name__ == "__main__":
+    asyncio.run(main())

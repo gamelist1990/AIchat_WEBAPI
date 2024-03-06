@@ -1,15 +1,24 @@
-from g4f.client import Client
-from g4f.Provider.GeminiPro import GeminiPro
+import asyncio
+
+from sydney import SydneyClient
 
 
-comment = input("comment :")
-client = Client(
-    api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
-    provider=GeminiPro
-)
+async def main() -> None:
+    async with SydneyClient() as sydney:
+        while True:
+            prompt = input("You: ")
 
-response = client.chat.completions.create_async(
-    model="gemini-pro",
-    messages=[{"role": "user", "content": comment}],
-)
-print(response.choices[0].message.content)
+            if prompt == "!reset":
+                await sydney.reset_conversation()
+                continue
+            elif prompt == "!exit":
+                break
+
+            print("Sydney: ", end="", flush=True)
+            async for response in sydney.ask_stream(prompt):
+                print(response, end="", flush=True)
+            print("\n")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

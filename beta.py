@@ -9,13 +9,14 @@ from sydney import SydneyClient
 
 
 
-import g4f, json,asyncio,os
+import g4f, json,os
 import logging
 import shutil
 import threading
 import time
 import re
 import uvicorn
+import asyncio
 
 
 
@@ -111,8 +112,7 @@ async def ask(request: Request):
     # If the prompt is "!bing", use sydney.ask() to get the response
     if text == "!bing":   
         async with SydneyClient() as sydney:
-            logging.info("Attempting to call sydney.ask()")
-            response = await sydney.ask(f"{geminis[user_id]}", citations=False,search=True,length="short")
+            response = await sydney.ask(f"{text}", citations=False,search=True)
             logging.info("Successfully called sydney.ask()")
             return JSONResponse(content=response, status_code=200)
 
@@ -128,7 +128,7 @@ async def ask(request: Request):
         try:
           async with SydneyClient() as sydney:
               logging.info("Attempting to call sydney.ask()")
-              response = await sydney.ask(f"{conversation_history[user_id]}", citations=False)
+              response = await sydney.ask(f"{text}", citations=False)
               logging.info("Successfully called sydney.ask()")
         except Exception as e:
          if 'candidates' in str(e):
@@ -169,8 +169,38 @@ async def ask(request: Request):
 
 
 
+bing = {}
 
+@app.get("/chat")
+async def ask(request: Request):
+    global bing
+    text = request.query_params.get('text')
+    user_id = request.query_params.get('user_id')  # Get the user ID from the request
 
+    # If no user_id is provided, use the IP address as the identifier
+    if not user_id:
+        user_id = request.client.host
+
+    if not text:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+    
+    if user_id not in bing:
+        bing[user_id] = []
+    
+    bing[user_id].append({"comment": text, "user_id": user_id})
+
+    try:
+        async with SydneyClient(style="precise") as sydney:
+            logging.info("SydneyClient has started.")
+            response = await sydney.ask(f"{text}", citations=False)
+            logging.info("SydneyClient is processing.")
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        return JSONResponse(content={"response": "An error occurred while processing your request."}, status_code=500)
+
+    logging.info("SydneyClient has finished processing.")
+    print(f"AI:{response}")
+    return JSONResponse(content={"response":response}, status_code=200)
 
 
 
