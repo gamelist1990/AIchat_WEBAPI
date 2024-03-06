@@ -196,11 +196,12 @@ async def ask(request: Request):
             logging.info("SydneyClient is processing.")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        return JSONResponse(content={"response": "An error occurred while processing your request."}, status_code=500)
+        return JSONResponse(content={"response": f"An error occurred while processing your request: {str(e)}."}, status_code=500)
 
     logging.info("SydneyClient has finished processing.")
     print(f"AI:{response}")
     return JSONResponse(content={"response":response}, status_code=200)
+
 
 
 
