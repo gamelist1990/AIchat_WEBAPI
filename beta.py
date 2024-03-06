@@ -5,10 +5,11 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional
 from g4f.image import ImageResponse
+from sydney import SydneyClient
 
 
 
-import g4f, json,asyncio
+import g4f, json,asyncio,os
 import logging
 import shutil
 import threading
@@ -27,7 +28,8 @@ g4f.debug.version_check = False  # Disable automatic version checking
 
 logging.basicConfig(level=logging.INFO)
 
-#Token = "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0FMyN-aIUFx9aOYSDcCC6SUWjFMpz83jsmjmDCqiU9uyITa4z-xzu5BdxPp8zVNIj4o9nAnJTVQSFGeDhRC7r1Ge5t2xA_h946daH1GEfe9XCpHIawXez3RMokifNtyDXMgnPD-nPJnNxO-qXA"
+Token = "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0FMyN-aIUFx9aOYSDcCC6SUWjFMpz83jsmjmDCqiU9uyITa4z-xzu5BdxPp8zVNIj4o9nAnJTVQSFGeDhRC7r1Ge5t2xA_h946daH1GEfe9XCpHIawXez3RMokifNtyDXMgnPD-nPJnNxO-qXA"
+os.environ["BING_COOKIES"] = Token
 
 app = FastAPI()
 
@@ -101,18 +103,33 @@ async def ask(request: Request):
     if len(conversation_history[user_id]) > 5:
         conversation_history[user_id].pop(0)
 
+    # If the prompt is "!reset", reset the conversation and continue
+    if text == "!reset":
+        await sydney.reset_conversation()
+        return JSONResponse(content={"response": "Conversation reset"}, status_code=200)
+
+    # If the prompt is "!bing", use sydney.ask() to get the response
+    if text == "!bing":   
+        async with SydneyClient() as sydney:
+            logging.info("Attempting to call sydney.ask()")
+            response = await sydney.ask(f"{geminis[user_id]}", citations=False,search=True,length="short")
+            logging.info("Successfully called sydney.ask()")
+            return JSONResponse(content=response, status_code=200)
+
     try:
         response = await g4f.ChatCompletion.create_async(
           model="gemini-pro",
           messages=geminis[user_id],
           provider=g4f.Provider.GeminiPro,
-          #set_cookies={"__Secure-1PSID": "g.a000gQg8QrMMHaFNt4xrii5g6VL1qTCle2Et6qVnioaet_72wj05BaexUH0IpglZ6YqdKCWSwAACgYKAfASAQASFQHGX2MioH0Ad5GKLx1qf-dA97-DcRoVAUF8yKpLwVs5mpoNBWzTwz0ggi6n0076",}
           api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         try:
-          response = await g4f.ChatCompletion.create_async(model="default",provider=g4f.Provider.Bing, messages=conversation_history[user_id])
+          async with SydneyClient() as sydney:
+              logging.info("Attempting to call sydney.ask()")
+              response = await sydney.ask(f"{conversation_history[user_id]}", citations=False)
+              logging.info("Successfully called sydney.ask()")
         except Exception as e:
          if 'candidates' in str(e):
             logging.error("A 'candidates' error occurred. Please check your input and try again.")
@@ -120,6 +137,7 @@ async def ask(request: Request):
         else:
             logging.error(f"Error occurred: {str(e)}")
             return JSONResponse(content={"error": str(e)}, status_code=500)
+
         # Check if the response is a dictionary
         if isinstance(response, dict):
             # Check if the response is a reply to the user's message
@@ -148,6 +166,9 @@ async def ask(request: Request):
         return JSONResponse(content={"error": error_message}, status_code=500)
     else:
         return JSONResponse(content=decoded_response, status_code=200)
+
+
+
 
 
 

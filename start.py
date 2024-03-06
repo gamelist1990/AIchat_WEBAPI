@@ -13,5 +13,7 @@ import subprocess
 
 print("SERVERを起動します・・・")
 
+subprocess.check_call(['pip','install','sydney-py'])
+
 # uvicornを起動
 subprocess.check_call(['uvicorn', 'beta:app', '--reload', '--host', '0.0.0.0', '--port', '5000'])
