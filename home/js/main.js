@@ -49,7 +49,15 @@ function askQuestion() {
         fetch('/ask?text=' + encodeURIComponent(text))
             .then(response => response.json())
             .then(data => {
-                var decodedData = unicodeToUtf8(data);
+                // Check if the data is an object and has a property named 'response'
+                if (typeof data === 'object' && data.hasOwnProperty('response')) {
+                    // If so, use the value of the 'response' property
+                    var decodedData = unicodeToUtf8(data.response);
+                } else {
+                    // Otherwise, use the data as is
+                    var decodedData = unicodeToUtf8(data);
+                }
+                document.getElementById('answer').innerText = decodedData;
                 document.getElementById('answer').innerText = decodedData;
                 clearInterval(dotsInterval);
                 button.innerText = '質問する';
@@ -73,10 +81,16 @@ function askQuestion() {
 
 
 function unicodeToUtf8(unicode) {
-    return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function (match, grp) {
-        return String.fromCharCode(parseInt(grp, 16));
-    });
+    if (typeof unicode === 'string') {
+        return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function (match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+    } else {
+        // If unicode is not a string, return it as is
+        return unicode;
+    }
 }
+
 
 window.onload = function () {
     var textarea = document.getElementById('question');
