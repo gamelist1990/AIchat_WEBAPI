@@ -23,6 +23,6 @@ setuptools
 aiohttp_socks
 BingImageCreator
 uvicorn
-webdriver
 sydney-py
 bingart
+g4f[all]
