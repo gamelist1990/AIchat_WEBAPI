@@ -25,3 +25,4 @@ BingImageCreator
 uvicorn
 webdriver
 sydney-py
+bingart

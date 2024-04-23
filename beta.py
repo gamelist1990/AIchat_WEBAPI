@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Optional
 from g4f.image import ImageResponse
 from sydney import SydneyClient
+from bingart import BingArt
+
 
 
 
@@ -17,6 +19,8 @@ import time
 import re
 import uvicorn
 import aiohttp
+import requests
+import base64
 
 
 
@@ -31,6 +35,8 @@ logging.basicConfig(level=logging.INFO)
 
 Token = "15VBs_g92c5WcLeDh7F058OJrZOFeV0IsKBevB65QZsGCHX4eBXFAMm9HBHLnxXurk9PR0FMyN-aIUFx9aOYSDcCC6SUWjFMpz83jsmjmDCqiU9uyITa4z-xzu5BdxPp8zVNIj4o9nAnJTVQSFGeDhRC7r1Ge5t2xA_h946daH1GEfe9XCpHIawXez3RMokifNtyDXMgnPD-nPJnNxO-qXA"
 os.environ["BING_COOKIES"] = Token
+Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACP9aKorbYOIOGAT37RzYWD1UbwgKVAI891Pihn15AoPJ1xoLw6D2uPzD2M54c1RNk7mjzDWh2A0dT+Ch/EFzb21Q8NZlbKxepkoARZbXX3IBzJ1tf0ll5ZXFAjdBUaQPfYjmMHTMGBGR+iwOOEBWD/bL/27egQYk6f6S0tf4TUvCHcjg8Q0YvIysvLFuvN8r9PrJ260HlTETFYDfuBwEranoSrg3R7yZw4qc4yUK2d6h4ttcOfbifBoJjI0oUdMR/OqIjQCKWwC1NZyglFOxxt/thXL0lLPmGRLl27PMFzbtK03j66I6EZgEJ2/0C4OaPkCDw9KLHsfx1lAfpEbSwbi2d+Qz7CMGLNY8PvCjihO1lX78Yrm8mPqZEeTnQPeNG2AEmeqminHivHDKhS3kzv+Ed3/2mG0FNZ9IDbHzqSq6rYPUz/HxQ+PZriA2Jpd/nUTw4kGJffWAWkjIekC9vxygyXixnkmdn/R20MCfC77ESI39+Mi2YQXY2NmQJj/+06sL+zsBs6ZHiR/J2VIAsFAFIgWFffwgPmC0rdOES2IZkcOSk7nH4U/G4pyvdNGpBNN7RDL/MMy06iO9g8jnvGExXKByYz6fMGs7++FTYdM0IzHfj0dnTaSEZTWDumQilaOtFmmReZ+yQKBDtMvV7P4kGEYxg35bKmg3MB94Fj9ecnWA8m3CUwkPjoiVwfL3EGld8aR/d3HEkp08+KaQmo1o6lTB71W/tqWpP0d5DoNYojpRGlaWx1z3mayA9R8NT40FtH9AHHJ9M6E8hMYLgpieOnhggLWYTVOoFq9U3u9HkjMgdsfJ4Wi9J0Zb1m7rhZ1OJHgCIgbVmkwCspQyGDBZwMxCZTTdBWo8bxP8kWh6IEZ9h5H9TOKTaWQRwt6nrDCe6luf7Sr1KrOkiPKyoY+j6WBfQS1lQe6BKxs9PGXBouwCLz1qB9tZ7OD6WlvXzJJtLYHe6txfrEX3WfLd9AhU7yLiHde0nLfBL2a6F7Ov8vzC8+5ThtJ8Uo58N4yWZZ8n+yAui2v5GiEZix6+ptetUnDTDdYnw9FzrwBvS6HAZH9sM3jYoQKK0OjkonZEbwFcSZUJu24gifSS0Xw6wA0dZwGXuup4fJCVFw3Qkrg94EzdYHUvPTCTWiJf/s6+2BzgWE+uCSuyag5p40LKXomVq5l6S522NTM16ZDDObqo6p81WGrdiVXucP0dPtY4mDDY4QgOZXO2q5X4DUgRRCL4fpZx5+QSdYqGtMXUrbH/AT2RkIQIpKZ0qQFf3b5xfVf+uEBkrkwBLf+swDldXqN2rhzuzodvnuTFodIQvGyPu+7GZNo/ve20pZjV/n8NVZTSVxIqOVh697MThMQl0KI7S/Ktfi946CrN1mfdXL6CwtvzVhFTyY51UHfqTO30SprSFAA27x9poqmvgzLmaXvg8VJcnI4/WQ=='
+
 
 app = FastAPI()
 
@@ -118,10 +124,9 @@ async def ask(request: Request):
 
     try:
         response = await g4f.ChatCompletion.create_async(
-          model="gemini-pro",
+          model="default",
           messages=geminis[user_id],
-          provider=g4f.Provider.GeminiPro,
-          api_key="AIzaSyDHCVkGkQ0d5lQ230ssHzf3rg2XZBjNCZM",
+          provider=g4f.Provider.OpenaiChat,
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -214,26 +219,19 @@ async def generate_image(prompt: Optional[str] = None):
     # Ensure a prompt was provided
     if prompt is None:
         return JSONResponse(content={"error": "No prompt provided"}, status_code=400)
+    
+    bing_art = BingArt(auth_cookie_U=Token, auth_cookie_KievRPSSecAuth=Kiev_cookies)
+    results = bing_art.generate_images(prompt)
 
-    # Create the image
-    chunks = await g4f.ChatCompletion.create_async(
-        model="gemini-pro-vision", # Using the default model
-        provider=g4f.Provider.GeminiPro, # Specifying the provider as OpenaiChat
-        messages=[{"role": "user", "content": f"Create images with {prompt}"}],
-        
-    )
+    # 画像URLをbase64に変換
+    images_base64 = []
+    for image in results['images']:
+        response = requests.get(image['url'])
+        image_base64 = base64.b64encode(response.content).decode('utf-8')
+        images_base64.append(image_base64)
 
-    # Get image links from response
-    images = []
-    for chunk in chunks:
-        if isinstance(chunk, ImageResponse):
-            images.append({
-                "image_links": chunk.images, # Generated image links
-                "alt": chunk.alt # Used prompt for image generation
-            })
-
-    # Return the images in a JSON response
-    return {"images": images}
+    # base64に変換した画像を含むJSONを返す
+    return JSONResponse(content={"images": images_base64})
 
 
 
