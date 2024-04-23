@@ -25,4 +25,5 @@ BingImageCreator
 uvicorn
 sydney-py
 bingart
-g4f[all]
+g4f
+nodriver

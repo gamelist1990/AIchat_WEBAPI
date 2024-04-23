@@ -103,9 +103,9 @@ async def ask(request: Request):
     messages = conversations[user_id]
     try:
         response = await g4f.ChatCompletion.create_async(
-            model="gpt-3.5-turbo",
+            model="gemini",
             messages=messages,
-            provider=g4f.Provider.OpenaiChat,
+            provider=g4f.Provider.Gemini,
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
