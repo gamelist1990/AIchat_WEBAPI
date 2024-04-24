@@ -15,21 +15,28 @@
 
     <link rel="stylesheet" href="/home/css/home.css">
     <script src="/home/js/main.js"></script>
+    <script>
+    function goBack() {
+        window.history.back();
+    }
+    </script>
 </head>
 <body>
     <h1>AIライブラリへようこそ！!</h1>
     <br />
     <div class="container">
         <h2>AIチャットボットについて</h2>
-        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。本来はopenai機能しますが、サーバーの問題でエラーが起きた時は予備のbingが使用されるかもしれません。通常の会話なら3秒で回答されますがbingの場合は5秒掛かるかも(会話の内容による)。</p>
+        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。本来はGeminiが機能しますが、サーバーの問題でエラーが起きた時は予備のbingが使用されるかもしれません(ERRORで未実装・bing)。通常の会話なら3秒で回答されます(会話の内容による)。</p>
         <h2>新機能: 画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫が踊る  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
         <button onclick="askQuestion()">質問</button>
+        
         <div id="answer"></div>
         <div id="error"></div>
+        <button onclick="goBack()">ホームページに戻る</button>
         <h2>サンプルコード</h2>
-        <p>以下のコードはこのサイトを利用するためのサンプルコードです：userIDを設定していない場合は自動でIPが使用されます</p>
+        <p>以下のコードはこのサイトを利用するためのサンプルコードです/リクエストを送るにはテキストは"https://webapi-8trs.onrender.com/ask?text=hello"<br><br>画像生成の場合は"https://webapi-8trs.onrender.com/generate_image?prompt=cat"という感じでリクエストしてください画像はbase64で返されます</p>
         <h3>Python</h3>
         <p>
             import requests
