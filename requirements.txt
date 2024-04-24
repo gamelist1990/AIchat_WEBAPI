@@ -25,3 +25,4 @@ BingImageCreator
 uvicorn
 bingart
 g4f
+sydney-py
