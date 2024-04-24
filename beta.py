@@ -110,8 +110,8 @@ async def ask(request: Request):
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        # If the ask function fails, call the chat function
-        return JSONResponse(content={"response": response}, status_code=200)
+        # If the ask function fails, return an error message
+        return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
         decoded_response = json.loads(json.dumps(response))
@@ -121,6 +121,7 @@ async def ask(request: Request):
         return JSONResponse(content={"error": error_message}, status_code=500)
 
     return JSONResponse(content=decoded_response, status_code=200)
+
 
 
 async def chat_with_sydney(prompt: str):
