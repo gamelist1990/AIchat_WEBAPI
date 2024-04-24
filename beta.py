@@ -111,7 +111,6 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, call the chat function
-        response = await chat_with_sydney(text)
         return JSONResponse(content={"response": response}, status_code=200)
 
     try:
