@@ -103,9 +103,10 @@ async def ask(request: Request):
     messages = conversations[user_id]
     try:
         response = await g4f.ChatCompletion.create_async(
-            model="gemini",
+            model="gemini-pro",
             messages=messages,
-            provider=g4f.Provider.Gemini,
+            provider=g4f.Provider.GeminiPro,
+            api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU"
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
