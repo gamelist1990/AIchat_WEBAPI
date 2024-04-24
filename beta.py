@@ -9,6 +9,7 @@ from sydney import SydneyClient
 from bingart import BingArt
 from g4f.client import AsyncClient
 from g4f.Provider import BingCreateImages, OpenaiChat, Gemini
+import uuid
 
 
 
@@ -88,19 +89,17 @@ conversations = {}
 async def ask(request: Request):
     text = request.query_params.get('text')
     user_id = request.query_params.get('user_id') or request.client.host
+    dev = request.query_params.get('dev') == 'true'
 
     if not text:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
 
-    if user_id not in conversations:
-        conversations[user_id] = []
+    # If dev mode is true or user_id is not detected, generate a unique id
+    if dev or not user_id:
+        user_id = str(uuid.uuid4())
 
-    conversations[user_id].append({"role":"user", "content": text})
-    
-    # Limit the conversation history to the last 5 messages
-    conversations[user_id] = conversations[user_id][-5:]
-    
-    messages = conversations[user_id]
+    messages = [{"role":"user", "content": text}]
+
     try:
         response = await g4f.ChatCompletion.create_async(
             model="gemini-pro",
@@ -121,6 +120,7 @@ async def ask(request: Request):
         return JSONResponse(content={"error": error_message}, status_code=500)
 
     return JSONResponse(content=decoded_response, status_code=200)
+
 
 
 
