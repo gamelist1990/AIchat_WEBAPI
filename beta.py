@@ -40,6 +40,7 @@ Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACD1+oAq+j1C3GARTMaPE
 
 app = FastAPI()
 
+
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
 with open('cookies.json', 'r') as file:
@@ -130,10 +131,7 @@ async def chat_with_sydney(prompt: str):
 async def g4f_bing(prompt: str):
     response = await g4f.ChatCompletion.create_async(
         model=g4f.models.default, 
-        provider=g4f.Provider.Bing,
-        cookies={
-            "_U": "1-3KDP5zuUL89eDUMA7PpxaGgKEiWDOUNDCBUMG--ejjSBaNNIZUyBljuGuTzN9X_FsafyiZT1dxkYyOr9TvQnPNp3JR6AakWhuAKiFRrzDfdgjnkK_5c2gHpCTdVYJIICHBFZErGtJ-M1sC6ucA1YAifM_iZxWs_er-CQdO9LvAnImqkquw-zuExs8S3EPZu41gt5qquJ2cGcf1TE6cMoQ",
-        },
+        provider=g4f.Provider.Gemini,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
