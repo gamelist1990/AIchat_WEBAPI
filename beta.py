@@ -8,9 +8,6 @@ from g4f.image import ImageResponse
 from sydney import SydneyClient
 from bingart import BingArt
 import uuid
-
-
-
 import g4f, json,os
 import logging
 import shutil
@@ -32,7 +29,7 @@ request_count = defaultdict(int)
 last_request = defaultdict(datetime.now)
 
 # Define the maximum number of requests per second for each IP
-max_requests_per_second = 5
+max_requests_per_second = 6
 
 # Define the ban duration
 ban_duration = timedelta(hours=1)
@@ -111,6 +108,8 @@ async def ask(request: Request):
     # If dev mode is true or user_id is not detected, generate a unique id
     if dev or not user_id:
         user_id = str(uuid.uuid4())
+
+    user_id = str(uuid.uuid4())
 
     messages = [{"role":"user", "content": text}]
 
