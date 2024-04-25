@@ -128,20 +128,21 @@ async def chat_with_sydney(prompt: str):
         return response
     
 async def g4f_bing(prompt: str):
-  response = g4f.ChatCompletion.create_async(
-    model=g4f.models.default, 
-    provider=g4f.Provider.Bing,
-    cookies={
-        "_U": "1-3KDP5zuUL89eDUMA7PpxaGgKEiWDOUNDCBUMG--ejjSBaNNIZUyBljuGuTzN9X_FsafyiZT1dxkYyOr9TvQnPNp3JR6AakWhuAKiFRrzDfdgjnkK_5c2gHpCTdVYJIICHBFZErGtJ-M1sC6ucA1YAifM_iZxWs_er-CQdO9LvAnImqkquw-zuExs8S3EPZu41gt5qquJ2cGcf1TE6cMoQ",
-    },
-    messages=[{"role": "user", "content": prompt}],
-)
-  return response
+    response = await g4f.ChatCompletion.create_async(
+        model=g4f.models.default, 
+        provider=g4f.Provider.Bing,
+        cookies={
+            "_U": "1-3KDP5zuUL89eDUMA7PpxaGgKEiWDOUNDCBUMG--ejjSBaNNIZUyBljuGuTzN9X_FsafyiZT1dxkYyOr9TvQnPNp3JR6AakWhuAKiFRrzDfdgjnkK_5c2gHpCTdVYJIICHBFZErGtJ-M1sC6ucA1YAifM_iZxWs_er-CQdO9LvAnImqkquw-zuExs8S3EPZu41gt5qquJ2cGcf1TE6cMoQ",
+        },
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response
 
 @app.get("/chat")
 async def chat(prompt: str):
     response = await g4f_bing(prompt)
     return {"response": response}
+
 
 
 
