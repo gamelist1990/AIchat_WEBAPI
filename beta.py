@@ -128,17 +128,18 @@ async def chat_with_sydney(prompt: str):
         response = await sydney.ask(prompt)
         return response
     
-async def g4f_bing(prompt: str):
+async def g4f_gemini(prompt: str):
     response = await g4f.ChatCompletion.create_async(
         model=g4f.models.default, 
         provider=g4f.Provider.Gemini,
+        cookies=cookies,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
 
 @app.get("/chat")
 async def chat(prompt: str):
-    response = await g4f_bing(prompt)
+    response = await g4f_gemini(prompt)
     return {"response": response}
 
 
