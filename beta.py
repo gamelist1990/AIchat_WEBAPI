@@ -21,6 +21,21 @@ import uvicorn
 import aiohttp
 import requests
 import base64
+from datetime import datetime, timedelta
+from collections import defaultdict
+
+
+# Define a dictionary to store the request count for each IP
+request_count = defaultdict(int)
+
+# Define a dictionary to store the time of the last request for each IP
+last_request = defaultdict(datetime.now)
+
+# Define the maximum number of requests per second for each IP
+max_requests_per_second = 5
+
+# Define the ban duration
+ban_duration = timedelta(hours=1)
 
 
 
@@ -99,6 +114,13 @@ async def ask(request: Request):
 
     messages = [{"role":"user", "content": text}]
 
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+    
+    # Update the request count and the time of the last request
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
     try:
         response = await g4f.ChatCompletion.create_async(
             model="gemini-pro",
@@ -109,6 +131,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
+        response = g4f_gemini(text)
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
@@ -139,7 +162,7 @@ async def g4f_gemini(prompt: str):
 
 @app.get("/chat")
 async def chat(prompt: str):
-    response = await g4f_gemini(prompt)
+    response = await chat_with_sydney(prompt)
     return {"response": response}
 
 
