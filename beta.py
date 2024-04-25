@@ -100,20 +100,15 @@ conversations = {}
 async def ask(request: Request):
     text = request.query_params.get('text')
     user_id = request.query_params.get('user_id') or request.client.host
-    dev = request.query_params.get('dev') == 'true'
 
     if not text:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
-
-    # If dev mode is true or user_id is not detected, generate a unique id
-    if dev or not user_id:
-        user_id = str(uuid.uuid4())
 
     user_id = str(uuid.uuid4())
 
     messages = [{"role":"user", "content": text}]
 
-    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
         return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
     
     # Update the request count and the time of the last request
