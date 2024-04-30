@@ -167,10 +167,8 @@ async def chat_with_OpenAI( prompt: str):
  
     response = await g4f.ChatCompletion.create_async(
         model="Precise",
-        provider=g4f.Provider.Bing,
+        provider=g4f.Provider.Aura,
         messages=conversation_history,
-        cookies={"_U": Token},
-        web_search=True,
 
     )
 
