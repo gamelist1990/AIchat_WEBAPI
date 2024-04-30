@@ -137,14 +137,10 @@ async def ask(request: Request):
 
 
 
-async def chat_with_OpenAI(request: Request,prompt: str):
+async def chat_with_OpenAI(request: Request, prompt: str):
     user_id = request.query_params.get('user_id') or request.client.host
 
     user_id = str(uuid.uuid4())
-
-    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-    
     # Update the request count and the time of the last request
     request_count[user_id] += 1
     last_request[user_id] = datetime.now()
@@ -153,6 +149,10 @@ async def chat_with_OpenAI(request: Request,prompt: str):
     conversation_history.append({"role": "user", "content": prompt})
 
     conversation_history = conversation_history[-5:]
+
+    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+    
 
     response = await g4f.ChatCompletion.create_async(
         model="gpt-3.5-turbo",
@@ -185,8 +185,8 @@ async def g4f_gemini(request: Request,prompt: str):
     return response
 
 @app.get("/chat")
-async def chat(prompt: str):
-    response = await chat_with_OpenAI(prompt)
+async def chat(request: Request,prompt: str):
+    response = await chat_with_OpenAI(request, prompt)
     return {"response": response}
 
 
