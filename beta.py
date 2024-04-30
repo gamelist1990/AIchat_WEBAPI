@@ -17,7 +17,12 @@ import requests
 import base64
 from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta
 
+# ユーザーIDとブロック終了時間のマッピング
+blocked_users = {}
+
+last_prompt = {}
 
 # Define a dictionary to store the request count for each IP
 request_count = defaultdict(int)
@@ -30,6 +35,8 @@ max_requests_per_second = 6
 
 # Define the ban duration
 ban_duration = timedelta(hours=1)
+
+last_comment = {}
 
 
 
@@ -93,6 +100,7 @@ geminis = {}
 
 conversations = {}
 
+
 @app.get('/ask')
 async def ask(request: Request):
     text = request.query_params.get('text')
@@ -101,16 +109,28 @@ async def ask(request: Request):
     if not text:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
 
-    user_id = str(uuid.uuid4())
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_comment and text == last_comment[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
 
-    messages = [{"role":"user", "content": text}]
+    # 最後のコメントを更新
+    last_comment[user_id] = text
 
-    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
         return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-    
-    # Update the request count and the time of the last request
+
+    # リクエストカウントと最後のリクエスト時間を更新
     request_count[user_id] += 1
     last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
+
+
+
+    messages = [{"role":"user", "content": text}]
 
     try:
         response = await g4f.ChatCompletion.create_async(
@@ -137,23 +157,14 @@ async def ask(request: Request):
 
 
 
-async def chat_with_OpenAI(request: Request, prompt: str):
-    user_id = request.query_params.get('user_id') or request.client.host
-
-    user_id = str(uuid.uuid4())
-    # Update the request count and the time of the last request
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
+async def chat_with_OpenAI( prompt: str):
     conversation_history = []
 
     conversation_history.append({"role": "user", "content": prompt})
 
     conversation_history = conversation_history[-5:]
 
-    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-    
-
+ 
     response = await g4f.ChatCompletion.create_async(
         model="gpt-3.5-turbo",
         provider=g4f.Provider.OpenaiChat,
@@ -165,17 +176,7 @@ async def chat_with_OpenAI(request: Request, prompt: str):
 
     return response
     
-async def g4f_gemini(request: Request,prompt: str):
-    user_id = request.query_params.get('user_id') or request.client.host
-
-    user_id = str(uuid.uuid4())
-
-    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-    
-    # Update the request count and the time of the last request
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
+async def g4f_gemini(prompt: str):
     response = await g4f.ChatCompletion.create_async(
         model=g4f.models.default, 
         provider=g4f.Provider.Gemini,
@@ -186,7 +187,31 @@ async def g4f_gemini(request: Request,prompt: str):
 
 @app.get("/chat")
 async def chat(request: Request,prompt: str):
-    response = await chat_with_OpenAI(request, prompt)
+    user_id = request.query_params.get('user_id') or request.client.host
+
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_comment and prompt == last_comment[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
+
+    # 最後のコメントを更新
+    last_comment[user_id] = prompt
+
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+
+    # リクエストカウントと最後のリクエスト時間を更新
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
+
+    response = await chat_with_OpenAI(prompt)
     return {"response": response}
 
 
@@ -202,14 +227,27 @@ async def chat(request: Request,prompt: str):
 async def generate_image(request: Request, prompt: Optional[str] = None):
     user_id = request.query_params.get('user_id') or request.client.host
 
-    user_id = str(uuid.uuid4())
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
 
-    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_prompt and prompt == last_prompt[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
+
+    # 最後のコメントを更新
+    last_prompt[user_id] = prompt
+
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
         return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-    
-    # Update the request count and the time of the last request
+
+    # リクエストカウントと最後のリクエスト時間を更新
     request_count[user_id] += 1
     last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
     # Ensure a prompt was provided
     if prompt is None:
