@@ -4,8 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional
-from g4f.image import ImageResponse
-from sydney import SydneyClient
+import g4f.Provider
 from bingart import BingArt
 import uuid
 import g4f, json,os
@@ -14,8 +13,6 @@ import shutil
 import threading
 import time
 import re
-import uvicorn
-import aiohttp
 import requests
 import base64
 from datetime import datetime, timedelta
@@ -140,12 +137,45 @@ async def ask(request: Request):
 
 
 
-async def chat_with_sydney(prompt: str):
-    async with SydneyClient() as sydney:
-        response = await sydney.ask(prompt)
-        return response
+async def chat_with_OpenAI(request: Request,prompt: str):
+    user_id = request.query_params.get('user_id') or request.client.host
+
+    user_id = str(uuid.uuid4())
+
+    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
     
-async def g4f_gemini(prompt: str):
+    # Update the request count and the time of the last request
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+    conversation_history = []
+
+    conversation_history.append({"role": "user", "content": prompt})
+
+    conversation_history = conversation_history[-5:]
+
+    response = await g4f.ChatCompletion.create_async(
+        model="gpt-3.5-turbo",
+        provider=g4f.Provider.OpenaiChat,
+        messages=conversation_history,
+
+    )
+
+    conversation_history.append({"role": "assistant", "content": response})
+
+    return response
+    
+async def g4f_gemini(request: Request,prompt: str):
+    user_id = request.query_params.get('user_id') or request.client.host
+
+    user_id = str(uuid.uuid4())
+
+    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+    
+    # Update the request count and the time of the last request
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
     response = await g4f.ChatCompletion.create_async(
         model=g4f.models.default, 
         provider=g4f.Provider.Gemini,
@@ -156,7 +186,7 @@ async def g4f_gemini(prompt: str):
 
 @app.get("/chat")
 async def chat(prompt: str):
-    response = await chat_with_sydney(prompt)
+    response = await chat_with_OpenAI(prompt)
     return {"response": response}
 
 
@@ -169,7 +199,18 @@ async def chat(prompt: str):
 
     
 @app.get("/generate_image")
-async def generate_image(prompt: Optional[str] = None):
+async def generate_image(request: Request, prompt: Optional[str] = None):
+    user_id = request.query_params.get('user_id') or request.client.host
+
+    user_id = str(uuid.uuid4())
+
+    if  datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+    
+    # Update the request count and the time of the last request
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
     # Ensure a prompt was provided
     if prompt is None:
         return JSONResponse(content={"error": "No prompt provided"}, status_code=400)
