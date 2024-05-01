@@ -209,19 +209,20 @@ async def g4f_gemini(prompt: str):
     for cookie in data:
        api[cookie["name"]] = cookie["value"]
 
+       #作業中
+
     
     response = await g4f.ChatCompletion.create_async(
         model="gemini",
         provider=g4f.Provider.Gemini,
      
-#        set_cookies=(
-#    ".google.com",
-#    {
-#        "__Secure-1PSID": "g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076",
-#        "__Secure-1PSIDCC": "AKEyXzUBQdPVwoUyvmERuJ2Do0yngKUPsqzff2Mp-YTUjTtvcTnAhKUx9MgEUJIZq1tTlsGqlQ",
-#        "__Secure-1PSIDTS": "sidts-CjIBLwcBXPtn5OASWPcDix1Nd7UTqh1471jiWz6Ux4McVoj704cL82lo2wOLv7LC85WnvxAA"
-#    },),
-      cookies=api,
+        set_cookies=(
+    ".google.com",
+    {
+        "__Secure-1PSID": "g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076",
+        "__Secure-1PSIDCC": "AKEyXzUBQdPVwoUyvmERuJ2Do0yngKUPsqzff2Mp-YTUjTtvcTnAhKUx9MgEUJIZq1tTlsGqlQ",
+        "__Secure-1PSIDTS": "sidts-CjIBLwcBXPtn5OASWPcDix1Nd7UTqh1471jiWz6Ux4McVoj704cL82lo2wOLv7LC85WnvxAA"
+    },),
         messages=[{"role": "user", "content": prompt}],
     )
     return response
