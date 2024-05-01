@@ -22,6 +22,7 @@ import asyncio
 from g4f.client import AsyncClient
 from g4f.Provider import OpenaiChat,Gemini,GeminiPro
 import uuid
+from g4f.cookies import set_cookies
 
 
 # ユーザーIDとブロック終了時間のマッピング
@@ -200,7 +201,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 async def g4f_gemini(prompt: str):
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, 'cookies.json')
-    
+
     with open(file_path, 'r') as file:
       data = json.load(file)
 
@@ -212,8 +213,15 @@ async def g4f_gemini(prompt: str):
     response = await g4f.ChatCompletion.create_async(
         model="gemini",
         provider=g4f.Provider.Gemini,
-        api_key={"__Secure-1PSID","g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076"},
-        cookies=api,
+     
+#        set_cookies=(
+#    ".google.com",
+#    {
+#        "__Secure-1PSID": "g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076",
+#        "__Secure-1PSIDCC": "AKEyXzUBQdPVwoUyvmERuJ2Do0yngKUPsqzff2Mp-YTUjTtvcTnAhKUx9MgEUJIZq1tTlsGqlQ",
+#        "__Secure-1PSIDTS": "sidts-CjIBLwcBXPtn5OASWPcDix1Nd7UTqh1471jiWz6Ux4McVoj704cL82lo2wOLv7LC85WnvxAA"
+#    },),
+      cookies=api,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
