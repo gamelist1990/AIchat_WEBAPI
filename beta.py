@@ -187,7 +187,8 @@ async def g4f_gemini(prompt: str):
 
     client = AsyncClient(
         provider=Gemini,
-        api_ley=cookies,
+        api_key=cookies,
+        cookies=cookies,
     )
     response = await client.chat.completions.create(
         model="gemini", 
