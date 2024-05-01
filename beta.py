@@ -205,7 +205,7 @@ async def g4f_gemini(prompt: str):
     return response.choices[0].message.content
 
 @app.get("/chat")
-async def chat(request: Request,prompt: str):
+async def chat(request: Request,prompt: str,user_identifier: str):
     user_id = request.query_params.get('user_id') or request.client.host
 
     if not prompt:
@@ -230,7 +230,7 @@ async def chat(request: Request,prompt: str):
     if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
-    response = await chat_with_OpenAI(prompt)
+    response = await chat_with_OpenAI(user_identifier,prompt)
     return {"response": response}
 
 
