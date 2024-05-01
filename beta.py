@@ -151,7 +151,7 @@ async def ask(request: Request):
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
-        decoded_response = json.loads(json.dumps(response))
+        decoded_response = json.loads(json.dumps(response.choices[0].message.content))
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
         logging.error(f"{error_message}: {response.text}")
