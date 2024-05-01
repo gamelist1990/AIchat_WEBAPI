@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from typing import Optional
+from typing import Optional,Dict,List
 import g4f.Provider
 from bingart import BingArt
 import uuid
@@ -17,11 +17,12 @@ import requests
 import base64
 from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta
 import asyncio
 from g4f.client import AsyncClient
 from g4f.Provider import OpenaiChat,Gemini,GeminiPro
-from typing import Dict, List
-import socket
+import uuid
+
 
 # ユーザーIDとブロック終了時間のマッピング
 blocked_users = {}
@@ -162,27 +163,19 @@ async def ask(request: Request):
 
 
 
-
-
-
 # ユーザー識別子をキーとして会話履歴とそのタイムスタンプを保存する辞書
 conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
-async def chat_with_OpenAI(user_id:str,prompt: str):
+async def chat_with_OpenAI(user_id: str, prompt: str):
+    # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
-        try:
-            hostname = socket.gethostname()
-            user_id = socket.gethostbyname(hostname)
-        except:
-            user_id = str(uuid.uuid4())
+        user_id = str(uuid.uuid4())
 
     # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
     conversation_history = conversation_histories.get(user_id, [])
 
-    # 会話履歴の保持期限が30分を超えていたら削除
-    conversation_history = [conv for conv in conversation_history if datetime.now() - conv['timestamp'] < timedelta(minutes=30)]
-
-    conversation_history.append({"role": "user", "content": prompt, "timestamp": datetime.now()})
+    # ユーザーのメッセージを会話履歴に追加
+    conversation_history.append({"role": "user", "content": prompt})
 
     # 会話履歴の保持は最大5つまで
     conversation_history = conversation_history[-5:]
@@ -191,18 +184,19 @@ async def chat_with_OpenAI(user_id:str,prompt: str):
         provider=OpenaiChat,
     )
 
+    # OpenAIとの会話を生成
     response = await client.chat.completions.create(
         model=g4f.models.gpt_35_turbo,
-        messages=[msg['content'] for msg in conversation_history],
+        messages=conversation_history,
     )
 
-    conversation_history.append({"role": "assistant", "content": response.choices[0].message.content, "timestamp": datetime.now()})
+    # アシスタントの応答を会話履歴に追加
+    conversation_history.append({"role": "assistant", "content": response.choices[0].message.content})
 
     # 更新した会話履歴を保存
     conversation_histories[user_id] = conversation_history
 
     return response.choices[0].message.content
-
 
     
 async def g4f_gemini(prompt: str):
@@ -244,6 +238,36 @@ async def chat(request: Request,prompt: str):
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
     response = await chat_with_OpenAI(user_id,prompt)
+    return {"response": response}
+
+
+@app.get("/gemini")
+async def gemini(request: Request,prompt: str):
+    user_id = request.query_params.get('user_id') or request.client.host
+
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_comment and prompt == last_comment[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
+
+    # 最後のコメントを更新
+    last_comment[user_id] = prompt
+
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+
+    # リクエストカウントと最後のリクエスト時間を更新
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
+
+    response = await g4f_gemini(prompt)
     return {"response": response}
 
 
