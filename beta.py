@@ -216,8 +216,7 @@ async def g4f_gemini(prompt: str):
         model="gemini",
         provider=g4f.Provider.Gemini,
      
-        set_cookies=(
-    ".google.com",
+        set_cookies=set_cookies(".google.com",
     {
         "__Secure-1PSID": "g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076",
         "__Secure-1PSIDCC": "AKEyXzUBQdPVwoUyvmERuJ2Do0yngKUPsqzff2Mp-YTUjTtvcTnAhKUx9MgEUJIZq1tTlsGqlQ",
