@@ -18,6 +18,9 @@ import base64
 from datetime import datetime, timedelta
 from collections import defaultdict
 from datetime import datetime, timedelta
+import asyncio
+from g4f.client import AsyncClient
+from g4f.Provider import OpenaiChat,Gemini,GeminiPro
 
 # ユーザーIDとブロック終了時間のマッピング
 blocked_users = {}
@@ -131,13 +134,15 @@ async def ask(request: Request):
 
 
     messages = [{"role":"user", "content": text}]
+    client = AsyncClient(
+        provider=GeminiPro,
+        api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU",
+    )
 
     try:
-        response = await g4f.ChatCompletion.create_async(
+        response = await client.chat.completions.create(
             model="gemini-pro",
             messages=messages,
-            provider=g4f.Provider.GeminiPro,
-            api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU"
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -146,7 +151,7 @@ async def ask(request: Request):
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
-        decoded_response = json.loads(json.dumps(response))
+        decoded_response = json.loads(json.dumps(response.choices[0].message.content))
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
         logging.error(f"{error_message}: {response.text}")
@@ -164,26 +169,31 @@ async def chat_with_OpenAI( prompt: str):
 
     conversation_history = conversation_history[-5:]
 
+    client = AsyncClient(
+        provider=OpenaiChat,
+    )
  
-    response = await g4f.ChatCompletion.create_async(
-        model="Precise",
-        provider=g4f.Provider.Aura,
+    response = await client.chat.completions.create(
+        model=g4f.models.gpt_35_turbo,
         messages=conversation_history,
 
     )
 
-    conversation_history.append({"role": "assistant", "content": response})
+    conversation_history.append({"role": "assistant", "content": response.choices[0].message.content})
 
-    return response
+    return response.choices[0].message.content
     
 async def g4f_gemini(prompt: str):
-    response = await g4f.ChatCompletion.create_async(
-        model=g4f.models.default, 
-        provider=g4f.Provider.Gemini,
-        cookies=cookies,
+
+    client = AsyncClient(
+        provider=Gemini,
+        api_ley=cookies,
+    )
+    response = await client.chat.completions.create(
+        model="gemini", 
         messages=[{"role": "user", "content": prompt}],
     )
-    return response
+    return response.choices[0].message.content
 
 @app.get("/chat")
 async def chat(request: Request,prompt: str):
@@ -211,7 +221,7 @@ async def chat(request: Request,prompt: str):
     if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
-    response = await chat_with_OpenAI(prompt)
+    response = await g4f_gemini(prompt)
     return {"response": response}
 
 

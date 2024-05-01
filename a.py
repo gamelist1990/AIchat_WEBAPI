@@ -1,9 +1,12 @@
 from g4f.client import Client
 from g4f.Provider import OpenaiChat
+import g4f
 
-client = Client(
-    provider=OpenaiChat,
-)
+
+g4f.debug.logging = True  # Enable debug logging
+g4f.debug.version_check = False  # Disable automatic version checking
+
+client = Client()
 
 # Initialize an empty list to hold the conversation history
 conversation_history = []
