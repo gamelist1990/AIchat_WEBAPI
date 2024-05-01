@@ -135,14 +135,12 @@ async def ask(request: Request):
 
 
     messages = [{"role":"user", "content": text}]
-    client = AsyncClient(
-        provider=GeminiPro,
-        api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU",
-    )
 
     try:
-        response = await client.chat.completions.create(
+        response = await g4f.ChatCompletion.create_async(
             model="gemini-pro",
+            provider=GeminiPro,
+            api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU",
             messages=messages,
         )
     except Exception as e:
@@ -152,7 +150,7 @@ async def ask(request: Request):
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
-        decoded_response = json.loads(json.dumps(response.choices[0].message.content))
+        decoded_response = json.loads(json.dumps(response))
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
         logging.error(f"{error_message}: {response.text}")
@@ -200,16 +198,13 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     
 async def g4f_gemini(prompt: str):
-    client = AsyncClient(
-        provider=Gemini,
-    )
-
-    response = await client.chat.completions.create(
+    response = await g4f.ChatCompletion.create_async(
         model="gemini",
+        provider=g4f.Provider.Gemini,
         cookies=cookies,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content
+    return response
 
 @app.get("/chat")
 async def chat(request: Request,prompt: str):
