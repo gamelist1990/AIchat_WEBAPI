@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 import asyncio
 from g4f.client import AsyncClient
 from g4f.Provider import OpenaiChat,Gemini,GeminiPro
+from typing import Dict, List
 
 # ユーザーIDとブロック終了時間のマッピング
 blocked_users = {}
@@ -72,7 +73,6 @@ for cookie in data:
 
 
 
-# Initialize the conversation history
     
 
 
@@ -162,8 +162,14 @@ async def ask(request: Request):
 
 
 
-async def chat_with_OpenAI( prompt: str):
-    conversation_history = []
+
+
+# ユーザー識別子をキーとして会話履歴を保存する辞書
+conversation_histories: Dict[str, List[Dict[str, str]]] = {}
+
+async def chat_with_OpenAI(user_identifier: str, prompt: str):
+    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
+    conversation_history = conversation_histories.get(user_identifier, [])
 
     conversation_history.append({"role": "user", "content": prompt})
 
@@ -172,16 +178,19 @@ async def chat_with_OpenAI( prompt: str):
     client = AsyncClient(
         provider=OpenaiChat,
     )
- 
+
     response = await client.chat.completions.create(
         model=g4f.models.gpt_35_turbo,
         messages=conversation_history,
-
     )
 
     conversation_history.append({"role": "assistant", "content": response.choices[0].message.content})
 
+    # 更新した会話履歴を保存
+    conversation_histories[user_identifier] = conversation_history
+
     return response.choices[0].message.content
+
     
 async def g4f_gemini(prompt: str):
     client = AsyncClient(
@@ -221,7 +230,7 @@ async def chat(request: Request,prompt: str):
     if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
-    response = await g4f_gemini(prompt)
+    response = await chat_with_OpenAI(prompt)
     return {"response": response}
 
 
