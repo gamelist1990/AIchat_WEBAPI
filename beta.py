@@ -198,11 +198,22 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     
 async def g4f_gemini(prompt: str):
+    current_directory = os.getcwd()
+    file_path = os.path.join(current_directory, 'cookies.json')
+    
+    with open(file_path, 'r') as file:
+      data = json.load(file)
+
+    api={}
+    for cookie in data:
+       api[cookie["name"]] = cookie["value"]
+
+    
     response = await g4f.ChatCompletion.create_async(
-        model="default",
+        model="gemini",
         provider=g4f.Provider.Gemini,
-        api_key=cookies,
-        cookies=cookies,
+        api_key={"__Secure-1PSID","g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076"},
+        cookies=api,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
