@@ -177,16 +177,14 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
     # ユーザーのメッセージを会話履歴に追加
     conversation_history.append({"role": "user", "content": prompt})
 
-    # 会話履歴の保持は最大5つまで
     conversation_history = conversation_history[-5:]
 
     client = AsyncClient(
         provider=OpenaiChat,
     )
 
-    # OpenAIとの会話を生成
     response = await client.chat.completions.create(
-        model=g4f.models.gpt_35_turbo,
+        model="text-davinci-002-render-sha",
         messages=conversation_history,
     )
 
