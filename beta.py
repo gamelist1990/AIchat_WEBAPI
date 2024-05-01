@@ -64,6 +64,8 @@ app = FastAPI()
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
+
+
 with open('cookies.json', 'r') as file:
     data = json.load(file)
 
@@ -199,8 +201,9 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
     
 async def g4f_gemini(prompt: str):
     response = await g4f.ChatCompletion.create_async(
-        model="gemini",
+        model="default",
         provider=g4f.Provider.Gemini,
+        api_key=cookies,
         cookies=cookies,
         messages=[{"role": "user", "content": prompt}],
     )
