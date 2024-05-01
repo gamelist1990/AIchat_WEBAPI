@@ -184,14 +184,16 @@ async def chat_with_OpenAI( prompt: str):
     return response.choices[0].message.content
     
 async def g4f_gemini(prompt: str):
+    client = AsyncClient(
+        provider=Gemini,
+    )
 
-    response = await g4f.ChatCompletion.create_async(
+    response = await client.chat.completions.create(
         model="gemini",
         cookies=cookies,
-        provider=Gemini,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response
+    return response.choices[0].message.content
 
 @app.get("/chat")
 async def chat(request: Request,prompt: str):
