@@ -4,7 +4,6 @@ import subprocess
 
 
 
-print("SERVERの起動準備中・・・")
 
 subprocess.check_call(['pip','install','-r','requirements.txt'])
 #print("G4Fのインストール")
@@ -17,4 +16,4 @@ subprocess.check_call(['pip','install','-U','g4f[all]'])
 #print("Error:", error.decode())
 
 print("依存関係のインストール完了")
-subprocess.check_call(['pip','list'])
+(['pip','list'])
