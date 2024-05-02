@@ -24,5 +24,6 @@ aiohttp_socks
 BingImageCreator
 uvicorn
 bingart
-g4f
 sydney-py
+curl_cffi
+nodriver
