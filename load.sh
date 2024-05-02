@@ -1,28 +1,7 @@
-#!/usr/bin/env bash
-# exit on error
-set -o errexit
+pip install -r requirements.txt
 
-STORAGE_DIR=/opt/render/project/.render
+pip install -U g4f[all]
 
-if [[ ! -d $STORAGE_DIR/chrome ]]; then
-  echo "...Downloading Chrome"
-  mkdir -p $STORAGE_DIR/chrome
-  cd $STORAGE_DIR/chrome
-  wget -P ./ https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  dpkg -x ./google-chrome-stable_current_amd64.deb $STORAGE_DIR/chrome
-  rm ./google-chrome-stable_current_amd64.deb
-  cd $HOME/project/src # Make sure we return to where we were
-else
-  echo "...Using Chrome from cache"
-fi
+echo y | pip uninstall undetected-chromedriver
 
-# be sure to add Chromes location to the PATH as part of your Start Command
-# export PATH="${PATH}:/opt/render/project/.render/chrome/opt/google/chrome"
-
-
-
-with open('cookies.json', 'r') as file:
-    data = json.load(file)
-cookies={}
-for cookie in data:
-    cookies[cookie["name"]] = cookie["value"]
+uvicorn beta:app --reload --host 0.0.0.0 --port 5000
