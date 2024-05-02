@@ -205,6 +205,7 @@ async def g4f_gemini(prompt: str):
     response = await g4f.ChatCompletion.create_async(
         model="gemini",
         provider=g4f.Provider.Gemini,
+        cookies=api,
         messages=[{"role": "user", "content": prompt}],
     )
     return response
