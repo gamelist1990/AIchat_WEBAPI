@@ -1,0 +1,11 @@
+# Exported from Render on 2024-05-02T01:59:31Z
+services:
+- type: web
+  name: webapi
+  runtime: python
+  repo: https://github.com/Gamelist2023/api
+  plan: free
+  region: singapore
+  buildCommand: python test.py
+  startCommand: python start.py
+version: "1"
