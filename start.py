@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 # コマンドをリスト形式で指定
 cmd = ['uvicorn', 'beta:app', '--reload', '--host', '0.0.0.0', '--port', '5000']
@@ -15,6 +16,8 @@ with open('console.log', 'a') as f:
     for line in iter(process.stdout.readline, b''):
         line = line.decode('utf-8').rstrip()
         print(line)
+        sys.stdout.write(line + '\n')
+        sys.stdout.flush()
         f.write(line + '\n')
         f.flush()  # バッファをフラッシュ
 

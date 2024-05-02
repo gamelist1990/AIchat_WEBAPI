@@ -449,7 +449,7 @@ def help_menu():
 
 @app.get("/console")
 async def console(password: str, command: str = None, status: str = None,menu:bool=False, checkfile: bool = False, old_name: str = None, new_name: str = None, show: str = None):
-    if password != 'test':
+    if password != 'admin/@gamelist1990':
         raise HTTPException(status_code=401, detail="Unauthorized")
     else:
         clear_log()
