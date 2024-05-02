@@ -9,8 +9,6 @@ import subprocess
 #output, error = process.communicate(input=b'Y\n')
 
 #subprocess.check_call(['pip','list'])
-# uvicornを起動
-subprocess.check_call(['wget', 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'])
-subprocess.check_call(['sudo', 'apt', 'install', './google-chrome-stable_current_amd64.deb'])
+# uvicornを起動subprocess.check_call(['wget', 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'])subprocess.check_call(['sudo', 'apt', 'install', './google-chrome-stable_current_amd64.deb'])
 
 subprocess.check_call(['uvicorn', 'beta:app', '--reload', '--host', '0.0.0.0', '--port', '5000'])
