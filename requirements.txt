@@ -26,5 +26,4 @@ uvicorn
 bingart
 sydney-py
 curl_cffi
-nodriver
-chromedriver-py
+
