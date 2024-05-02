@@ -17,7 +17,7 @@ print("SERVERの起動準備中・・・")
 #print("Error:", error.decode())
 
 print("SERVER起動完了")
-subprocess.check_call(['pip','list'])
+#subprocess.check_call(['pip','list'])
 # uvicornを起動
 subprocess.check_call(['uvicorn', 'beta:app', '--reload', '--host', '0.0.0.0', '--port', '5000'])
 print("serverを0.0.0.0:5000で起動しました")
