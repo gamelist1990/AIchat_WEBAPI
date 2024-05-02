@@ -475,3 +475,9 @@ async def console(password: str, command: str = None, status: str = None,menu:bo
         with open('console.log', 'r') as f:
             console_log = f.readlines()
         return {"console_log": console_log}
+    
+@app.get("/check")
+async def check_device(request: Request):
+    client_host = request.client.host
+    headers = request.headers
+    return {"client_host": client_host, "headers": headers}
