@@ -1,12 +1,10 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request,HTTPException
+from fastapi.responses import JSONResponse,FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional,Dict,List
-import g4f.Provider
 from bingart import BingArt
-import uuid
 import g4f, json,os
 import logging
 import shutil
@@ -18,11 +16,14 @@ import base64
 from datetime import datetime, timedelta
 from collections import defaultdict
 from datetime import datetime, timedelta
-import asyncio
 from g4f.client import AsyncClient
 from g4f.Provider import OpenaiChat,Gemini,GeminiPro
 import uuid
 from g4f.cookies import set_cookies
+import psutil,socket
+import platform
+
+
 
 
 set_cookies(
@@ -56,6 +57,26 @@ last_comment = {}
 
 conversation_history = {}
 chatlist = {}
+
+start_time = datetime.now()
+
+# ロガーの設定
+
+
+# ファイルハンドラの設定
+handler = logging.FileHandler('console.log')
+handler.setLevel(logging.INFO)
+
+
+#
+# ログファイルをクリアする時間間隔（分）
+interval = 30
+
+# 次にログファイルをクリアする時間
+next_clear_time = datetime.now() + timedelta(minutes=interval)
+
+
+
 
 
 
@@ -360,4 +381,97 @@ async def generate_image(request: Request, prompt: Optional[str] = None):
 
 
 
+def clear_log():
+    global next_clear_time
+    # 現在の時間が次のクリア時間を超えていたらログファイルをクリア
+    if datetime.now() >= next_clear_time:
+        with open('console.log', 'w') as f:
+            f.truncate(0)
+        next_clear_time = datetime.now() + timedelta(minutes=interval)
 
+def execute_command(command):
+    result = os.popen(command).read()  # コマンドを実行し、結果を取得します
+    with open('console.log', 'a') as f:
+        f.write(result)  # 結果をconsole.logに保存します
+
+def show_status():
+    # CPU使用率を取得
+    cpu_usage = psutil.cpu_percent(interval=1)
+    # メモリ使用率を取得
+    memory_usage = psutil.virtual_memory().percent
+    # 起動時間を取得
+    boot_time = datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
+    # OSバージョンを取得
+    os_version = platform.system() + " " + platform.release()
+    # Pythonバージョンを取得
+    python_version = platform.python_version()
+    # グローバルIPアドレスを取得
+    global_ip = socket.gethostbyname(socket.gethostname())
+    # 状態情報を辞書として保存
+    status_info = {
+        "CPU使用率": f"{cpu_usage}%",
+        "メモリ使用率": f"{memory_usage}%",
+        "時間": boot_time,
+        "OS": os_version,
+        "Pythonバージョン": python_version,
+        "グローバルIPアドレス": global_ip,
+    }
+    return status_info  # 状態情報をJSON形式で直接返す
+
+def check_files():
+    directory = os.getcwd()
+    files = os.listdir(directory)
+    return json.dumps(files, ensure_ascii=False)
+
+def change_name(old_name: str, new_name: str):
+    if os.path.splitext(old_name)[1] != os.path.splitext(new_name)[1]:
+        raise HTTPException(status_code=400, detail="拡張子の変更は許可されていません")
+    os.rename(old_name, new_name)
+
+def help_menu():
+    help_pass = 'パスワードを記載します例：console?password=xxx これだけだとconsole.logが表示されます' 
+    help_cmd = 'コマンドを実行します例：console?password=xxx&command=pip list これでpyの依存関係が表示されます'
+    help_status = 'ステータスを表示します例：console?password=xxx&status=show これでサーバーの状態が表示されますよ'
+    help_checkfile = 'ディレクトリをチェックできますただ整理していないので少し見にくいですけど'
+    help_changename = 'このパラメータはファイル/フォルダの名前を変えるやつです例：testファイルがあると仮定：console?password=xxx&old_name=test&new_name=HELLO という感じにoldに古い名前/newに新しい名前を入れてください'
+    help_show = 'このパラメータではファイルの内容を見れますバイナリ系は無理です例：console?password=xxx&show=ファイル名'
+
+    help_info = {
+        "使い方": "管理者用",
+        "password": help_pass,
+        "command": help_cmd,
+        "status": help_status,
+        "checkfile": help_checkfile,
+        "changename": help_changename,
+        "show": help_show,
+    }
+    return help_info
+
+@app.get("/console")
+async def console(password: str, command: str = None, status: str = None,menu:bool=False, checkfile: bool = False, old_name: str = None, new_name: str = None, show: str = None):
+    if password != 'test':
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    else:
+        clear_log()
+        if command:
+            execute_command(command)
+        elif status and status == 'show':
+            return show_status()
+        elif checkfile:
+            return {"files": check_files()}
+        elif menu:
+            return {"HELP": help_menu()}
+        elif old_name and new_name:
+            try:
+                change_name(old_name, new_name)
+                return {"message": f"{old_name}名 は {new_name}名 に変更されました"}
+            except Exception as e:
+                return {"error": str(e)}
+        elif show:
+            if os.path.exists(show):
+                return FileResponse(show)
+            else:
+                return {"error": "指定されたファイルは存在しません"}
+        with open('console.log', 'r') as f:
+            console_log = f.readlines()
+        return {"console_log": console_log}
