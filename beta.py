@@ -167,7 +167,7 @@ async def ask(request: Request):
 
     try:
         response = await g4f.ChatCompletion.create_async(
-            model="gemini-pro",
+            model="gemini-1.5-pro-latest",
             provider=GeminiPro,
             api_key="AIzaSyBW0t8wOZ5n59RmO0n_NF8zAww-uhBaWnU",
             messages=messages,
