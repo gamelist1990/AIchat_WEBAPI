@@ -5,7 +5,9 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional,Dict,List
 from bingart import BingArt
-import g4f, json,os
+import g4f
+import json
+import os
 import logging
 import shutil
 import threading
@@ -19,22 +21,15 @@ from datetime import datetime, timedelta
 from g4f.client import AsyncClient
 from g4f.Provider import OpenaiChat,Gemini,GeminiPro
 import uuid
-from g4f.cookies import set_cookies
 import psutil,socket
 import platform
+from g4f.cookies import set_cookies_dir, read_cookie_files
 
 
 
-
-set_cookies(
-    ".google.com",
-    {
-        "__Secure-1PSID": "g.a000jAg-IYqJSUD3qzpCORsRCvwVFnd9RXqZod2n442jcW3nxwWqx4xi4AtXOv1gej18LgO1dQACgYKAScSAQASFQHGX2MiztZO4gM5nLCe0dM2Z30OYRoVAUF8yKrqr4sz-5jtJapa1fEQ_wno0076",
-        "__Secure-1PSIDCC": "AKEyXzWY1ktLDNlIhEkkJX1EIH8xjYQlvGDHlqtJMAsCRuQppI97YKVOE0bLwo9hDbygk_cJ6Q",
-        "__Secure-1PSIDTS": "sidts-CjIBLwcBXIQZpxr5_mlCexC0dXIW2TaKEYfnMjwZahTmmxyj-QRMma1z5qFB3or5sZznKhAA"
-    },
-)
-
+cookies_dir = os.path.join(os.path.dirname(__file__), "har_and_cookies")
+set_cookies_dir(cookies_dir)
+read_cookie_files(cookies_dir)
 
 # ユーザーIDとブロック終了時間のマッピング
 blocked_users = {}
@@ -92,8 +87,8 @@ logging.basicConfig(level=logging.INFO)
 Token = "1m_jPZIuRMtCmPOX_bcZ55j1enfzipvNGaREtMHDeBU-86-Rhae8QvGw4GqSfyUIcApSljIKqgZfSvnw_If396jzpKEGh_xf48ljtFMg7W4XNT7X1YJPZDEJc-QuOnJEzr_MytmduxVzylKx8wRBaZ3zfotx1yYy2xJ7SlXh2vceBOTbSASivWMQlYTnuGk6YS7Q_prnrSHv-pd_NICmzlw"
 Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACBFdRN//lcmxGATHQdxfyc9kDGN4i5PGoiELCuANUQoamst80ltd1ahJPApkBcBcpMxsD8N8d2/lZqbIqrO5DKr0O1JcZC9UlFtodKSpJ/J+ZOqmdIGtBVe1h3t2+xwRD7iwHmX4ldyBRQ90H0h2GBKH1XolCELTWcp7WtLCQsqnbiVutkY0LiuLa4RYg1wEIPOdL4p7+Q3FBNiuDza/xPogdc+6uerMowAxW86z3MkAhrPzHsYbpot09bmrSSrhm5zMy0Br5OjUa4xmQ0EPZnXMkaRj+aLKbK66rYsXvr8ByNixhZzFJyjSKno1mnozKIE43OCd4g+vJVz8Wucal/hZLyPZ2WFaHwj+G3fPILmEtbwTqXCDjDdHZ+4tK/L3yP5DJl2/PxYhi929bkHU1q+nrU3364QKDKnYGjXO2LFJVlWqu5KF1jAVtIfK51JJpApzli5ObkK5XWLyw12fkQY1kuot3/wxMP6oVXH9lBjfX6tbYCzl6zUByS8iPkSQlS6n+4yxhaqjhnbPYeQF9JTO9joJQeo9AdjVyq+BBhPSDSqB+CK+YLoqab9GRDaNG+DYSNTm6WPqmE/kw8KjoCd+GEFzFsqCcECrQDcdZEx0LlyZRTDS9Up/CZDGOvdudkOLDWcedu1tIBNbV/gHd1GjFC0nx110z4aUvEhhTNwbaFmMrkhpq6/KI6EmzGvu1wgvvKtLOGQXv6tg89e5Sxt8IAVWlLZdyPweI1YSm8KYjs5rHaiUZDJ2QouEBfnJw9fPXvyYNzBAwp1DFeCISXezhg8O4UG32XTZk6T2Tw9B370sybJKFuI+WStaQl5W+oS9i4SoQOY3CyWxhMi0bp3sNHqgRp1BeeqiC4UdsxbswWkAUYOTXNu5+l6z2g5+6+8atb91W50oLTvkA1hSgPV2U2I6qRtOxw9esdN/ktlrkdgYpzOsIHYreTjfFMhuOJsr5XPSG8oltblinF77TKxyHK0Z6CFJHs/Du3e3Tv7wy1OoqcC4aDovvdZo0dU+WSM3/+RiSj1Vf7A1b7f5JLXrQTyuuVrdQtPPlZHo6ySXxkvp0QK/1g7NnTCbQcgIEek/bEdF/ar7/j0qEqqGtheCWQsdbTfi+NzQidEuIsxHmG4Qxbx/XECut7JOw1jmiZ9sAnMII+7yJ7FLraSayT3HEMpaEWktatGJJWssp16vGj8tVkiIhdN49ejOjQSglA5RMPbHxKpe9Kekga3t5TYe1aQIxjJcqIJ318jViH9fhO1zQF/S5WfmMqlMS+6mQgWrktuL956VGYkSjaPBi0gehxTwKnPnBWdBfXfduVLfrPH70zB2iTpCgy9oDellSkoE06Hi3VecT1BQ8VpuVjZt/o49KFJyQUZGS/q7RTxjD9OmAzRmn2oRFO5LHD8FLiSKFADZCQiLYJKZWTTSAMup/DX2mTiOwA=='
 
-
 app = FastAPI()
+
 
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
@@ -208,10 +203,13 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     client = AsyncClient(
         provider=OpenaiChat,
+        api_key=set_cookies_dir(cookies_dir)
+
+
     )
 
     response = await client.chat.completions.create(
-        model="text-davinci-002-render-sha",
+        model="default",
         messages=conversation_history,
     )
 
@@ -226,15 +224,11 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
 
-with open("har_and_cookie/cookies.json", 'r') as file:
-        data = json.load(file)
+
 
 
 
 async def g4f_gemini(user_id: str, prompt: str):
-    api = {}
-    for cookie in data:
-        api[cookie["name"]] = cookie["value"]
     # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -246,11 +240,14 @@ async def g4f_gemini(user_id: str, prompt: str):
 
     conversation_history = conversation_history[-10:]
 
-    response = await g4f.ChatCompletion.create_async(
+    client = AsyncClient(
+        provider=Gemini,
+        api_key=set_cookies_dir(cookies_dir)
+
+    )
+
+    response = await client.chat.completions.create(
         model="gemini",
-        provider=g4f.Provider.Gemini,
-        #set_cookies=set_cookies,
-        cookies=api,
         messages=conversation_history,  # 更新された会話履歴を送信
     )
     conversation_history.append({"role": "assistant", "content": response})
@@ -258,7 +255,7 @@ async def g4f_gemini(user_id: str, prompt: str):
     # 更新した会話履歴を保存
     chatlist[user_id] = conversation_history
 
-    return response
+    return response.choices[0].message.content
 
 
 
