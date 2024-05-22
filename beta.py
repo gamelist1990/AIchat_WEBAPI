@@ -23,13 +23,16 @@ from g4f.Provider import OpenaiChat,Gemini,GeminiPro
 import uuid
 import psutil,socket
 import platform
-from g4f.cookies import set_cookies_dir, read_cookie_files
+from g4f.cookies import set_cookies, set_cookies_dir, read_cookie_files
 
 
 
 cookies_dir = os.path.join(os.path.dirname(__file__), "har_and_cookies")
 set_cookies_dir(cookies_dir)
 read_cookie_files(cookies_dir)
+
+
+
 
 # ユーザーIDとブロック終了時間のマッピング
 blocked_users = {}
@@ -69,6 +72,14 @@ interval = 30
 
 # 次にログファイルをクリアする時間
 next_clear_time = datetime.now() + timedelta(minutes=interval)
+
+
+with open('cookies.json', 'r') as file:
+    data = json.load(file)
+
+cookies={}
+for cookie in data:
+    cookies[cookie["name"]] = cookie["value"]
 
 
 
@@ -240,13 +251,9 @@ async def g4f_gemini(user_id: str, prompt: str):
 
     conversation_history = conversation_history[-10:]
 
-    client = AsyncClient(
+    response = await g4f.ChatCompletion.create_async(
         provider=Gemini,
-        api_key=set_cookies_dir(cookies_dir)
-
-    )
-
-    response = await client.chat.completions.create(
+        cookies=cookies,
         model="gemini",
         messages=conversation_history,  # 更新された会話履歴を送信
     )
@@ -255,7 +262,7 @@ async def g4f_gemini(user_id: str, prompt: str):
     # 更新した会話履歴を保存
     chatlist[user_id] = conversation_history
 
-    return response.choices[0].message.content
+    return response
 
 
 
