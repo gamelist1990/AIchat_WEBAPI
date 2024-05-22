@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from datetime import datetime, timedelta
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat,Gemini,GeminiPro
+from g4f.Provider import OpenaiChat,Gemini,GeminiPro,HuggingChat
 import uuid
 import psutil,socket
 import platform
@@ -27,7 +27,7 @@ from g4f.cookies import set_cookies, set_cookies_dir, read_cookie_files
 
 
 
-cookies_dir = os.path.join(os.path.dirname(__file__), "har_and_cookies")
+cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 set_cookies_dir(cookies_dir)
 read_cookie_files(cookies_dir)
 
@@ -214,13 +214,12 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     client = AsyncClient(
         provider=OpenaiChat,
-        api_key=set_cookies_dir(cookies_dir)
-
+        api_key=set_cookies_dir(cookies_dir),
 
     )
 
     response = await client.chat.completions.create(
-        model="default",
+        model="auto",
         messages=conversation_history,
     )
 

@@ -23,9 +23,14 @@ from .typing import Dict, Cookies
 from .errors import MissingRequirementsError
 from . import debug
 
+
+current_directory = os.path.dirname(os.path.abspath(__file__))
+
+
 class CookiesConfig():
     cookies: Dict[str, Cookies] = {}
-    cookies_dir: str = "./har_and_cookies"
+    cookies_dir: str = "./har"
+    print(cookies_dir)
 
 DOMAINS = [
     ".bing.com",
