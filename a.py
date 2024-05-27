@@ -1,11 +1,11 @@
-import time
-from g4f import webdriver
-import g4f.debug
+from g4f.local import LocalClient
 
-g4f.debug.logging = True  # Enable debug logging
-driver = webdriver.get_browser()
-try:
-    driver.get("https://gemini.google.com/app")
-    time.sleep(10000)
-finally:
-    driver.quit()
+client   = LocalClient()
+response = client.chat.completions.create(
+    model    = 'orca-mini-3b',
+    messages = [{"role": "user", "content": "hi"}],
+    stream   = True
+)
+
+for token in response:
+    print(token.choices[0].delta.content or "")

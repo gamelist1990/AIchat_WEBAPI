@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional,Dict,List
 from bingart import BingArt
+from gemini_webapi import GeminiClient
+
 import g4f
 import json
 import os
@@ -236,7 +238,7 @@ chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
 
 
 
-
+chatlist = {}
 
 async def g4f_gemini(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
@@ -250,12 +252,14 @@ async def g4f_gemini(user_id: str, prompt: str):
 
     conversation_history = conversation_history[-10:]
 
+   
     response = await g4f.ChatCompletion.create_async(
         provider=Gemini,
         cookies=cookies,
         model="gemini",
-        messages=conversation_history,  # 更新された会話履歴を送信
+        messages=conversation_history,
     )
+    
     conversation_history.append({"role": "assistant", "content": response})
 
     # 更新した会話履歴を保存
