@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional,Dict,List
 from bingart import BingArt
-from gemini_webapi import GeminiClient
 
 import g4f
 import json
