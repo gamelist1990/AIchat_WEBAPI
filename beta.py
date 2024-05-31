@@ -20,12 +20,11 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from datetime import datetime, timedelta
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat,Gemini,GeminiPro,HuggingChat
+from g4f.Provider import OpenaiChat,Gemini,You
 import uuid
 import psutil,socket
 import platform
 from g4f.cookies import set_cookies, set_cookies_dir, read_cookie_files
-from sydney import SydneyClient
 
 
 
@@ -48,7 +47,7 @@ request_count = defaultdict(int)
 last_request = defaultdict(datetime.now)
 
 # Define the maximum number of requests per second for each IP
-max_requests_per_second = 6
+max_requests_per_second = 10
 
 # Define the ban duration
 ban_duration = timedelta(hours=1)
@@ -171,15 +170,17 @@ async def ask(request: Request):
 
 
 
-   # messages = [{"role":"user", "content": text}]
+    messages = [{"role":"user", "content": text}]
 
     try:
-     async with SydneyClient() as sydney:
-        response = await sydney.ask(text)
+     response = await g4f.ChatCompletion.create_async(
+        model="gpt-3.5-turbo",
+        messages=conversation_history,
+    )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response = await g4f_gemini(user_id,text)
+        response = "不明"
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
@@ -253,7 +254,7 @@ async def g4f_gemini(user_id: str, prompt: str):
    
     response = await g4f.ChatCompletion.create_async(
         provider=Gemini,
-        cookies=cookies,
+        api_key=read_cookie_files(cookies_dir),
         model="gemini",
         messages=conversation_history,
     )
