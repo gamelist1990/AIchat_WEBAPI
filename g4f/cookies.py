@@ -25,7 +25,7 @@ from . import debug
 
 class CookiesConfig():
     cookies: Dict[str, Cookies] = {}
-    cookies_dir: str = "./har_and_cookies"
+    cookies_dir: str = "./har"
 
 DOMAINS = [
     ".bing.com",
