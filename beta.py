@@ -179,7 +179,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response = "不明"
+        response = g4f_gemini(user_id,text)
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
@@ -241,24 +241,24 @@ async def g4f_gemini(user_id: str, prompt: str):
         user_id = str(uuid.uuid4())
 
     # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
-    conversation_history = chatlist.get(user_id, [])
+    #conversation_history = chatlist.get(user_id, [])
     # ユーザーのメッセージを会話履歴に追加
-    conversation_history.append({"role": "user", "content": prompt})
+    #conversation_history.append({"role": "user", "content": prompt})
 
-    conversation_history = conversation_history[-10:]
+    #conversation_history = conversation_history[-5:]
 
    
     response = await g4f.ChatCompletion.create_async(
         provider=Gemini,
         api_key=read_cookie_files(cookies_dir),
         model="gemini",
-        messages=conversation_history,
+        messages=[{"role": "user", "content": prompt}],
     )
     
-    conversation_history.append({"role": "assistant", "content": response})
+    #conversation_history.append({"role": "assistant", "content": response})
 
     # 更新した会話履歴を保存
-    chatlist[user_id] = conversation_history
+    #chatlist[user_id] = conversation_history
 
     return response
 
