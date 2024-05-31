@@ -55,7 +55,6 @@ ban_duration = timedelta(hours=1)
 last_comment = {}
 
 conversation_history = {}
-chatlist = {}
 
 start_time = datetime.now()
 
@@ -235,9 +234,6 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
 
-
-
-chatlist = {}
 
 async def g4f_gemini(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
