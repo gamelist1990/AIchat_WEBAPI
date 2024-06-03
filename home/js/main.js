@@ -4,7 +4,9 @@ var dotsInterval;
 
 function askQuestion() {
     var text = document.getElementById('question').value;
+    var provider = document.getElementById('provider').value;
     button = document.querySelector('button');
+    
     button.disabled = true;
     button.innerText = '質問中';
     button.classList.add('loading');
@@ -46,7 +48,7 @@ function askQuestion() {
                 button.disabled = false;
             });
     } else {
-        fetch('/ask?text=' + encodeURIComponent(text))
+        fetch('/' + provider + encodeURIComponent(text))
             .then(response => response.json())
             .then(data => {
                 // Check if the data is an object and has a property named 'response'

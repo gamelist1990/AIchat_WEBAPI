@@ -16,16 +16,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/home/css/home.css">
-    <script src="/home/js/main.js"></script>
+    
+    <style>/* ドロップダウンコンテナ */
+.select-container {
+    width: 150px;
+    margin-left: 0; /* 左寄せ */
+}
+
+/* ドロップダウンスタイル */
+.select-container select {
+    width: 100%;
+    padding: 10px 20px;
+    border: 1px solid #007aff; /* Mac風のボーダー */
+    border-radius: 5px; /* Mac風のボーダーラディウス */
+    background-color: #007aff; /* Mac風の背景色 */
+    font-size: 16px;
+    color: #f2f2f2; /* Mac風のテキスト色 */
+    -webkit-appearance: none; /* デフォルトのブラウザスタイルを削除 */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* ドロップダウンホバースタイル */
+.select-container select:hover {
+    border-color: #69c8e6; /* ホバー時のボーダーカラー */
+}
+
+/* ドロップダウンフォーカススタイル */
+.select-container select:focus {
+    outline: none;
+    border-color: #007aff; /* フォーカス時のボーダーカラー */
+}
+
+</style>
 </head>
 <body>
     <h1>AIライブラリへようこそ！!</h1>
     <br />
     <div class="container">
         <h2>AIチャットボットについて</h2>
-        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。追記：(5/30日をもってGemini-proが有料になるためGemini-Proのサポートを終了致します)今後は予備の<a href="https://gemini.google.com/">Gemini君</a>が使用されます本来はbingを使いたいのですがサーバの問題でgeminiにしました、また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
+        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のドロップボックスから
+            <ui><li>Default(gpt3.5_tubo)</li>
+            <li>Gemini(Google)</li>
+            <li>ChatGPT(OpenAI)</li>
+        　　</ui>から選択することができますまた通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
         <h2>画像生成</h2>
-        <p>!image 生成したい画像 例： !image 猫が踊る  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
+        <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
+        <h2>【お知らせ】</h2>
+        <p>現在6/03時点OpenAIモデルでエラーが発生しています解決までもう少しお待ちください。</p>
+        <div class="select-container">
+        <select id="provider">
+          <option value="ask?text=">Default</option>
+          <option value="gemini?prompt=">Gemini</option>
+          <option value="chat?prompt=">ChatGPT</option>
+        </select>
+        </div>
         <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
         <button onclick="askQuestion()">質問</button>
         
@@ -75,4 +120,5 @@
         channel: '1069498532068872193' // htmlコードを勝手に使わないでね
     })
 </script>
+<script src="/home/js/main.js"></script>
 </html>
