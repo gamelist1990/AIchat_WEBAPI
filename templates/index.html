@@ -55,20 +55,25 @@
     <br />
     <div class="container">
         <h2>AIチャットボットについて</h2>
-        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のドロップボックスから
-            <ui><li>Default(gpt3.5_tubo)</li>
+        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のプロバイダーが使用できます
+            <ui><li>Default(You)</li>
             <li>Gemini(Google)</li>
             <li>ChatGPT(OpenAI)</li>
-        　　</ui>から選択することができますまた通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
+            <li>Blackbox(blackboxAI)</li>
+        　　</ui>また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
         <h2>画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <h2>【お知らせ】</h2>
-        <p>現在6/03時点OpenAIモデルでエラーが発生しています解決までもう少しお待ちください。</p>
+        <p>6/03時点OpenAIモデルでエラーが発生しています解決までもう少しお待ちください。
+            <br>
+            6/5の更新でBlackBoxプロバイダー,defaultモデルをYouプロバイダーに変更しました
+        </p>
         <div class="select-container">
         <select id="provider">
           <option value="ask?text=">Default</option>
           <option value="gemini?prompt=">Gemini</option>
           <option value="chat?prompt=">ChatGPT</option>
+          <option value="blackbox?prompt=">BlackBox</option>
         </select>
         </div>
         <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
@@ -85,7 +90,7 @@
             import requests
 
             url = "https://webapi-8trs.onrender.com/ask"
-            params = {"text": "こんにちは", "user_id": "123"}
+            params = {"text": "こんにちは"}
 
             response = requests.get(url, params=params)
 
@@ -96,7 +101,7 @@
             const axios = require('axios');
 
             const url = 'https://webapi-8trs.onrender.com/ask';
-            const params = { text: 'こんにちは', user_id: '123' };
+            const params = { text: 'こんにちは'};
 
             axios.get(url, { params })
               .then(response => {

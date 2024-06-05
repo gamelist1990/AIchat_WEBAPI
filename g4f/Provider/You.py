@@ -12,6 +12,8 @@ from ..image import ImageResponse, ImagePreview, EXTENSIONS_MAP, to_bytes, is_ac
 from ..requests import StreamSession, FormData, raise_for_status
 from .you.har_file import get_telemetry_ids
 from .. import debug
+import random
+
 
 class You(AsyncGeneratorProvider, ProviderModelMixin):
     label = "You.com"
@@ -189,35 +191,42 @@ class You(AsyncGeneratorProvider, ProviderModelMixin):
         return f"Basic {auth}"
 
     @classmethod
-    async def create_cookies(cls, client: StreamSession) -> Cookies:
-        if not cls._telemetry_ids:
-            cls._telemetry_ids = await get_telemetry_ids()
-        user_uuid = str(uuid.uuid4())
+    async def create_cookies(cls, client: StreamSession, beta: bool = True) -> Cookies:
+       defined_telemetry_ids = ["8677388a-e4d0-4245-871c-de5312b26851", "136f6f88-2108-441f-b057-a2692b2a2da0", "814b37d0-af2d-4660-911a-2c3d2ce25a8b","27ec5c9d-e017-4791-b105-73a0731e5a08"]
+       if beta:#telemetry_id = random.choice(defined_telemetry_ids)
+        telemetry_id = str(uuid.uuid4())
+       elif not cls._telemetry_ids:
+        cls._telemetry_ids = await get_telemetry_ids()
+        if debug.logging:
+          print(f"Use test id :{cls._telemetry_ids}")
         telemetry_id = cls._telemetry_ids.pop()
+
+        user_uuid = str(uuid.uuid4())
         if debug.logging:
             print(f"Use telemetry_id: {telemetry_id}")
+            
         async with client.post(
-            "https://web.stytch.com/sdk/v1/passwords",
-            headers={
-                "Authorization": cls.get_auth(),
-                "X-SDK-Client": cls.get_sdk(),
-                "X-SDK-Parent-Host": cls.url,
-                "Origin": "https://you.com",
-                "Referer": "https://you.com/"
-            },
-            json={
-                "dfp_telemetry_id": telemetry_id,
-                "email": f"{user_uuid}@gmail.com",
-                "password": f"{user_uuid}#{user_uuid}",
-                "session_duration_minutes": 129600
-            }
-        ) as response:
-            await raise_for_status(response)
-            session = (await response.json())["data"]
+        "https://web.stytch.com/sdk/v1/passwords",
+        headers={
+            "Authorization": cls.get_auth(),
+            "X-SDK-Client": cls.get_sdk(),
+            "X-SDK-Parent-Host": cls.url,
+            "Origin": "https://you.com",
+            "Referer": "https://you.com/"
+        },
+        json={
+            "dfp_telemetry_id": telemetry_id,
+            "email": f"{user_uuid}@gmail.com",
+            "password": f"{user_uuid}#{user_uuid}",
+            "session_duration_minutes": 129600
+        }
+    ) as response:
+          await raise_for_status(response)
+        session = (await response.json())["data"]
 
         return {
-            "stytch_session": session["session_token"],
-            'stytch_session_jwt': session["session_jwt"],
-            'ydc_stytch_session': session["session_token"],
-            'ydc_stytch_session_jwt': session["session_jwt"],
-        }
+        "stytch_session": session["session_token"],
+        'stytch_session_jwt': session["session_jwt"],
+        'ydc_stytch_session': session["session_token"],
+        'ydc_stytch_session_jwt': session["session_jwt"],
+    }

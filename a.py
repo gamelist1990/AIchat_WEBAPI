@@ -1,27 +1,33 @@
 from g4f.client import Client
 from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
-g4f.debug.logging = True
 import g4f
 import os,json
-from g4f.Provider import OpenaiChat
-
-
+from g4f.Provider import OpenaiChat,OpenRouter,Blackbox,You
+import uuid
 
 g4f.debug.logging = True  # Enable debug logging
-g4f.debug.version_check = False  # Disable automatic version checking
-
-
+g4f.debug.version_check = True  # Disable automatic version checking
 
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=OpenaiChat,
+        provider=You,
         api_key=read_cookie_files(cookies_dir),
-
     )
+
 response = client.chat.completions.create(
-    model="auto",
-    messages=[{"role": "user", "content": "Hello"}]
+    model="gemini-1-5-pro",
+    messages=[{"role": "user", "content": "なんJ風でテーマ：日本が戦争を始めた！ に関するスレッドを創造して出力"}]
 )
-print(response.choices[0].message.content)
+
+# Get the AI's response
+ai_response = response.choices[0].message.content
+
+# Define the string to be removed
+remove_string = "#### Please log in to access GPT-4 mode. \n\n#### For more information, check out our YouPro plan here: https://you.com/plans.\n\nAnswering your question without GPT-4 mode:"
+
+# Remove the string from the AI's response
+clean_response = ai_response.replace(remove_string, "")
+
+print(clean_response)
