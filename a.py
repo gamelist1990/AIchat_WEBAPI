@@ -3,7 +3,7 @@ from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
 import g4f
 import os,json
-from g4f.Provider import OpenaiChat,OpenRouter,Blackbox,You
+from g4f.Provider import OpenaiChat,OpenRouter,Blackbox,You,Gemini
 import uuid
 
 g4f.debug.logging = True  # Enable debug logging
@@ -12,13 +12,13 @@ g4f.debug.version_check = True  # Disable automatic version checking
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=You,
+        provider=Gemini,
         api_key=read_cookie_files(cookies_dir),
     )
 
 response = client.chat.completions.create(
-    model="gemini-1-5-pro",
-    messages=[{"role": "user", "content": "なんJ風でテーマ：日本が戦争を始めた！ に関するスレッドを創造して出力"}]
+    model="gemini",
+    messages=[{"role": "user", "content": "hello"}]
 )
 
 # Get the AI's response

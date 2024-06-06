@@ -135,12 +135,12 @@ function saveDivAsImage() {
             <ui><li>Default(HuggingChat)</li>
             <li>Gemini(Google)</li>
             <li>ChatGPT(OpenAI)</li>
-            <li>Blackbox(blackboxAI)</li>
+            <li>Random(Gpt4o)</li>
         　　</ui>また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
         <h2>画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <h2>【お知らせ】</h2>
-        <p> 現時点でエラーが起きているAIはGemini,OpenAIです
+        <p> 現時点でエラーが起きているAIはBlackBox,OpenAIです
             HuggingChat →のAImodelは<a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>に設定してあります
         </p>
         
@@ -149,7 +149,7 @@ function saveDivAsImage() {
           <option value="ask?text=">Default</option>
           <option value="gemini?prompt=">Gemini</option>
           <option value="chat?prompt=">ChatGPT</option>
-          <option value="blackbox?prompt=">BlackBox</option>
+          <option value="blackbox?prompt=">Random</option>
         </select>
         </div>
         <div id="user_chatlist">

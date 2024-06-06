@@ -212,9 +212,10 @@ async def ask(request: Request):
 
 
 
-async def chat_with_OpenAI(user_id: str, prompt: str):
-    conversation_histories: Dict[str, List[Dict[str, str]]] = {}
+# 会話履歴を保持する辞書は関数の外で定義
+conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
+async def chat_with_OpenAI(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -225,35 +226,25 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
     # ユーザーのメッセージを会話履歴に追加
     conversation_history.append({"role": "user", "content": prompt})
 
+    # 最新の5つのメッセージのみを保持
     conversation_history = conversation_history[-5:]
+    conversation_histories[user_id] = conversation_history
 
     try:
         client = AsyncClient(
-        provider=OpenaiChat,
-        api_key=set_cookies_dir(cookies_dir),
+            provider='OpenaiChat',
+            api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
         )
         response = await client.chat.completions.create(
-        model="auto",
-        messages=conversation_history,
+            model="auto",
+            messages=conversation_history,
         )
-
+        return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        response = "OpenAIのプロバイダーでエラーが発生しました(6/6時点OpenAIでエラーが発生しています(修正めんどいので後回し))"
-        return response
-    
-    
+        return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
 
     
-
-    
-
-    conversation_history.append({"role": "assistant", "content": response.choices[0].message.content})
-
-    # 更新した会話履歴を保存
-    conversation_histories[user_id] = conversation_history
-
-    return response.choices[0].message.content
 
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
@@ -263,25 +254,20 @@ async def g4f_gemini(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
         user_id = str(uuid.uuid4())
-
-    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
-    #conversation_history = chatlist.get(user_id, [])
-    # ユーザーのメッセージを会話履歴に追加
-    #conversation_history.append({"role": "user", "content": prompt})
-
-    #conversation_history = conversation_history[-5:]
-
     try:
-        response = await g4f.ChatCompletion.create_async(
-        provider=Gemini,
-        api_key=read_cookie_files(cookies_dir),
-        model="gemini",
-        messages=[{"role": "user", "content": prompt}],
-    )
+        client = AsyncClient(
+            provider='Gemini',
+            api_key=read_cookie_files(cookies_dir),
+        )
+        response = await client.chat.completions.create(
+            model="gemini",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        response = f"Geminiプロバイダーでエラーが発生しました:何度も起きる場合はServerERRORの為管理者に連絡してください"
-        return response
+        return f"Geminiプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+
     
 
 async def blackbox(user_id: str, prompt: str):
@@ -289,29 +275,16 @@ async def blackbox(user_id: str, prompt: str):
         user_id = str(uuid.uuid4())
     try:
         response = await g4f.ChatCompletion.create_async(
-        provider=Blackbox,
-        api_key=read_cookie_files(cookies_dir),
-        model="default",
+        model=g4f.models.gpt_4o,
         messages=[{"role": "user", "content": prompt}],
     )
+        return response
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
+        return f"Randomプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
 
-
-        response = "BlackBoxプロバイダーでエラーが発生しました:何度も起きる場合はServerERRORの為管理者に連絡してください"
-        return response
-        
 
    
-    
-    
-    #conversation_history.append({"role": "assistant", "content": response})
-
-    # 更新した会話履歴を保存
-    #chatlist[user_id] = conversation_history
-
-    return response
-
 
 
 
