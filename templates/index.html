@@ -14,13 +14,61 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
     <link rel="stylesheet" href="/home/css/home.css">
 
 <script>
 function openWindow() {
   var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
 }
+
+// ユーザーの質問とAIの回答を保存する関数
+function saveTextAsFile() {
+    console.log('saveTextAsFile function called'); // 関数が呼び出されたことを確認
+    var userQuestion = 'User Chat: ' + document.getElementById('question').value;
+    var aiAnswer = 'Answer: ' + document.getElementById('answer').innerText;
+    var textToWrite = 'User:'+ document.getElementById('question').value + '\n' + 'AI:'+document.getElementById('answer').innerText;
+    console.log('Text to write:', textToWrite); // 保存するテキストの内容を確認
+    var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+    var fileNameToSaveAs = "chat_history.txt";
+
+    var downloadLink = document.createElement("a");
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = "Download File";
+    if (window.webkitURL != null) {
+        // Chrome allows the link to be clicked without actually adding it to the DOM.
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    } else {
+        // Firefox requires the link to be added to the DOM before it can be clicked.
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = destroyClickedElement;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+    }
+
+    downloadLink.click();
+}
+
+// ダウンロードリンクをクリックした後にリンクを削除する関数
+function destroyClickedElement(event) {
+    document.body.removeChild(event.target);
+}
+
+
+function saveDivAsImage() {
+    // html2canvasライブラリを使用して、特定のDOM要素をCanvasに変換
+    user_chatlist
+    html2canvas(document.querySelector("#user_chatlist")).then(canvas => {
+        // Canvasを画像としてエクスポート
+        var link = document.createElement('a');
+        link.download = 'chat-image.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+
+
+
 </script>
 
 
@@ -55,6 +103,27 @@ function openWindow() {
     border-color: #007aff; /* フォーカス時のボーダーカラー */
 }
 
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.button-group button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.button-group button:hover {
+    background-color: #0056b3;
+}
+
 </style>
 </head>
 <body>
@@ -71,7 +140,7 @@ function openWindow() {
         <h2>画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <h2>【お知らせ】</h2>
-        <p> 6/6の更新でdefaultモデルをYOUからHuggingChatプロバイダーに変更しました
+        <p> 現時点でエラーが起きているAIはGemini,OpenAIです
             HuggingChat →のAImodelは<a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>に設定してあります
         </p>
         
@@ -83,18 +152,21 @@ function openWindow() {
           <option value="blackbox?prompt=">BlackBox</option>
         </select>
         </div>
+        <div id="user_chatlist">
         <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
         <button onclick="askQuestion()">質問</button>
         
         <div id="answer"></div>
         <div id="error"></div>
+        </div>
         <br>
-        <button onclick="location.href='https://gamelist1990.github.io/gamelist1990/page/';">ホームへ</button>
+        <button onclick="saveTextAsFile()">テキストをダウンロード</button>
         <br>
-        <br>
-
+        <div class="button-group">
+        <button onclick="saveDivAsImage()">画像として保存</button>
         <button onclick="openWindow()">更新履歴</button>
-
+        <button onclick="location.href='https://gamelist1990.github.io/gamelist1990/page/';">ホームへ</button>
+    </div>
         <h2>サンプルコード</h2>
         <p>以下のコードはこのサイトを利用するためのサンプルコードです/リクエストを送るにはテキストは"https://webapi-8trs.onrender.com/ask?text=hello"<br><br>画像生成の場合は"https://webapi-8trs.onrender.com/generate_image?prompt=cat"という感じでリクエストしてください画像はbase64で返されます</p>
         <h3>Python</h3>
