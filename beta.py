@@ -236,7 +236,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        response = "OpenAIのプロバイダーでエラーが発生しました(何度も起きる場合：サーバー側のエラーの可能性があります)"
+        response = "OpenAIのプロバイダーでエラーが発生しました(6/6時点OpenAIでエラーが発生しています(修正めんどいので後回し))"
         return response
     
     
