@@ -181,15 +181,15 @@ async def ask(request: Request):
 
     try:
      response = await g4f.ChatCompletion.create_async(
-        provider=g4f.Provider.You,
-        model="gpt-3.5-turbo",
+        provider=g4f.Provider.HuggingChat,
+        model="CohereForAI/c4ai-command-r-plus",
         api_key=set_cookies_dir(cookies_dir),
         messages=messages,
     )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response = f"現在Youプロバイダーでエラーが発生しましたエラー内容:{str(e)}"
+        response = f"現在HuggingChatプロバイダーでエラーが発生しましたエラー内容:{str(e)}"
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
