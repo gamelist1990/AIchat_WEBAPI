@@ -16,7 +16,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/home/css/home.css">
-    
+
+<script>
+function openWindow() {
+  var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
+}
+</script>
+
+
     <style>/* ドロップダウンコンテナ */
 .select-container {
     width: 150px;
@@ -64,11 +71,10 @@
         <h2>画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <h2>【お知らせ】</h2>
-        <p>6/03時点OpenAIモデルでエラーが発生しています解決までもう少しお待ちください。
-            <br>
-            6/6の更新でdefaultモデルをYOUからHuggingChatプロバイダーに変更しました
+        <p> 6/6の更新でdefaultモデルをYOUからHuggingChatプロバイダーに変更しました
             HuggingChat →のAImodelは<a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>に設定してあります
         </p>
+        
         <div class="select-container">
         <select id="provider">
           <option value="ask?text=">Default</option>
@@ -84,6 +90,11 @@
         <div id="error"></div>
         <br>
         <button onclick="location.href='https://gamelist1990.github.io/gamelist1990/page/';">ホームへ</button>
+        <br>
+        <br>
+
+        <button onclick="openWindow()">更新履歴</button>
+
         <h2>サンプルコード</h2>
         <p>以下のコードはこのサイトを利用するためのサンプルコードです/リクエストを送るにはテキストは"https://webapi-8trs.onrender.com/ask?text=hello"<br><br>画像生成の場合は"https://webapi-8trs.onrender.com/generate_image?prompt=cat"という感じでリクエストしてください画像はbase64で返されます</p>
         <h3>Python</h3>

@@ -180,10 +180,13 @@ async def ask(request: Request):
     messages = [{"role":"user", "content": text}]
 
     try:
-     response = await g4f.ChatCompletion.create_async(
+     client = AsyncClient(
         provider=g4f.Provider.HuggingChat,
+        cookies=read_cookie_files(cookies_dir),
+    )
+     
+     response = await client.chat.completions.create(
         model="CohereForAI/c4ai-command-r-plus",
-        api_key=set_cookies_dir(cookies_dir),
         messages=messages,
     )
     except Exception as e:
@@ -193,13 +196,13 @@ async def ask(request: Request):
         return JSONResponse(content={"response": str(e)}, status_code=500)
 
     try:
-        ai_response = response
-        remove_string = "#### Please log in to access GPT-4 mode. \n\n#### For more information, check out our YouPro plan here: https://you.com/plans.\n\nAnswering your question without GPT-4 mode:"
-        clean_response = ai_response.replace(remove_string, "")
-        decoded_response = json.loads(json.dumps(clean_response))
+         ai_response = response.choices[0].message.content
+         remove_string = "\u0000"
+         clean_response = ai_response.replace(remove_string, "")
+         decoded_response = json.loads(json.dumps(clean_response))
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
-        logging.error(f"{error_message}: {response.text}")
+        logging.error(f"{error_message}: {response}")
         return JSONResponse(content={"error": error_message}, status_code=500)
 
     return JSONResponse(content={"response": decoded_response}, status_code=200)
