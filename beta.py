@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request,HTTPException
+from fastapi import FastAPI, File, Request,HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse,FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -21,7 +21,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import g4f.Provider
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat,Gemini,You,Blackbox
+from g4f.Provider import OpenaiChat,Gemini,You,Bing,GeminiProChat
 import uuid
 import psutil,socket
 import platform
@@ -34,6 +34,7 @@ set_cookies_dir(cookies_dir)
 read_cookie_files(cookies_dir)
 
 
+conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
 
 # ユーザーIDとブロック終了時間のマッピング
@@ -103,7 +104,7 @@ Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACGkveRq4YHiQGASQ7W8n
 
 openAI = "OpenAI"
 gemini_normal = "Gemini"
-blackbox_normal = "BlackBox"
+bingProvider_normal = "bingProvider"
 
 
 
@@ -112,7 +113,6 @@ app = FastAPI()
 
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
-
 
 
 
@@ -209,11 +209,42 @@ async def ask(request: Request):
 
 
 
+async def geminipro(user_id: str, prompt: str):
+    # ユーザー識別子がなければUUIDで新たに作成
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
+    conversation_history = conversation_histories.get(user_id, [])
+
+    # ユーザーのメッセージを会話履歴に追加
+    conversation_history.append({"role": "user", "content": prompt})
+
+    # 最新の5つのメッセージのみを保持
+    conversation_history = conversation_history[-5:]
+    conversation_histories[user_id] = conversation_history
+
+    try:
+        client = AsyncClient(
+            provider=GeminiProChat,
+            #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+        )
+        response = await client.chat.completions.create(
+            model="default",
+            messages=conversation_history,
+        )
+        return response.choices[0].message.content  # 正常な応答を返す
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        return "GeminiProのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
+
+
+
+
 
 
 
 # 会話履歴を保持する辞書は関数の外で定義
-conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
 async def chat_with_OpenAI(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
@@ -232,17 +263,18 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     try:
         client = AsyncClient(
-            provider='OpenaiChat',
-            api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+            provider=g4f.Provider.Liaobots,
+            _auth_code="RSBNJWTer4Orm",
+            #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
         )
         response = await client.chat.completions.create(
-            model="auto",
+            model="gpt-4-turbo",
             messages=conversation_history,
         )
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
+        return "OpenAI[6/10時点で修正がまだなので臨時でLiaobotsのGPT-4モデルを使用しております]のプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
 
     
 
@@ -256,7 +288,7 @@ async def g4f_gemini(user_id: str, prompt: str):
         user_id = str(uuid.uuid4())
     try:
         client = AsyncClient(
-            provider='Gemini',
+            provider=Gemini,
             api_key=read_cookie_files(cookies_dir),
         )
         response = await client.chat.completions.create(
@@ -270,21 +302,77 @@ async def g4f_gemini(user_id: str, prompt: str):
 
     
 
-async def blackbox(user_id: str, prompt: str):
+async def bingProvider(user_id: str, prompt: str):
     if not user_id:
         user_id = str(uuid.uuid4())
+
+
+        
     try:
         response = await g4f.ChatCompletion.create_async(
-        model=g4f.models.gpt_4o,
-        messages=[{"role": "user", "content": prompt}],
-    )
+                provider=Bing,
+                api_key=read_cookie_files(cookies_dir),
+                model="Copilot",
+                messages=[{"role": "user", "content": prompt}],
+            )
         return response
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return f"Randomプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+        return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
 
 
-   
+async def lianocloud(user_id: str, prompt: str):
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+
+        
+    try:
+        response = await g4f.ChatCompletion.create_async(
+                provider=g4f.Provider.Liaobots,
+                _auth_code="RSBNJWTer4Orm",
+                model="claude-3-opus-20240229",
+                messages=[{"role": "user", "content": prompt}],
+            )
+        return response
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        return f"Liaobotsプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+
+
+
+@app.get("/claude3")
+async def chat(request: Request,prompt: str):
+    user_id = request.query_params.get('user_id') or request.client.host
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_comment and prompt == last_comment[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
+
+    # 最後のコメントを更新
+    last_comment[user_id] = prompt
+
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+
+    # リクエストカウントと最後のリクエスト時間を更新
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
+
+
+    response = await lianocloud(user_id,prompt)
+
+    return JSONResponse(content={"response": response}) 
 
 
 
@@ -356,9 +444,40 @@ async def gemini(request: Request,prompt: str):
     response = await g4f_gemini(user_id,prompt)
     return JSONResponse(content={"response": response})
 
+@app.get("/geminiPro")
+async def gemini(request: Request,prompt: str):
+    user_id = request.query_params.get('user_id') or request.client.host
+    if not user_id:
+        user_id = str(uuid.uuid4())
 
-@app.get("/blackbox")
-async def chat(request: Request,prompt: str):
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 同じコメントが繰り返し使われていないかチェック
+    if user_id in last_comment and prompt == last_comment[user_id]:
+        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
+
+    # 最後のコメントを更新
+    last_comment[user_id] = prompt
+
+    # ユーザーがブロックされているかどうかをチェック
+    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
+        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
+
+    # リクエストカウントと最後のリクエスト時間を更新
+    request_count[user_id] += 1
+    last_request[user_id] = datetime.now()
+
+    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
+    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
+        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
+
+    response = await geminipro(user_id,prompt)
+    return JSONResponse(content={"response": response})
+
+
+@app.get("/bingProviders")
+async def chat(request: Request,prompt: str,image:str):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -386,7 +505,7 @@ async def chat(request: Request,prompt: str):
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
 
-    response = await blackbox(user_id,prompt)
+    response = await bingProvider(user_id,prompt,image)
 
     return JSONResponse(content={"response": response})
 

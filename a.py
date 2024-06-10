@@ -3,7 +3,7 @@ from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
 import g4f
 import os,json
-from g4f.Provider import OpenaiChat,OpenRouter,Blackbox,You,Gemini
+from g4f.Provider import OpenaiChat,OpenRouter,Blackbox,You,Gemini,Bing,Liaobots
 import uuid
 
 g4f.debug.logging = True  # Enable debug logging
@@ -12,13 +12,13 @@ g4f.debug.version_check = True  # Disable automatic version checking
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Gemini,
-        api_key=read_cookie_files(cookies_dir),
+        provider=Liaobots,
+        _auth_code="RSBNJWTer4Orm",
     )
 
 response = client.chat.completions.create(
-    model="gemini",
-    messages=[{"role": "user", "content": "hello"}]
+    model="gpt-4-turbo",
+    messages=[{"role": "user", "content": "hello!"}]
 )
 
 # Get the AI's response
