@@ -16,3 +16,12 @@ INFO:root:Successfully sent a new message in the conversation. ID: 66672bca5d051
 INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/66672bca5d051c97bdc7b18a) [500 Internal Server Error]>
 <CIMultiDictProxy('Content-Type': 'application/json', 'Content-Length': '80', 'Connection': 'keep-alive', 'Date': 'Mon, 10 Jun 2024 16:37:32 GMT', 'Set-Cookie': 'hf-chat=c1f93d9f-505b-45a1-b977-5b63ff0d17f2; Path=/; Expires=Mon, 24 Jun 2024 16:37:32 GMT; HttpOnly; Secure; SameSite=None', 'X-Cache': 'Error from cloudfront', 'Via': '1.1 c5d8e8ff3b6ac1a7b3dd00013627faf0.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': 'CXXW_QGcKERUgfPJ033Uc6C9FoLq85nxXhll7TU9eirF8X_UKDvkPg==')>
 
+INFO:root:Successfully started a new conversation. ID: 66672e105d5455221ae8b1bf
+INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/66672e105d5455221ae8b1bf/__data.json) [200 OK]>
+<CIMultiDictProxy('Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Vary': 'Accept-Encoding', 'Date': 'Mon, 10 Jun 2024 16:47:13 GMT', 'Cache-Control': 'private, no-store', 'Vary': 'Accept', 'Content-Encoding': 'gzip', 'X-Cache': 'Miss from cloudfront', 'Via': '1.1 3bdc7e6977a85ef67742debc52912908.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': 'KopKzY4rffCrQaZ4T2_I5-Ur6Qih_HS4FiPox_PDkEt5u0Z-eB7TXg==')>
+
+INFO:root:optionÅF{'id': '67cea92a-c701-4962-81aa-a1d21c31e606', 'inputs': 'your name', 'is_continue': False, 'is_retry': False, 'web_search': False}
+INFO:root:Successfully sent a new message in the conversation. ID: 66672e105d5455221ae8b1bf
+INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/66672e105d5455221ae8b1bf) [500 Internal Server Error]>
+<CIMultiDictProxy('Content-Type': 'application/json', 'Content-Length': '80', 'Connection': 'keep-alive', 'Date': 'Mon, 10 Jun 2024 16:47:13 GMT', 'Set-Cookie': 'hf-chat=c1f93d9f-505b-45a1-b977-5b63ff0d17f2; Path=/; Expires=Mon, 24 Jun 2024 16:47:13 GMT; HttpOnly; Secure; SameSite=None', 'X-Cache': 'Error from cloudfront', 'Via': '1.1 3bdc7e6977a85ef67742debc52912908.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': 'dloY3ovZKZMAW9-z0TqMGLT-624wQThSUt7rJstk2jlHzfKcQNSauw==')>
+
