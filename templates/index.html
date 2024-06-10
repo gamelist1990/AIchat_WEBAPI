@@ -143,19 +143,23 @@ function saveDivAsImage() {
         <h2>画像生成</h2>
         <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
         <h2>【お知らせ】</h2>
-        <p> 現時点でエラーが起きているAIはOpenAIです 臨時でChatGPTでliaoBotsのmodel GPT-4を動作させています
+        <p> 現時点でエラーが起きているAIは<ui>
+            <li>ChatGPT</li>
+            <li>claude-3-opus</li>
+            <li>default</li>
+        </ui><br>です
             HuggingChat →のAImodelは<a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>に設定してあります
             liaoBots のAImodelは<a href="https://www.anthropic.com/claude">claude-3-opus</a>を使用しています
         </p>
         
         <div class="select-container">
         <select id="provider">
-          <option value="ask?text=">Default</option>
+          <option value="ask?text=">Default(修正中)</option>
           <option value="gemini?prompt=">Gemini</option>
-          <option value="chat?prompt=">ChatGPT</option>
+          <option value="chat?prompt=">ChatGPT(修正中)</option>
           <option value="bingProviders?prompt=">GPT-4</option>
           <option value="geminiPro?prompt=">geminiPro</option>
-          <option value="claude3?prompt=">claude-3-opus</option>
+          <option value="claude3?prompt=">claude-3-opus(修正中)</option>
         </select>
         </div>
         <div id="user_chatlist">

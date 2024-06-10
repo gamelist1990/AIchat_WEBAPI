@@ -11,8 +11,6 @@ from .Provider import (
     ChatgptNext,
     Cnote,
     DeepInfra,
-    DuckDuckGo,
-    Ecosia,
     Feedough,
     FreeGpt,
     Gemini,
@@ -59,7 +57,6 @@ default = Model(
         ChatgptAi,
         You,
         OpenaiChat,
-        Ecosia,
     ])
 )
 
@@ -73,8 +70,6 @@ gpt_35_long = Model(
         ChatgptNext,
         OpenaiChat,
         Koala,
-        Ecosia,
-        DuckDuckGo,
     ])
 )
 
@@ -199,7 +194,7 @@ claude_3_sonnet = Model(
 claude_3_haiku = Model(
     name          = 'claude-3-haiku',
     base_provider = 'anthropic',
-    best_provider = DuckDuckGo
+    best_provider = None
 )
 
 gpt_35_turbo_16k = Model(

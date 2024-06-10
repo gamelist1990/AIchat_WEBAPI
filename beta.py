@@ -97,8 +97,8 @@ g4f.debug.version_check = False  # Disable automatic version checking
 
 logging.basicConfig(level=logging.INFO)
 
-Token = "1Hg2irr_sM-seogXWY1X7SO0pO8OLMFe8wT9q42-WhDclPBVeTu0mMYhFa-RnDBl2q3rIl5lMW7f4Go4ZxQK_n0hcUbhxA94ifrEKviVG3k-NlK5_V5GJRyELVjX1fj3USYblstCFy3UjaknV3CPN5qJjYxLY_gmzJzlJj-XX8Sysrx72g9CvetbX0kTMVeUp0-tnzPRuWlBArYob_8iqKg"
-Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACGkveRq4YHiQGASQ7W8nVBTG3f34MKwATSDfhwqz2bdfD7QeDEq1JcomqPED5pjQt1a+1pE+oojpz0n5my5tp0PonwY+n/+cMtjBt04c+BT6PYHAnsbze5iNHEuwC0jwzuS8vE7UJCngqK9X0CVPGf1HL66J3ckR7ydiQJSqnfHx/YTUmBcgbiaK1S/ytbS3RWe+nnsk6NcEvGSKVRprl4luQmET+O1CrDpHNwrRcFtWUnDzRKPKXvXuv8y7G0nDnyWvkF1iV402PVNXq9VQhQWwJM+qzbNe/vzKc4ZHtLEI4B4EOmHD08ldm0Fb+qbDQhMqa13QZCojLIqESa2mTR9FA2woiQfXvjPywBsyAZkxoAVWWOIggQi7PTx4y5d7NepkAno6iSD6irSsPYuAMRJDm0sSA+CiWEpL5y8dDfioRv3lwZdzzhyw3tgsK5rZwdjBjXGM3HC/YAB5pI7t5PdOpbiaZf+ziTalOUswTGWW93QbAzJvEgt4GEMlljLeAIhVmdgyW+DC7iMvMCYnFGT7E/uZTtAABq2WLrLjq5bfGdWNyJ8XtJSVUik7l2yoHMdqiOdkaKYejkRHajaTKcVYesOtAbHxrgKDxIXAkqqx37v/n4bC2dcwdNX6XcbXuf0hIQUOY20TMeh/p49jm0UzqJx2Sk4CAE8gu9o8d2PuJpb5F60IaCMaJ39jriKu5W/ZsPRGY0qNz4+zJT3Paz9fc6yBZubLxIBkcRM+JAs5BipPUy8G8upbvvhRsjJAAZbKGX68+HFmjURRrfyyMIdXeK3VVbYxZRVlsqQTb/4tvkUgTCQ2xXPC9l3nfxXuTqZpet3snsfhksPFtXi+44arrTp5tSufH16lrfVEi78J0KLdGqeCEKK/KUMMqS95ykco0VbK/vXd5hJD3qw1M5yoivrH8+h1p0usjIlTL5jZKDfQYxjfFWOQ+q9GSwgY70yeQChqoKVT67wkj9UUK7pUCR+o0CoWPVRsF/dnrC1reGDQ9wFWsZNZDndr4JxNdYn//yHMjEVVJihGnI3Y5W8ujVq6GnIWRr+naLsAAWHJoOtiVQsSiPdDvgrf2bS+azoJW7y+STuBmGfh54pIXwhRoPXmaE0UCLUkQghO8Z8lFBjgTzTnGcFoV5KRzV5trsOssa0JMTKGxXmOqxMVUacvEn/KEdpeltVxz5+LNQHaWhJubBjTLkAtLkUpa7HDPIQYn7pIG5JOsVRO8Spr5IBTRqgQYy5z8V0DDskMYMbvjCFqGCetBOiGYzQalDGu3iNm54Hxf89IlvUkLbZSM1jR9DLO2tZXsRoJDQpyX7T4jYDqmjm18B+/2TfidRwkwD4fXdFtVK4eocoSqpN570SjxaB+iWuZlMIV1Wu3LcHh+5T9PIO8EA/REX0ZbPXIIPoTFAAVCusrvdhIVoo/buCKkwh1b+5PHA=='
+Token = "1ownAmqW096w2VpQOhq4zlmQd04_xsguI1iwqce_3gacdEv0MuuRycxRIG72on0RQickk7GWvZdqfWG0UQJ_ogwVdBWQrDbhHCOHTA10-zPtqK40RBILMKzBwPwbaoccjIgxGgztA_wK9hO1nIdeKq9jNX_aafLWxwoiaR8xkmQNLwT0oeo64Ygj-4MlC5eZL-5WxpLaBAclDErkKX8zUQA"
+Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACDuUj2v35WdtGATzROeXHJJglGUNiHEu4CbOzoVf35iMwB8demUrb8UVaEGChKcc/v84X/SwvDu+ctyeahYH0pAKR03qcmbtXy48t0AA+gACc0EUomeAFsuC2R0wyJJYwEYyBBrAJOSzFw6bvkrYoDKzKBu5hFftqs06SSA9kLmxnkOhXEMocLaJpcIMxCYABF8PqCPei0A7z/SijNYxxCHpOJhCE20nZuttB+Lk97haNEMYw9ofcIp9fYLdXerjdO5sXJoCRNewp6+bnrtZC+HNUHf9pwbWyLsLgX6CVgcbTwTODsXg3QNBV6RIEOZvkdlMIgw2ui6Y3OTqJmNmiye63eFFBSg5wSB0Ot4rufwApzlFodCwOv8F7QM/yzs8vzfEw7/HezYxEw3VhLxZnEyyeUDxdyo/8bZS7pq96nok9tuNKJtNinr7GAYff9aJoOdnf30sks+QpsUSO+e06OSc+5nmsI29GY+Aje7my/APYBzbP0LwSCgX0rweio3wig60JwsWAYTbzzozJKz/ra1C+dFCrMEjhexuz6uShtfarPqwpSn31WYkGzRtDZC4z2dtSDvWFRDRtqd90fiZY6kY+PMIZ7FeIYaK0OBI/+xp4FY8UmSfp6SGMawIKmX7eMg9YoOy9M9Rxd6ZvTdkgNbHza8ENiJIbWWjh0pu1QZtT2k831F/B4rEAECEebINRnkPvdwRiOojdcYqXD98svONorIiuHZzhh0m7J2zEv0Nrao1Yp2sQumOoKZvO2HbAh5Vej5WYFj+zli33OKcN88TlN+jI1YNh34lv3RSANKt3LK8HnbK95+dxh1Ot47O3SEjyo1T9KIn7ASMEzGcjH1vN+5UuqXZvGM1ASOjOrm17eYRa+rvmpN/DtDKLKUDIbv1RbdjYQH7CXc1u7Uk/K3t4IX52j21cgExpnBiu7c+LNavQSWr9ipU2g7e/Y0Yh4tEwvOz6x1VNGv16r8vu0gd5ZaJBSmCQoU+LzCifzL0U74kVSypirVvOGsjfRu7Vl/ZvmtUYwy6lQIQEUWsQQq/+QI/tkCgjO43e7PXoGREWMmZ7czrBj03xhXQAWljZjn3EUgKSckKsTD1PgPyuVGOvdfHPqxr2xrml15pXs+hUEMzzvxemXb/xSZKC0pjpWcTDXkpH37VrdcNz7uEvYhozFXwEcRhUNo6O5h/dXXvpawnAvIIpZ7ldPLkMyCuknrivTowO+j6zlf+0q+RL9g3r3ZP0LDX4KKFuQ3epF2f5V8BzvjIaZmbRzTPMKgVHZax7CZUU+bWuRVfTcwaYjQoV8dFq4aBJPVeVURuTiHvi6W9yC0tQmYUDTXo4Bo4qtEFzQoTkwp+KpFaje9gVX5TzESzFKm/WRTmEtokMuh3phtSTX0Ipz70JcOSdbqeJ3jEFAC8F/EhZzpNF5c2rg8OHINABDVVMQ=='
 
 #support model
 
@@ -182,7 +182,7 @@ async def ask(request: Request):
     try:
      client = AsyncClient(
         provider=g4f.Provider.HuggingChat,
-        cookies=read_cookie_files(cookies_dir),
+        cookies=set_cookies_dir(cookies_dir),
     )
      
      response = await client.chat.completions.create(
@@ -192,17 +192,17 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response = f"現在HuggingChatプロバイダーでエラーが発生しましたエラー内容:{str(e)}"
-        return JSONResponse(content={"response": str(e)}, status_code=500)
+        response_error = f"現在HuggingChatプロバイダーでエラーが発生しましたエラー内容:"
+        return JSONResponse(content={"response": response_error+str(e)}, status_code=500)
 
     try:
          ai_response = response.choices[0].message.content
          remove_string = "\u0000"
          clean_response = ai_response.replace(remove_string, "")
-         decoded_response = json.loads(json.dumps(clean_response))
+         decoded_response = json.loads(json.dumps(ai_response))
     except json.decoder.JSONDecodeError:
         error_message = "Invalid JSON response"
-        logging.error(f"{error_message}: {response}")
+        logging.error(f"{error_message}: {ai_response}")
         return JSONResponse(content={"error": error_message}, status_code=500)
 
     return JSONResponse(content={"response": decoded_response}, status_code=200)
@@ -274,7 +274,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return "OpenAI[6/10時点で修正がまだなので臨時でLiaobotsのGPT-4モデルを使用しております]のプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
+        return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
 
     
 
@@ -305,9 +305,6 @@ async def g4f_gemini(user_id: str, prompt: str):
 async def bingProvider(user_id: str, prompt: str):
     if not user_id:
         user_id = str(uuid.uuid4())
-
-
-        
     try:
         response = await g4f.ChatCompletion.create_async(
                 provider=Bing,
@@ -324,8 +321,6 @@ async def bingProvider(user_id: str, prompt: str):
 async def lianocloud(user_id: str, prompt: str):
     if not user_id:
         user_id = str(uuid.uuid4())
-
-
         
     try:
         response = await g4f.ChatCompletion.create_async(
@@ -477,7 +472,7 @@ async def gemini(request: Request,prompt: str):
 
 
 @app.get("/bingProviders")
-async def chat(request: Request,prompt: str,image:str):
+async def chat(request: Request,prompt: str):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -505,7 +500,7 @@ async def chat(request: Request,prompt: str,image:str):
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
 
-    response = await bingProvider(user_id,prompt,image)
+    response = await bingProvider(user_id,prompt)
 
     return JSONResponse(content={"response": response})
 

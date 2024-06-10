@@ -3,12 +3,17 @@ from __future__ import annotations
 import json
 import requests
 from aiohttp import ClientSession, BaseConnector
+import logging
+
 
 from ..typing import AsyncResult, Messages
 from ..requests.raise_for_status import raise_for_status
 from ..providers.conversation import BaseConversation
 from .base_provider import AsyncGeneratorProvider, ProviderModelMixin
 from .helper import format_prompt, get_connector, get_cookies
+
+
+logging.basicConfig(level=logging.INFO)
 
 class HuggingChat(AsyncGeneratorProvider, ProviderModelMixin):
     url = "https://huggingface.co/chat"
@@ -76,12 +81,14 @@ class HuggingChat(AsyncGeneratorProvider, ProviderModelMixin):
                 async with session.post(f"{cls.url}/conversation", json=options) as response:
                     await raise_for_status(response)
                     conversation_id = (await response.json())["conversationId"]
+                    logging.info(f'Successfully started a new conversation. ID: {conversation_id}')
                 if return_conversation:
                     yield Conversation(conversation_id)
             else:
                 conversation_id = conversation.conversation_id
             async with session.get(f"{cls.url}/conversation/{conversation_id}/__data.json") as response:
                 await raise_for_status(response)
+                logging.info(f'{response}')
                 data: list = (await response.json())["nodes"][1]["data"]
                 keys: list[int] = data[data[0]["messages"]]
                 message_keys: dict = data[keys[0]]
@@ -93,8 +100,11 @@ class HuggingChat(AsyncGeneratorProvider, ProviderModelMixin):
                 "is_retry": False,
                 "web_search": web_search
             }
+            logging.info(f'option：{options}')
             async with session.post(f"{cls.url}/conversation/{conversation_id}", json=options) as response:
+                logging.info(f'Successfully sent a new message in the conversation. ID: {conversation_id}')
                 first_token = True
+                logging.info(f'{response}')
                 async for line in response.content:
                     await raise_for_status(response)
                     line = json.loads(line)
@@ -106,6 +116,7 @@ class HuggingChat(AsyncGeneratorProvider, ProviderModelMixin):
                             token = token.lstrip().replace('\u0000', '')
                             first_token = False
                         yield token
+                        logging.info(token)
                     elif line["type"] == "finalAnswer":
                         break
             if delete_conversation:
@@ -114,4 +125,4 @@ class HuggingChat(AsyncGeneratorProvider, ProviderModelMixin):
 
 class Conversation(BaseConversation):
     def __init__(self, conversation_id: str) -> None:
-        self.conversation_id = conversation_id6
+        self.conversation_id = conversation_id
