@@ -3,7 +3,7 @@ from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
 import g4f
 import os,json
-from g4f.Provider import OpenaiChat,HuggingChat,Blackbox,You,Liaobots,Bing
+from g4f.Provider import OpenaiChat,HuggingChat,Blackbox,You,Liaobots,Bing,Reka
 import uuid
 
 g4f.debug.logging = True  # Enable debug logging
@@ -12,12 +12,12 @@ g4f.debug.version_check = True  # Disable automatic version checking
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Bing,
-        cookies=read_cookie_files(cookies_dir),
+        provider=Reka,
+        api_key=read_cookie_files(cookies_dir),
     )
 
 response = client.chat.completions.create(
-    model="Copilot",
+    model="reka",
     messages=[{"role": "user", "content": "hello"}]
 )
 

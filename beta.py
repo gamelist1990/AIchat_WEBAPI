@@ -21,7 +21,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import g4f.Provider
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat,Gemini,You,Bing,GeminiProChat
+from g4f.Provider import OpenaiChat,Gemini,You,Bing,GeminiProChat,Reka
 import uuid
 import psutil,socket
 import platform
@@ -302,16 +302,16 @@ async def g4f_gemini(user_id: str, prompt: str):
 
     
 
-async def bingProvider(user_id: str, prompt: str):
+async def reka_core(user_id: str, prompt: str):
     if not user_id:
         user_id = str(uuid.uuid4())
     try:
         client = AsyncClient(
-            provider=Bing,
-            cookies=read_cookie_files(cookies_dir),
+            provider=Reka,
+            api_key=read_cookie_files(cookies_dir),
         )
         response = await client.chat.completions.create(
-                model="Copilot",
+                model="reka",
                 messages=[{"role": "user", "content": prompt}],
             )
         return response.choices[0].message.content
@@ -476,7 +476,7 @@ async def gemini(request: Request,prompt: str):
     return JSONResponse(content={"response": response})
 
 
-@app.get("/bingProviders")
+@app.get("/Reka")
 async def chat(request: Request,prompt: str):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
@@ -505,7 +505,7 @@ async def chat(request: Request,prompt: str):
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
 
-    response = await bingProvider(user_id,prompt)
+    response = await reka_core(user_id,prompt)
 
     return JSONResponse(content={"response": response})
 
