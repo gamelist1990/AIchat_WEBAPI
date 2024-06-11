@@ -134,7 +134,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
                 "model": models[cls.get_model(model)],
                 "messages": messages,
                 "key": "",
-                "prompt": kwargs.get("system_message", "You are a helpful assistant."),
+                "prompt": kwargs.get("system_message", "あなたは有能なAIchatです"),
             }
             if not cls._auth_code:
                 async with session.post(
@@ -169,7 +169,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
             except:
                 async with session.post(
                     "https://liaobots.work/api/user",
-                    json={"authcode": "pTIQr4FTnVRfr"},
+                    json={"authcode": "RSBNJWTer4Orm"},
                     verify_ssl=False
                 ) as response:
                     await raise_for_status(response)
