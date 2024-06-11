@@ -314,7 +314,13 @@ async def reka_core(user_id: str, prompt: str):
                 model="reka",
                 messages=[{"role": "user", "content": prompt}],
             )
-        return response.choices[0].message.content
+        
+        ai_response = response.choices[0].message.content
+        remove_string = ["(Translation:", "<sep"]
+        clean_response = ai_response
+        for string in remove_string:
+            clean_response = clean_response.split(string, 1)[0]
+        return clean_response
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す

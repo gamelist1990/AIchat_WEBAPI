@@ -18,16 +18,20 @@ client = Client(
 
 response = client.chat.completions.create(
     model="reka",
-    messages=[{"role": "user", "content": "hello"}]
+    messages=[{"role": "user", "content": "こんにちは自己紹介をおねがい！"}]
 )
 
 # Get the AI's response
 ai_response = response.choices[0].message.content
 
 # Define the string to be removed
-remove_string = "#### Please log in to access GPT-4 mode. \n\n#### For more information, check out our YouPro plan here: https://you.com/plans.\n\nAnswering your question without GPT-4 mode:"
+remove_string = ["(Translation:", "<sep"]
 
 # Remove the string from the AI's response
-clean_response = ai_response.replace(remove_string, "")
+#clean_response = ai_response.replace(remove_string, "")
+
+clean_response = ai_response
+for string in remove_string:
+    clean_response = clean_response.split(string, 1)[0]
 
 print(clean_response)
