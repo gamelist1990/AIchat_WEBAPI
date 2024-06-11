@@ -68,7 +68,7 @@ class Reka(AbstractProvider):
         json_data = {
             'conversation_history': conversation,
             'stream': True,
-            'use_search_engine': False,
+            'use_search_engine': True,
             'use_code_interpreter': False,
             'model_name': 'reka-core',
             'random_seed': int(time.time() * 1000),

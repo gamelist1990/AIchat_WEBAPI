@@ -104,7 +104,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
     model_aliases = {
         "claude-v2": "claude-2"
     }
-    _auth_code = ""
+    _auth_code = "RSBNJWTer4Orm"
     _cookie_jar = None
 
     @classmethod

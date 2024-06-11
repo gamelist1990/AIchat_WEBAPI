@@ -333,7 +333,6 @@ async def lianocloud(user_id: str, prompt: str):
     try:
         client = AsyncClient(
             provider=g4f.Provider.Liaobots,
-            cookies=read_cookie_files(cookies_dir),
             auth="RSBNJWTer4Orm",
         )
         response = await client.chat.completions.create(
