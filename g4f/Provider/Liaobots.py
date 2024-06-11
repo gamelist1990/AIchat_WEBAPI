@@ -183,6 +183,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
                     headers={"x-auth-code": cls._auth_code},
                     verify_ssl=False
                 ) as response:
+                    
                     await raise_for_status(response)
                     async for chunk in response.content.iter_any():
                         if b"<html coupert-item=" in chunk:

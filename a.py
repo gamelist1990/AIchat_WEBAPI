@@ -3,7 +3,7 @@ from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
 import g4f
 import os,json
-from g4f.Provider import HuggingChat,OpenRouter,Blackbox,You,Gemini,Bing,Liaobots
+from g4f.Provider import HuggingChat,OpenRouter,Blackbox,You,Gemini,Bing,Liaobots,GeminiProChat,OpenaiChat
 import uuid
 
 g4f.debug.logging = True  # Enable debug logging
@@ -11,14 +11,14 @@ g4f.debug.logging = True  # Enable debug logging
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Liaobots,
+        provider=OpenaiChat,
         cookies=read_cookie_files(cookies_dir),
     )
 
 response = client.chat.completions.create(
     #model="CohereForAI/c4ai-command-r-plus",
-    model="claude-3-opus-20240229",
-    messages=[{"role": "user", "content": "your name"}]
+    model="auto",
+    messages=[{"role": "user", "content": "hello!"}]
 )
 
 # Get the AI's response

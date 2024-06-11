@@ -263,12 +263,11 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
 
     try:
         client = AsyncClient(
-            provider=g4f.Provider.Liaobots,
-            auth_code="RSBNJWTer4Orm",
-            #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+            provider=g4f.Provider.OpenaiChat,
+            api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
         )
         response = await client.chat.completions.create(
-            model="gpt-4-turbo",
+            model="auto",
             messages=conversation_history,
         )
         return response.choices[0].message.content  # 正常な応答を返す
