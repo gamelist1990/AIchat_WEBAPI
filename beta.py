@@ -306,13 +306,15 @@ async def bingProvider(user_id: str, prompt: str):
     if not user_id:
         user_id = str(uuid.uuid4())
     try:
-        response = await g4f.ChatCompletion.create_async(
-                provider=Bing,
-                api_key=read_cookie_files(cookies_dir),
+        client = AsyncClient(
+            provider=Bing,
+            cookies=read_cookie_files(cookies_dir),
+        )
+        response = await client.chat.completions.create(
                 model="Copilot",
                 messages=[{"role": "user", "content": prompt}],
             )
-        return response
+        return response.choices[0].message.content
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
@@ -323,13 +325,16 @@ async def lianocloud(user_id: str, prompt: str):
         user_id = str(uuid.uuid4())
         
     try:
-        response = await g4f.ChatCompletion.create_async(
-                provider=g4f.Provider.Liaobots,
-                _auth_code="RSBNJWTer4Orm",
+        client = AsyncClient(
+            provider=g4f.Provider.Liaobots,
+            cookies=read_cookie_files(cookies_dir),
+            auth="RSBNJWTer4Orm",
+        )
+        response = await client.chat.completions.create(
                 model="claude-3-opus-20240229",
                 messages=[{"role": "user", "content": prompt}],
             )
-        return response
+        return response.choices[0].message.content
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return f"Liaobotsプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
