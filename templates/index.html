@@ -148,15 +148,17 @@ function saveDivAsImage() {
             <li>ChatGPT</li>
             <li>c4ai-command-r-plus</li>
         </ui><br>
-        現状claude3の動作はServer側でも確認できましたその他Bingプロバイダーですが会話を作成できないという意味不明なエラーの為修正が難しいです(windowsだと正常に動作するし)
+        現状claude3の動作はServer側でも確認できましたその他Bingプロバイダーですが会話を作成できないという意味不明なエラーの為修正が難しいです(windowsだと正常に動作するし)<Br>
+            Bingプロバイダーの変わりにRekaAIを追加しましたこのAIはgpt4に少し劣りますがまぁgpt4と言っても過言ではないので<br>
+            6/11時点ChatGPTが治るまでLiaobotsプロバイダーのGPT4を変わりに使用することにしました
         </p>
         
         <div class="select-container">
         <select id="provider">
           <option value="ask?text=">Default(修正中)</option>
           <option value="gemini?prompt=">Gemini</option>
-          <option value="chat?prompt=">ChatGPT(修正中)</option>
-          <option value="reka?prompt=">Reka(新規)</option>
+          <option value="chat?prompt=">ChatGPT(Liaobots)</option>
+          <option value="Reka?prompt=">Reka(新規)</option>
           <option value="geminiPro?prompt=">geminiPro</option>
           <option value="claude3?prompt=">claude-3-opus(検証中)</option>
         </select>

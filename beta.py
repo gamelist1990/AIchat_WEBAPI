@@ -192,7 +192,7 @@ async def ask(request: Request):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response_error = f"現在HuggingChatプロバイダーでエラーが発生しましたエラー内容:"
+        response_error = f"(追記：6/11時点Response 500が返されるというエラーが起きています)HuggingChatプロバイダーでエラーが発生しましたエラー内容:"
         return JSONResponse(content={"response": response_error+str(e)}, status_code=500)
 
     try:
@@ -264,7 +264,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
     try:
         client = AsyncClient(
             provider=g4f.Provider.Liaobots,
-            _auth_code="RSBNJWTer4Orm",
+            auth_code="RSBNJWTer4Orm",
             #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
         )
         response = await client.chat.completions.create(
