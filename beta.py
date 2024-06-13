@@ -325,7 +325,7 @@ async def reka_core(user_id: str, prompt: str):
         return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
 
 
-async def lianocloud(user_id: str, prompt: str):
+async def lianocloud(user_id: str, prompt: str, system: str):
     if not user_id:
         user_id = str(uuid.uuid4())
         
@@ -336,6 +336,7 @@ async def lianocloud(user_id: str, prompt: str):
         )
         response = await client.chat.completions.create(
                 model="claude-3-opus-20240229",
+                systemPrompt=system,
                 messages=[{"role": "user", "content": prompt}],
             )
         return response.choices[0].message.content
@@ -343,16 +344,20 @@ async def lianocloud(user_id: str, prompt: str):
         logging.error(f"Error occurred: {str(e)}")
         return f"Liaobotsプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
 
+AI_prompt = "あなたは有能なAIです"
 
 
 @app.get("/claude3")
-async def chat(request: Request,prompt: str):
+async def chat(request: Request,prompt: str,system:str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
 
     if not prompt:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    if not system:
+         system = AI_prompt
 
     # 同じコメントが繰り返し使われていないかチェック
     if user_id in last_comment and prompt == last_comment[user_id]:
@@ -374,14 +379,14 @@ async def chat(request: Request,prompt: str):
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
 
-    response = await lianocloud(user_id,prompt)
+    response = await lianocloud(user_id,prompt,system)
 
     return JSONResponse(content={"response": response}) 
 
 
 
 @app.get("/chat")
-async def chat(request: Request,prompt: str):
+async def chat(request: Request,prompt: str,system:str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -418,7 +423,7 @@ async def chat(request: Request,prompt: str):
 
 
 @app.get("/gemini")
-async def gemini(request: Request,prompt: str):
+async def gemini(request: Request,prompt: str,system:str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -449,7 +454,7 @@ async def gemini(request: Request,prompt: str):
     return JSONResponse(content={"response": response})
 
 @app.get("/geminiPro")
-async def gemini(request: Request,prompt: str):
+async def gemini(request: Request,prompt: str,system:str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
@@ -481,7 +486,7 @@ async def gemini(request: Request,prompt: str):
 
 
 @app.get("/Reka")
-async def chat(request: Request,prompt: str):
+async def chat(request: Request,prompt: str,system:str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())

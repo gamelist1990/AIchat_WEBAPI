@@ -12,13 +12,16 @@ g4f.debug.version_check = True  # Disable automatic version checking
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Reka,
-        api_key=read_cookie_files(cookies_dir),
+        provider=Liaobots,
+        #api_key=read_cookie_files(cookies_dir),
+        auth="RSBNJWTer4Orm",
     )
 
 response = client.chat.completions.create(
-    model="reka",
-    messages=[{"role": "user", "content": "こんにちは自己紹介をおねがい！"}]
+    model="claude-3-opus-20240229",
+    systemPrompt="有能なAI",
+
+    messages=[{"role": "user", "content": "あなたについて色々教えてくれませんか？"}]
 )
 
 # Get the AI's response

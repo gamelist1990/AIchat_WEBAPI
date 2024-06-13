@@ -148,9 +148,8 @@ function saveDivAsImage() {
             <li>c4ai-command-r-plus</li>
             <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
         </ui><br>
-        現状claude3の動作はServer側でも確認できましたその他Bingプロバイダーですが会話を作成できないという意味不明なエラーの為修正が難しいです(windowsだと正常に動作するし)<Br>
-            Bingプロバイダーの変わりにRekaAIを追加しましたこのAIはgpt4に少し劣りますがまぁgpt4と言っても過言ではないので<br>
-            OpenAIプロバイダーの復旧完了しました！
+        6/13の更新でclaude3にSystemプロンプトに対応させました SystemプロンプトにはAIにこんな動作をさせたい！というリクエストを含める事ができます<br>
+        例：アシスタント： お喋り君 あなたの名前は{アシスタント}です,以下の指令に沿って行動してください {アシスタント}はユーザとお友達です,{アシスタント}の口調には語尾にワン！が付きますまた敬語無しでフレンドリーに接します
         </p>
         
         <div class="select-container">
@@ -164,6 +163,7 @@ function saveDivAsImage() {
         </select>
         </div>
         <div id="user_chatlist">
+        <textarea id="system" type="text" placeholder="ここにシステムプロンプトを入れる現在対応しているのはclaude-3のみ"></textarea>
         <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
         <button onclick="askQuestion()">質問</button>
         

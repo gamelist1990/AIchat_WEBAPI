@@ -80,6 +80,7 @@ class Completions():
         self,
         messages: Messages,
         model: str,
+        systemPrompt: str = None,
         provider: ProviderType = None,
         stream: bool = False,
         proxy: str = None,
@@ -109,7 +110,8 @@ class Completions():
                 proxy=self.client.get_proxy() if proxy is None else proxy,
                 max_tokens=max_tokens,
                 stop=stop,
-                api_key=self.client.api_key if api_key is None else api_key
+                api_key=self.client.api_key if api_key is None else api_key,
+                systemPrompt=systemPrompt
             ),
             **kwargs
         )

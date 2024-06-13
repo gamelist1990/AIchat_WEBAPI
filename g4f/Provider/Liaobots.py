@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+import logging
 
 from aiohttp import ClientSession, BaseConnector
 
@@ -8,6 +9,8 @@ from ..typing import AsyncResult, Messages
 from .base_provider import AsyncGeneratorProvider, ProviderModelMixin
 from .helper import get_connector
 from ..requests import raise_for_status
+
+logging.basicConfig(level=logging.INFO)
 
 models = {
     "gpt-4o": {
@@ -114,6 +117,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
         messages: Messages,
         auth: str = None,
         proxy: str = None,
+        systemPrompt: str = "You are a competent AI assistant",
         connector: BaseConnector = None,
         **kwargs
     ) -> AsyncResult:
@@ -134,12 +138,13 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
                 "model": models[cls.get_model(model)],
                 "messages": messages,
                 "key": "",
-                "prompt": kwargs.get("system_message", "あなたは有能なAIchatです"),
+                "prompt": kwargs.get("system_message",f"{systemPrompt}"),
             }
+            logging.info({systemPrompt})
             if not cls._auth_code:
                 async with session.post(
                     "https://liaobots.work/recaptcha/api/login",
-                    data={"token": "abcdefghijklmnopqrst"},
+                    data={"token": "abcdefghijklmnopqrst"},#こちらもできれば変えるといい
                     verify_ssl=False
                 ) as response:
                     await raise_for_status(response)
@@ -169,7 +174,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
             except:
                 async with session.post(
                     "https://liaobots.work/api/user",
-                    json={"authcode": "RSBNJWTer4Orm"},
+                    json={"authcode": "RSBNJWTer4Orm"},#ここのauthcodeを変えて
                     verify_ssl=False
                 ) as response:
                     await raise_for_status(response)
