@@ -9,17 +9,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="description" content="AI Chatbotへようこそ!このページは会話AI:Gemini-pro,Gemini,画像生成AI：Bing creator images,を使用して作成されています">
     <meta name="apple-mobile-web-app-title" content="MenuClient|AIChat">
-    <link rel="icon" id="appIcon" type="image/png" href="/home/icon.png">       
-    <link rel="icon" href="/home/icon.png"  />
+    <link rel="icon" id="appIcon" type="image/png" href="/icon.png">       
+    <link rel="icon" href="/icon.png"  />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="/home/css/home.css">
 
 <script>
 function openWindow() {
-  var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
+  var myWindow = window.open("/update.html", "MsgWindow", "width=400,height=400");
 }
 
 // ユーザーの質問とAIの回答を保存する関数
@@ -78,7 +77,6 @@ function toggleSystemPrompt() {
 }
 
 // 切り替えボタンをクリックしたときに関数を呼び出す
-document.getElementById('toggleButton').addEventListener('click', toggleSystemPrompt);
 
 
 var button;
@@ -411,7 +409,8 @@ pre {
         </select>
         </div>
         <div id="user_chatlist">
-        <button id="toggleButton">システムプロンプトを表示/非表示</button>
+            <br>
+        <button onclick="toggleSystemPrompt()">システムプロンプトを表示/非表示</button>
 
         <textarea id="system" type="text" placeholder="システムプロンプト入力欄(6/13)時点Claude3のみシステムプロンプトに対応しています"></textarea>
         <textarea id="question" type="text" placeholder="質問欄"></textarea>
@@ -470,5 +469,4 @@ pre {
         channel: '1069498532068872193' // htmlコードを勝手に使わないでね
     })
 </script>
-<script src="/home/js/main.js"></script>
 </html>

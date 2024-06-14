@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/rasterizehtml/1.3.0/rasterizeHTML.allinone.js"></script>
   <style>
     /* 全体 */
     body {
@@ -451,7 +452,49 @@
           </svg>
           ホームへ
         </button>
+         <button onclick="resetConversations()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+          Reset Conversations
+        </button>
+        <button onclick="openSummaryModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="m8.93 6.588-2.29.287-.082.107-.64.64-1.281 1.281a.5.5 0 0 1-.65.65l-.287 2.29a.5.5 0 0 1-.708.162l-1.414-1.414a.5.5 0 1 1 .708-.708L7.5 8.793l2.29-2.29a.5.5 0 0 1 .162-.708L11 7.414l1.281-1.281a.5.5 0 0 1 .65-.65l.64-.64.107-.082.287-2.29a.5.5 0 0 1 .708-.162l1.414 1.414a.5.5 0 0 1-.708.708L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+        </svg>
+        概要
+      </button>
       </div>
+    </div>
+  </div>
+
+
+  <div id="summaryModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeSummaryModal()">×</span>
+      <h2>概要</h2>
+      <p><p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のプロバイダーが使用できます
+            <ui>
+            <li><a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>(HuggingChat)</li>
+            <li>Gemini(Google)</li>
+            <li>ChatGPT(OpenAI)</li>
+            <li>reka-core(reka.AI)</li>
+            <li>GeminiPro(Google)</li>
+            <li><a href="https://www.anthropic.com/claude">claude-3-opus</a>(Liaobots)</li>
+        　　</ui>また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
+        <h2>画像生成</h2>
+        <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
+        <h2>【お知らせ】</h2>
+        <p>元のUIが良いって方は<a href="/home/oldindex.html">[旧UI]</a>があるのでそちらを使っても構いません</p>
+        <p> 現時点でエラーが起きているAIは<ui>
+            <li>c4ai-command-r-plus</li>
+            <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
+        </ui><br>
+        6/13の更新でclaude3のみSystemプロンプトに対応させました SystemプロンプトにはAIにこんな動作をさせたい！というリクエストを含める事ができます<br>
+        例：アシスタント： お喋り君 あなたの名前は{アシスタント}です,以下の指令に沿って行動してください {アシスタント}はユーザとお友達です,{アシスタント}の口調には語尾にワン！が付きますまた敬語無しでフレンドリーに接します
+        </p></p>
     </div>
   </div>
 
@@ -475,7 +518,7 @@
       <div class="conversations">
       </div>
     </div>
-
+    
     <div class="chat-window">
       <div class="chat-header">
         <div class="chat-title">System prompt</div>
@@ -489,7 +532,7 @@
           </button>
         </div>
       </div>
-      <div class="chat-messages">
+      <div id="image"class="chat-messages">
       </div>
       <div class="chat-input">
         <textarea id="question" placeholder="質問を入力してください..." rows="1"></textarea>
@@ -504,6 +547,25 @@
   </div>
 
   <script>
+
+    function openSummaryModal() {
+      document.getElementById("settingsModal").style.display = "none"; // 設定モーダルを閉じる
+      document.getElementById("summaryModal").style.display = "block";
+    }
+
+    // 概要モーダルを閉じる
+    function closeSummaryModal() {
+      document.getElementById("summaryModal").style.display = "none";
+    }
+
+    function resetConversations() {
+  if (confirm("すべての会話履歴を削除します。よろしいですか？")) {
+    conversations = [];
+    currentConversationIndex = -1;
+    saveConversationsToCookie(); 
+    createNewConversation(); 
+  }
+}
     let conversations = [];
     let currentConversationIndex = -1; 
     let userName = 'ユーザー';
@@ -531,35 +593,36 @@
     
     //設定の保存と読み込み
     function saveSettings() {
-      const settings = {
-        provider: document.getElementById('provider').value,
-        userName: document.getElementById('userName').value,
-        showSystemPrompt: document.getElementById('showSystemPrompt').checked
-      };
-      document.cookie = `settings=${JSON.stringify(settings)}; path=/`;
-    }
-
+  const settings = {
+    provider: document.getElementById('provider').value,
+    userName: document.getElementById('userName').value,
+    showSystemPrompt: document.getElementById('showSystemPrompt').checked
+  };
+  // encodeURIComponent を使用してエンコードしてからcookieに設定
+  document.cookie = `settings=${encodeURIComponent(JSON.stringify(settings))}; path=/`;
+}
     function loadSettings() {
-      const cookie = document.cookie;
-      const parts = cookie.split('; ');
-      for (const part of parts) {
-        const [key, value] = part.split('=');
-        if (key === 'settings') {
-          try {
-            const settings = JSON.parse(decodeURIComponent(value));
-            document.getElementById('provider').value = settings.provider;
-            document.getElementById('userName').value = settings.userName;
-            document.getElementById('showSystemPrompt').checked = settings.showSystemPrompt;
-            if (settings.showSystemPrompt) {
-              document.getElementById('system-prompt-input').style.display = 'block';
-            }
-          } catch (error) {
-            console.error('設定の読み込み中にエラーが発生しました。', error);
-          }
-          break;
+  const cookie = document.cookie;
+  const parts = cookie.split('; ');
+  for (const part of parts) {
+    const [key, value] = part.split('=');
+    if (key === 'settings') {
+      try {
+        // デコードしてからパースする
+        const settings = JSON.parse(decodeURIComponent(value));
+        document.getElementById('provider').value = settings.provider;
+        document.getElementById('userName').value = settings.userName;
+        document.getElementById('showSystemPrompt').checked = settings.showSystemPrompt;
+        if (settings.showSystemPrompt) {
+          document.getElementById('system-prompt-input').style.display = 'block';
         }
+      } catch (error) {
+        console.error('設定の読み込み中にエラーが発生しました。', error);
       }
+      break;
     }
+  }
+}
 
     function updateConversationList() {
       const conversationsList = document.querySelector('.conversations');
@@ -709,76 +772,229 @@
 
     function addMessageToChat(message, isUser) {
   const messageElement = document.createElement('div');
-  messageElement.classList.add('chat-message'); // まず 'chat-message' を追加
+  messageElement.classList.add('chat-message');
   if (isUser) {
-    messageElement.classList.add('user'); // isUser が true の場合のみ 'user' を追加
+    messageElement.classList.add('user');
   }
 
-    
+  const messageNameElement = document.createElement('div');
+  messageNameElement.classList.add('message-name');
+  if (isUser) {
+    messageNameElement.textContent = userName;
+  } else {
+    messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+  }
+  messageElement.appendChild(messageNameElement);
 
-      const messageNameElement = document.createElement('div');
-      messageNameElement.classList.add('message-name');
-      if (isUser) {
-        messageNameElement.textContent = userName;
-      } else {
-        messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-      }
-      messageElement.appendChild(messageNameElement);
+  let messageContent = `<div class="message-content">
+      <p id="message-${messageCount}">${message}</p> 
+    </div>`;
 
-      let messageContent = `<div class="message-content">
-          <p>${message}</p>
-        </div>`;
+  messageElement.innerHTML += messageContent;
+  document.querySelector('.chat-messages').appendChild(messageElement);
+  document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
-      messageElement.innerHTML += messageContent;
-      document.querySelector('.chat-messages').appendChild(messageElement);
-      document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-    }
+  // メッセージごとにIDをインクリメント
+  messageCount++;
+}
+
+// メッセージID用のカウンター
+let messageCount = 0; 
 
     function clearChatWindow() {
       document.querySelector('.chat-messages').innerHTML = '';
     }
 
     function saveTextAsFile() {
-      const userQuestion = Array.from(document.querySelectorAll('.chat-message.user .message-content p')) 
-        .map(p => p.textContent)
-        .join('\n');
+  const messages = document.querySelectorAll('.chat-message');
+  let textToWrite = '';
 
-      const aiResponse = Array.from(document.querySelectorAll('.chat-message:not(.user) .message-content p')) 
-        .map(p => p.textContent)
-        .join('\n');
+  messages.forEach(message => {
+    const messageContent = message.querySelector('.message-content p').textContent;
+    const isUser = message.classList.contains('user');
 
-      const textToWrite = 'User:' + userQuestion + '\n' + 'AI:' + aiResponse;
+    textToWrite += (isUser ? 'ユーザー：' : 'AI：') + messageContent + '\n';
+  });
 
-      const textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
-      const fileNameToSaveAs = "chat_history.txt";
+  const textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
+  const fileNameToSaveAs = "chat_history.txt";
 
-      const downloadLink = document.createElement("a");
-      downloadLink.download = fileNameToSaveAs;
-      downloadLink.innerHTML = "Download File";
-      if (window.webkitURL != null) {
-        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-      } else {
-        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-        downloadLink.onclick = destroyClickedElement;
-        downloadLink.style.display = "none";
-        document.body.appendChild(downloadLink);
-      }
+  const downloadLink = document.createElement("a");
+  downloadLink.download = fileNameToSaveAs;
+  downloadLink.innerHTML = "Download File";
+  if (window.webkitURL != null) {
+    downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+  } else {
+    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+  }
 
-      downloadLink.click();
+  downloadLink.click();
+}
+
+
+function saveDivAsImage() {
+  // 画像としてダウンロードする div 要素を取得
+  const divToDownload = document.getElementById('image');
+
+  // div 要素の HTML コードを取得
+  const divHtml = divToDownload.outerHTML;
+
+  // 変換する HTML を作成
+  const convertedHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Hannari', sans-serif; /* フォントを指定 */
+          margin: 0;
+          padding: 0;
+          background-color: #f5f5f5; /* チャット欄背景色 */
+        }
+
+        .chat-message {
+          display: flex;
+          margin-bottom: 15px;
+        }
+
+        .chat-message.user {
+          flex-direction: row-reverse; /* ユーザーメッセージを右寄せ */
+        }
+
+        .message-name {
+          font-weight: bold;
+          font-size: 14px;
+          margin-bottom: 5px;
+          margin-right: 10px; /* ユーザーメッセージとの間隔 */
+        }
+
+        .message-content {
+          background-color: #f2f2f2;
+          padding: 10px;
+          border-radius: 5px;
+          max-width: 70%;
+          word-break: break-all; /* 長い単語を折り返す */
+        }
+
+        .chat-message.user .message-content {
+          background-color: #007aff; /* ユーザーメッセージの色 */
+          color: #fff;
+        }
+
+        .save-date {
+          text-align: center;
+          font-size: 10px;
+          margin-top: 10px;
+        }
+
+        /* マークダウン対応 */
+        .chat-message .message-content p {
+          margin: 0;
+          font-family: 'Hannari', sans-serif; /* フォントを指定 */
+        }
+
+        .chat-message .message-content ul,
+        .chat-message .message-content ol {
+          list-style: disc;
+          padding-left: 20px;
+        }
+
+        .chat-message .message-content li {
+          margin-bottom: 5px;
+        }
+
+        .chat-message .message-content pre {
+          white-space: pre-wrap; /* 改行を維持 */
+          font-family: 'Courier New', Courier, monospace; /* モノスペースフォント */
+          padding: 10px;
+          background-color: #eee;
+          border-radius: 5px;
+        }
+
+        .chat-message .message-content code {
+          font-family: 'Courier New', Courier, monospace; /* モノスペースフォント */
+        }
+
+        .chat-message .message-content a {
+          color: #007bff; /* リンクの色 */
+          text-decoration: none;
+        }
+
+        .chat-message .message-content a:hover {
+          text-decoration: underline;
+        }
+      </style>
+    </head>
+    <body>
+      ${convertDivToP(divHtml)}
+      <div class="save-date">保存日時: ${new Date().toLocaleString()}</div>
+    </body>
+    </html>
+  `;
+
+  // 一時的な div 要素を作成
+  const temporaryDiv = document.createElement('div');
+
+  // 一時的な div 要素に HTML コードをセット
+  temporaryDiv.innerHTML = convertedHtml;
+
+  // 一時的に DOM に追加
+  document.body.appendChild(temporaryDiv);
+
+  // html2canvas に一時的な div 要素を渡す
+  html2canvas(temporaryDiv, { allowTaint: true, useCORS: false }).then(canvas => {
+    // キャンバスから画像データを取得
+    const imageData = canvas.toDataURL('image/png');
+
+    // 画像データをダウンロードするリンクを作成
+    const link = document.createElement('a');
+    link.download = 'chat-image.png';
+    link.href = imageData;
+
+    // リンクをクリックして画像をダウンロード
+    link.click();
+
+    // 一時的な div 要素を削除
+    temporaryDiv.remove();
+  });
+}
+
+function convertDivToP(divHtml) {
+  let userCount = 0;
+  let aiCount = 0;
+  let strings1 = "：";
+  return divHtml.replace(/<div class="chat-message( user)?"/g, (match, isUser) => {
+    if (isUser) {
+      userCount++;
+      return `<p class="chat-message+":${isUser}${strings1}">`;
+    } else {
+      aiCount++;
+      return `<p class="chat-message+":${isUser}${strings1}">`;
     }
-
-    function destroyClickedElement(event) {
-      document.body.removeChild(event.target);
+  })
+  .replace(/<div class="message-name">/g, (match, isUser) => {
+    if (isUser) {
+      return `<span class="user_name"></span>`;
+    } else {
+      return `<span class="ai_name"></span>`;
     }
-
-    function saveDivAsImage() {
-      html2canvas(document.querySelector(".chat-messages")).then(canvas => {
-        var link = document.createElement('a');
-        link.download = 'chat-image.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      });
+  })
+  .replace(/<div class="message-content">/g, (match, isUser) => {
+    if (isUser) {
+      return `<span class="user_value">`;
+    } else {
+      return `<span class="ai_value">`;
     }
+  })
+  .replace(/<\/div>/g, '</span>')
+  .replace(/<p id="message-\d+">/g, '<span class="ai_value">')
+  .replace(/<\/p>/g, '</span>');
+}
+
+
 
     function openWindow() {
       var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
