@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/rasterizehtml/1.3.0/rasterizeHTML.allinone.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+
   <style>
     /* 全体 */
     body {
@@ -546,7 +548,7 @@
     </div>
   </div>
 
-  <script>
+    <script>
 
     function openSummaryModal() {
       document.getElementById("settingsModal").style.display = "none"; // 設定モーダルを閉じる
@@ -742,35 +744,41 @@
     });
 
     function saveCurrentConversation() {
-      const messages = document.querySelectorAll('.chat-message');
-      const conversationData = Array.from(messages).map(message => {
-        return {
-          text: message.querySelector('.message-content p').textContent,
-          isUser: message.classList.contains('user')
-        };
-      });
+  const messages = document.querySelectorAll('.chat-message');
+  const conversationData = Array.from(messages).map(message => {
+    const messageContentElement = message.querySelector('.message-content'); 
+    // HTMLタグを含めて取得
+    const textContent = messageContentElement ? messageContentElement.outerHTML : ''; 
 
-      conversations[currentConversationIndex].history = conversationData; 
-      saveConversationsToCookie(); 
-    }
+    return {
+      html: textContent, // HTMLコンテンツを保存
+      isUser: message.classList.contains('user')
+    };
+  });
+
+  conversations[currentConversationIndex].history = conversationData; 
+  saveConversationsToCookie(); 
+}
+
 
     function loadConversation(index) {
-      clearChatWindow();
+  clearChatWindow();
 
-      if (conversations[index] && conversations[index].history) {
-        const conversationData = conversations[index].history;
+  if (conversations[index] && conversations[index].history) {
+    const conversationData = conversations[index].history;
 
-        if (conversationData) {
-          conversationData.forEach(messageData => {
-            addMessageToChat(messageData.text, messageData.isUser);
-          });
-        }
-      } else {
-        console.error("会話履歴が読み込めません。");
-      }
+    if (conversationData) {
+      conversationData.forEach(messageData => {
+        // messageData.html をそのまま innerHTML に設定
+        addMessageToChat(messageData.html, messageData.isUser); 
+      });
     }
+  } else {
+    console.error("会話履歴が読み込めません。");
+  }
+}
 
-    function addMessageToChat(message, isUser) {
+      function addMessageToChat(message, isUser) {
   const messageElement = document.createElement('div');
   messageElement.classList.add('chat-message');
   if (isUser) {
@@ -786,17 +794,19 @@
   }
   messageElement.appendChild(messageNameElement);
 
-  let messageContent = `<div class="message-content">
-      <p id="message-${messageCount}">${message}</p> 
-    </div>`;
+  // message を showdown で変換してから innerHTML に設定
+  const messageContent = document.createElement('div');
+  messageContent.classList.add('message-content');
+  const converter = new showdown.Converter();
+  messageContent.innerHTML = converter.makeHtml(message);
+  messageElement.appendChild(messageContent);
 
-  messageElement.innerHTML += messageContent;
   document.querySelector('.chat-messages').appendChild(messageElement);
   document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
-  // メッセージごとにIDをインクリメント
   messageCount++;
 }
+
 
 // メッセージID用のカウンター
 let messageCount = 0; 
@@ -1044,6 +1054,7 @@ function convertDivToP(divHtml) {
         fetch('/generate_image?prompt=' + encodeURIComponent(imagePrompt), { signal })
           .then(response => response.json())
           .then(data => {
+             saveCurrentConversation(); // 会話履歴を保存
             data.images.forEach(imageData => {
               if (imageData) { // imageDataが空でないことを確認
                 var img = document.createElement('img');
@@ -1070,6 +1081,7 @@ function convertDivToP(divHtml) {
             saveCurrentConversation(); // 会話履歴を保存
           })
           .catch(error => {
+             saveCurrentConversation(); // 会話履歴を保存
             console.error('Error:', error);
             clearInterval(dotsInterval);
             let errorMessage = document.createElement('div');
@@ -1127,7 +1139,7 @@ function convertDivToP(divHtml) {
           });
       }
     }
-
+let autoSaveInterval;
     function stopRequest() {
       console.log("AIリクエストを停止します。");
 
@@ -1200,6 +1212,8 @@ function convertDivToP(divHtml) {
     document.addEventListener('DOMContentLoaded', () => {
       loadConversationsFromCookie(); 
       loadSettings(); //設定を読み込み
+      loadUserNameFromCookie();
+      autoSaveInterval = setInterval(saveCurrentConversation, 5 * 60 * 1000);
       if (conversations.length === 0) {
         createNewConversation();
       } else {
@@ -1237,8 +1251,32 @@ function convertDivToP(divHtml) {
       });
 
       userNameInput.addEventListener('change', () => {
-        userName = userNameInput.value || 'ユーザー'; 
-      });
+    userName = userNameInput.value || 'ユーザー';
+    // ユーザー名をCookieに保存
+    saveUserNameToCookie();
+  });
+
+  // ユーザー名をCookieに保存する関数
+function saveUserNameToCookie() {
+  document.cookie = `userName=${encodeURIComponent(userName)}; path=/`;
+}
+
+// Cookieからユーザー名を読み込む関数
+function loadUserNameFromCookie() {
+  const cookie = document.cookie;
+  const parts = cookie.split('; ');
+  for (const part of parts) {
+    const [key, value] = part.split('=');
+    if (key === 'userName') {
+      try {
+        userName = decodeURIComponent(value);
+      } catch (error) {
+        console.error('ユーザー名の読み込み中にエラーが発生しました。', error);
+      }
+      break;
+    }
+  }
+}
 
       updateConversationList();
     });
