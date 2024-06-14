@@ -1,3 +1,71 @@
+.select-container {
+    width: 150px;
+    margin-left: 0; /* 左寄せ */
+}
+
+/* ドロップダウンスタイル */
+.select-container select {
+    width: 100%;
+    padding: 10px 20px;
+    border: 1px solid #007aff; /* Mac風のボーダー */
+    border-radius: 5px; /* Mac風のボーダーラディウス */
+    background-color: #007aff; /* Mac風の背景色 */
+    font-size: 16px;
+    color: #f2f2f2; /* Mac風のテキスト色 */
+    -webkit-appearance: none; /* デフォルトのブラウザスタイルを削除 */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* ドロップダウンホバースタイル */
+.select-container select:hover {
+    border-color: #69c8e6; /* ホバー時のボーダーカラー */
+}
+
+/* ドロップダウンフォーカススタイル */
+.select-container select:focus {
+    outline: none;
+    border-color: #007aff; /* フォーカス時のボーダーカラー */
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.button-group button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.button-group button:hover {
+    background-color: #0056b3;
+}
+
+#toggleButton {
+    background-color: #4CAF50; /* ボタンの背景色 */
+    border: none; /* ボーダーを非表示に */
+    color: white; /* テキストの色 */
+    padding: 15px 32px; /* パディング（上下15px、左右32px） */
+    text-align: center; /* テキストを中央寄せに */
+    text-decoration: none; /* テキストの装飾を無効に */
+    display: inline-block;
+    font-size: 16px; /* フォントサイズ */
+    margin: 4px 2px; /* マージン（上下4px、左右2px） */
+    cursor: pointer; /* カーソルをポインターに */
+}
+
+#toggleButton:hover {
+    background-color: #45a049; /* ホバー時の背景色 */
+}
+
 body {
     font-family: 'Hannari' sans-serif;
     margin: 0;

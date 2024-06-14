@@ -1,6 +1,8 @@
 uvicorn beta:app --reload
 
 
+python -m g4f.cli gui -port 8080 -debug
+
 
 await g4f.ChatCompletion.create_async(
             model="gemini-1.5-pro-latest",
@@ -11,58 +13,3 @@ await g4f.ChatCompletion.create_async(
 
 
 
-
-
-        <!DOCTYPE html>
-<html lang="ja">
-<head>
-    <!-- 省略 -->
-</head>
-<body>
-    <!-- 省略 -->
-
-    <!-- 質問と回答のセクション -->
-    <textarea id="question" type="text" placeholder="ここに質問を入れる"></textarea>
-    <button onclick="askQuestion()">質問</button>
-    <div id="answer"></div>
-    <div id="error"></div>
-
-    <!-- エクスポートボタン -->
-    <button id="exportBtn">エクスポート</button>
-
-    <!-- 省略 -->
-
-    <script>
-        // 質問と回答をテキストファイルとして保存する関数
-        function saveTextAsFile() {
-            var textToWrite = document.getElementById('question').value + "\n\n" + document.getElementById('answer').innerText;
-            var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-            var fileNameToSaveAs = "AI.txt";
-
-            var downloadLink = document.createElement("a");
-            downloadLink.download = fileNameToSaveAs;
-            downloadLink.innerHTML = "Download File";
-            if (window.webkitURL != null) {
-                // Chrome allows the link to be clicked without actually adding it to the DOM.
-                downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-            } else {
-                // Firefox requires the link to be added to the DOM before it can be clicked.
-                downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-                downloadLink.onclick = destroyClickedElement;
-                downloadLink.style.display = "none";
-                document.body.appendChild(downloadLink);
-            }
-
-            downloadLink.click();
-        }
-
-        var exportBtn = document.getElementById('exportBtn');
-        exportBtn.addEventListener('click', saveTextAsFile);
-
-        function destroyClickedElement(event) {
-            // remove the link from the DOM
-            document.body.removeChild(event.target);
-        }
-    </script>
-</body>
-</html>

@@ -11,7 +11,12 @@ class Reka(AbstractProvider):
     working         = True
     needs_auth      = True
     supports_stream = True
-    default_vision_model = "reka"
+    models = [
+        "reka-core",
+        "reka-flash"
+        "reka-edge"
+    ]
+    default_vision_model = "reka-core"
     cookies         = {}
 
     @classmethod

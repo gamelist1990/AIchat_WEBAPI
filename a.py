@@ -3,7 +3,7 @@ from g4f.cookies import set_cookies_dir, read_cookie_files
 import g4f.debug
 import g4f
 import os,json
-from g4f.Provider import HuggingChat,OpenRouter,Blackbox,You,Gemini,Bing,Liaobots,GeminiProChat,OpenaiChat,HuggingFace
+from g4f.Provider import HuggingChat,OpenRouter,Blackbox,You,Gemini,Bing,Liaobots,GeminiProChat,OpenaiChat,HuggingFace,Reka
 import uuid
 
 g4f.debug.logging = True  # Enable debug logging
@@ -11,16 +11,18 @@ g4f.debug.logging = True  # Enable debug logging
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=HuggingChat,
-        #api_key=read_cookie_files(cookies_dir),
+        provider=Reka,
+        api_key=read_cookie_files(cookies_dir),
     )
+system_prompt = "あなたの名前はAIChatです"
 
 response = client.chat.completions.create(
     #model="CohereForAI/c4ai-command-r-plus",
-    model="HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1",
+
+    model="reka",
     messages=[{"role": "user", "content": "こんにちはあなたは何ができるんですか？!"}]
 )
-
+#{"role": "system", "content": system_prompt},
 # Get the AI's response
 ai_response = response.choices[0].message.content
 

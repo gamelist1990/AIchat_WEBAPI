@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/home/css/home.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
   <style>
     /* 全体 */
@@ -26,30 +27,30 @@
     /* チャットコンテナ */
     .chat-container {
       display: flex;
-      width: 100%; 
-      height: 100vh; 
+      width: 100%; /* 画面幅に合わせて調整 */
+      height: 100vh; /* 画面高さに合わせて調整 */
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-      position: relative; 
+      position: relative; /* サイドバーの位置基準 */
     }
 
     /* サイドバー */
     .sidebar {
       background-color: #282626cb;
       color: #fdfdfd;
-      width: 100%; 
+      width: 100%; /* モバイルでは全開 */
       height: 100%;
-      position: fixed; 
+      position: fixed; /* 画面左側に固定 */
       top: 0;
-      left: -100%;
-      transition: left 0.3s ease; 
-      z-index: 10;
+      left: -100%; /* 初期状態では非表示 */
+      transition: left 0.3s ease; /* スムーズなスライドアニメーション */
+      z-index: 10; /* モーダルより上に表示 */
       overflow-y: auto;
     }
 
     .sidebar.open {
-      left: 0; 
+      left: 0; /* メニューを開いた状態 */
     }
 
     .sidebar-header {
@@ -97,7 +98,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative; 
+      position: relative; /* 名前変更フォームの配置基準 */
     }
 
     .conversation:hover {
@@ -105,7 +106,7 @@
     }
 
     .conversation.active {
-      background-color: #5a5858cb; 
+      background-color: #5a5858cb; /* アクティブな会話 */
     }
 
     .conversation .actions {
@@ -130,7 +131,7 @@
 
     /* 会話名変更フォーム */
     .rename-form {
-      display: none; 
+      display: none; /* 初期状態では非表示 */
       position: absolute;
       top: 0;
       left: 0;
@@ -165,11 +166,11 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      padding-top: 0px; 
+      padding-top: 0px; /* ハンバーガーメニューの高さ分だけパディングを追加 */
     }
-
+    /* チャットウィンドウ */
     .chat-window.open {
-      padding-top: 0px; 
+    padding-top: 0px; /* サイドバーが開いているときはパディングを削除 */
     }
 
     .chat-header {
@@ -206,19 +207,13 @@
 
     /* チャットメッセージ */
     .chat-message {
-      display: block; 
+      display: flex;
+      align-items: flex-start;
       margin-bottom: 10px;
     }
 
     .chat-message.user {
-      text-align: right;
-    }
-
-    /* メッセージ名 */
-    .message-name {
-      font-weight: bold;
-      font-size: small;
-      margin-bottom: 5px;
+      justify-content: flex-end;
     }
 
     .chat-message .message-content {
@@ -226,7 +221,6 @@
       padding: 10px;
       border-radius: 5px;
       max-width: 70%;
-      display: inline-block; 
     }
 
     .chat-message.user .message-content {
@@ -311,8 +305,7 @@
       margin-bottom: 5px;
     }
 
-    .setting-option select,
-    .setting-option input[type="text"] {
+    .setting-option select {
       width: 100%;
       padding: 8px;
       border: 1px solid #ccc;
@@ -356,11 +349,11 @@
 
     /* ハンバーガーメニューボタン */
     .hamburger-menu {
-      display: block; 
+      display: block; /* モバイルファースト */
       position: fixed;
       top: 20px;
       left: 20px;
-      z-index: 12; 
+      z-index: 12; /* サイドバーより上に表示 */
       cursor: pointer;
     }
 
@@ -368,7 +361,7 @@
       display: block;
       width: 30px;
       height: 4px;
-      background-color: #000; 
+      background-color: #000; /* ボタンの色を黒に変更 */
       margin-bottom: 5px;
       border-radius: 3px;
     }
@@ -401,7 +394,7 @@
   <!-- モーダルウィンドウ -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="saveSettings()">×</span> 
+      <span class="close">×</span>
       <h2>Open Settings</h2>
       <div class="setting-options">
         <div class="setting-option">
@@ -416,11 +409,7 @@
           </select>
         </div>
         <div class="setting-option">
-          <label for="userName">User Name:</label>
-          <input type="text" id="userName" placeholder="ユーザー名を入力">
-        </div>
-        <div class="setting-option">
-          <input type="checkbox" id="showSystemPrompt">
+          <input type="checkbox" id="showSystemPrompt" checked>
           <label for="showSystemPrompt">システムプロンプトを表示</label>
         </div>
         <button onclick="saveTextAsFile()">
@@ -504,10 +493,11 @@
   </div>
 
   <script>
+    // 会話履歴を管理するための配列
     let conversations = [];
-    let currentConversationIndex = -1; 
-    let userName = 'ユーザー';
+    let currentConversationIndex = 0;
 
+    // クッキーから会話履歴を取得する関数
     function loadConversationsFromCookie() {
       const cookie = document.cookie;
       const parts = cookie.split('; ');
@@ -517,6 +507,7 @@
           try {
             conversations = JSON.parse(decodeURIComponent(value));
           } catch (error) {
+            // クッキーから有効なデータが取得できなかった場合、空の配列を初期値とする
             conversations = [];
           }
           break;
@@ -524,43 +515,13 @@
       }
     }
 
+    // 会話履歴をクッキーに保存する関数
     function saveConversationsToCookie() {
       const cookieValue = encodeURIComponent(JSON.stringify(conversations));
       document.cookie = `conversations=${cookieValue}; path=/`;
     }
-    
-    //設定の保存と読み込み
-    function saveSettings() {
-      const settings = {
-        provider: document.getElementById('provider').value,
-        userName: document.getElementById('userName').value,
-        showSystemPrompt: document.getElementById('showSystemPrompt').checked
-      };
-      document.cookie = `settings=${JSON.stringify(settings)}; path=/`;
-    }
 
-    function loadSettings() {
-      const cookie = document.cookie;
-      const parts = cookie.split('; ');
-      for (const part of parts) {
-        const [key, value] = part.split('=');
-        if (key === 'settings') {
-          try {
-            const settings = JSON.parse(decodeURIComponent(value));
-            document.getElementById('provider').value = settings.provider;
-            document.getElementById('userName').value = settings.userName;
-            document.getElementById('showSystemPrompt').checked = settings.showSystemPrompt;
-            if (settings.showSystemPrompt) {
-              document.getElementById('system-prompt-input').style.display = 'block';
-            }
-          } catch (error) {
-            console.error('設定の読み込み中にエラーが発生しました。', error);
-          }
-          break;
-        }
-      }
-    }
-
+    // 会話リストを更新
     function updateConversationList() {
       const conversationsList = document.querySelector('.conversations');
       conversationsList.innerHTML = '';
@@ -568,28 +529,26 @@
       conversations.forEach((conversation, index) => {
         const conversationElement = document.createElement('div');
         conversationElement.classList.add('conversation');
-        conversationElement.textContent = conversation.name || `会話履歴 ${index + 1}`; 
+        conversationElement.textContent = conversation.name || `会話履歴 ${index + 1}`; // 会話名が設定されている場合はそれを表示
         conversationElement.dataset.conversationIndex = index;
         if (index === currentConversationIndex) {
-          conversationElement.classList.add('active'); 
+          conversationElement.classList.add('active'); // 現在の会話をアクティブにする
         }
 
+        // 削除ボタンを追加
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>';
         deleteButton.addEventListener('click', () => {
           deleteConversation(index);
         });
 
+        // 名前変更ボタンを追加
         const renameButton = document.createElement('button');
         renameButton.textContent = 'Rename';
         renameButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const oldName = conversation.name || `会話履歴 ${index + 1}`;
-        const newName = prompt("新しい名前を入力してください:", oldName);
-        if (newName !== null && newName.trim() !== "") { // キャンセル以外で、空白以外の入力があれば名前を変更
-          renameConversation(index, newName);
-        }
-      });
+          event.stopPropagation(); // 親要素へのイベント伝播を防ぐ
+          openRenameForm(index);
+        });
 
         const actionsContainer = document.createElement('div');
         actionsContainer.classList.add('actions');
@@ -599,6 +558,7 @@
         conversationElement.appendChild(actionsContainer);
         conversationsList.appendChild(conversationElement);
 
+        // 会話名変更フォームを追加
         const renameForm = document.createElement('form');
         renameForm.classList.add('rename-form');
         renameForm.innerHTML = `
@@ -612,9 +572,10 @@
         });
         conversationElement.appendChild(renameForm);
 
+        // 会話リストアイテムをクリックしたときの処理
         conversationElement.addEventListener('click', () => {
           switchConversation(index);
-
+          // クリックされた会話リストアイテムをアクティブにする
           const activeConversation = document.querySelector('.conversation.active');
           if (activeConversation) {
             activeConversation.classList.remove('active');
@@ -624,14 +585,16 @@
       });
     }
 
+    // 新しい会話を作成
     function createNewConversation() {
-       conversations.push({ name: `会話履歴 ${conversations.length + 1}`, history: [] }); 
+      conversations.push({ name: `会話履歴 ${conversations.length + 1}`, history: [] }); // 会話名と履歴を初期化
       currentConversationIndex = conversations.length - 1;
       updateConversationList();
       clearChatWindow();
-      saveConversationsToCookie(); 
+      saveConversationsToCookie(); // 会話履歴をクッキーに保存
     }
 
+    // 会話を削除
     function deleteConversation(index) {
       if (conversations.length === 1) {
         alert("最後の会話は削除できません。");
@@ -640,133 +603,130 @@
 
       conversations.splice(index, 1);
 
+      // 削除した会話が現在の会話だった場合は、最初の会話に切り替える
       if (currentConversationIndex === index) {
         currentConversationIndex = 0;
       } else if (currentConversationIndex > index) {
+        // 削除した会話よりも後の会話が選択されていた場合は、インデックスを調整
         currentConversationIndex--;
       }
 
       updateConversationList();
       loadConversation(currentConversationIndex);
-      saveConversationsToCookie(); 
+      saveConversationsToCookie(); // 会話履歴をクッキーに保存
     }
 
+    // 会話の名前を変更
     function renameConversation(index, newName) {
       conversations[index].name = newName;
       updateConversationList();
+      // フォームを閉じる
       const renameForm = document.querySelectorAll('.rename-form')[index];
       renameForm.style.display = 'none';
-      saveConversationsToCookie(); 
+      saveConversationsToCookie(); // 会話履歴をクッキーに保存
     }
 
+    // 会話の名前変更フォームを開く
     function openRenameForm(index) {
       const renameForm = document.querySelectorAll('.rename-form')[index];
       renameForm.style.display = 'block';
     }
 
+    // 会話を切り替える
     function switchConversation(index) {
-      if (currentConversationIndex !== -1) { 
-        saveCurrentConversation(); 
-      }
+      saveCurrentConversation();
       updateConversationList();
       currentConversationIndex = index;
       loadConversation(index);
     }
-
+    // 会話をクリア
     document.getElementById('regenerate-response').addEventListener('click', () => {
-      document.querySelector('.chat-messages').innerHTML = ''; 
-      askQuestion(); 
-    });
+    document.querySelector('.chat-messages').innerHTML = ''; // チャット欄をクリア
+    askQuestion(); // 最後の質問を再実行
+  });
 
+    // 会話を保存
     function saveCurrentConversation() {
-      const messages = document.querySelectorAll('.chat-message');
-      const conversationData = Array.from(messages).map(message => {
-        return {
-          text: message.querySelector('.message-content p').textContent,
-          isUser: message.classList.contains('user')
-        };
-      });
+  const messages = document.querySelectorAll('.chat-message');
+  const conversationData = Array.from(messages).map(message => {
+    return {
+      text: message.querySelector('.message-content p').textContent,
+      isUser: message.classList.contains('user')
+    };
+  });
 
-      conversations[currentConversationIndex].history = conversationData; 
-      saveConversationsToCookie(); 
-    }
+  conversations[currentConversationIndex].history = conversationData; // 現在の会話の履歴を更新
+  saveConversationsToCookie(); // 会話履歴をクッキーに保存
+}
 
+    // 会話をロード
     function loadConversation(index) {
       clearChatWindow();
+      const conversationData = conversations[index].history;
 
-      if (conversations[index] && conversations[index].history) {
-        const conversationData = conversations[index].history;
-
-        if (conversationData) {
-          conversationData.forEach(messageData => {
-            addMessageToChat(messageData.text, messageData.isUser);
-          });
-        }
-      } else {
-        console.error("会話履歴が読み込めません。");
+      if (conversationData) {
+        conversationData.forEach(messageData => {
+          addMessageToChat(messageData.text, messageData.isUser);
+        });
       }
     }
 
+    // メッセージをチャットに追加
     function addMessageToChat(message, isUser) {
-  const messageElement = document.createElement('div');
-  messageElement.classList.add('chat-message'); // まず 'chat-message' を追加
-  if (isUser) {
-    messageElement.classList.add('user'); // isUser が true の場合のみ 'user' を追加
-  }
-
-    
-
-      const messageNameElement = document.createElement('div');
-      messageNameElement.classList.add('message-name');
-      if (isUser) {
-        messageNameElement.textContent = userName;
-      } else {
-        messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-      }
-      messageElement.appendChild(messageNameElement);
-
-      let messageContent = `<div class="message-content">
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message', isUser ? 'user' : '');
+      messageElement.innerHTML = `
+        <div class="message-content">
           <p>${message}</p>
-        </div>`;
+        </div>
+      `;
 
-      messageElement.innerHTML += messageContent;
       document.querySelector('.chat-messages').appendChild(messageElement);
       document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
     }
 
+    // チャットウィンドウをクリア
     function clearChatWindow() {
       document.querySelector('.chat-messages').innerHTML = '';
     }
 
+    // ユーザーの質問とAIの回答を保存する関数
     function saveTextAsFile() {
-      const userQuestion = Array.from(document.querySelectorAll('.chat-message.user .message-content p')) 
-        .map(p => p.textContent)
-        .join('\n');
+  console.log('saveTextAsFile function called');
+  // チャット欄からユーザーの質問を取得
+  const userQuestion = Array.from(document.querySelectorAll('.chat-message.user .message-content p')) // NodeList を Array に変換
+    .map(p => p.textContent)
+    .join('\n');
 
-      const aiResponse = Array.from(document.querySelectorAll('.chat-message:not(.user) .message-content p')) 
-        .map(p => p.textContent)
-        .join('\n');
+  // チャット欄からAIの回答またはエラーメッセージを取得
+  const aiResponse = Array.from(document.querySelectorAll('.chat-message:not(.user) .message-content p')) // NodeList を Array に変換
+    .map(p => p.textContent)
+    .join('\n');
 
-      const textToWrite = 'User:' + userQuestion + '\n' + 'AI:' + aiResponse;
+  // テキストをファイルに書き込む内容を作成
+  const textToWrite = 'User:' + userQuestion + '\n' + 'AI:' + aiResponse;
+  console.log('Text to write:', textToWrite);
 
-      const textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
-      const fileNameToSaveAs = "chat_history.txt";
+  // Blob を作成してファイルをダウンロード
+  const textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
+  const fileNameToSaveAs = "chat_history.txt";
 
-      const downloadLink = document.createElement("a");
-      downloadLink.download = fileNameToSaveAs;
-      downloadLink.innerHTML = "Download File";
-      if (window.webkitURL != null) {
-        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-      } else {
-        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-        downloadLink.onclick = destroyClickedElement;
-        downloadLink.style.display = "none";
-        document.body.appendChild(downloadLink);
-      }
+  const downloadLink = document.createElement("a");
+  downloadLink.download = fileNameToSaveAs;
+  downloadLink.innerHTML = "Download File";
+  if (window.webkitURL != null) {
+    downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+  } else {
+    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+  }
 
-      downloadLink.click();
-    }
+  downloadLink.click();
+}
 
+    // ダウンロードリンクをクリックした後にリンクを削除する関数
     function destroyClickedElement(event) {
       document.body.removeChild(event.target);
     }
@@ -787,8 +747,8 @@
     var button;
     var dots = 0;
     var dotsInterval;
-    var isRequesting = false; 
-    var currentFetchController = null; 
+    var isRequesting = false; // AIリクエストの状態を管理する変数
+    var currentFetchController = null; // fetch の AbortController を保持
 
     function askQuestion() {
       var text = document.getElementById('question').value;
@@ -797,13 +757,15 @@
       button = document.querySelector('#send-message');
 
       if (isRequesting) {
+        // AIリクエストが実行中の場合はリクエストを停止
         stopRequest();
         return;
       }
 
-      isRequesting = true; 
+      isRequesting = true; // AIリクエスト開始
 
-      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 8.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5z"/></svg> Stop';
+      // アイコンを変更
+      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 8.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5z"/></svg> Stop';
 
       button.disabled = true;
       button.innerText = '質問中';
@@ -816,10 +778,22 @@
 
       document.getElementById('question').value = '';
 
-      addMessageToChat(text, true);
+      // 新しいメッセージ要素を作成
+      var messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message', 'user');
+      messageElement.innerHTML = `
+        <div class="message-content">
+          <p>${text}</p>
+        </div>
+      `;
 
+      // メッセージをチャットウィンドウに追加
+      document.querySelector('.chat-messages').appendChild(messageElement);
+
+      // チャットウィンドウを一番下までスクロール
       document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
+      // AbortController を作成
       currentFetchController = new AbortController();
       const signal = currentFetchController.signal;
 
@@ -829,20 +803,15 @@
           .then(response => response.json())
           .then(data => {
             data.images.forEach(imageData => {
-              if (imageData) { // imageDataが空でないことを確認
-                var img = document.createElement('img');
-                img.src = 'data:image/png;base64,' + imageData;
-                img.style.width = '300px';
-                let imageMessage = document.createElement('div');
-                imageMessage.classList.add('chat-message');
-                imageMessage.innerHTML = `<div class="message-content"><img src="${img.src}" style="width: 300px;"></div>`;
-                document.querySelector('.chat-messages').appendChild(imageMessage);
-
-                const messageNameElement = document.createElement('div');
-                messageNameElement.classList.add('message-name');
-                messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-                imageMessage.prepend(messageNameElement); 
-              }
+              var img = document.createElement('img');
+              img.src = 'data:image/png;base64,' + imageData;
+              img.style.width = '300px';
+              //document.getElementById('answer').appendChild(img);
+              // 画像をメッセージとして追加
+              let imageMessage = document.createElement('div');
+              imageMessage.classList.add('chat-message');
+              imageMessage.innerHTML = `<div class="message-content"><img src="${img.src}" style="width: 300px;"></div>`;
+              document.querySelector('.chat-messages').appendChild(imageMessage);
             });
             clearInterval(dotsInterval);
             button.innerText = 'Run';
@@ -850,12 +819,12 @@
             setTimeout(function () {
               button.disabled = false;
             }, 3000);
-            isRequesting = false;
-            saveCurrentConversation(); // 会話履歴を保存
+            isRequesting = false; // AIリクエスト停止
           })
           .catch(error => {
             console.error('Error:', error);
             clearInterval(dotsInterval);
+            //document.getElementById('error').innerText = 'エラーが起きました';
             let errorMessage = document.createElement('div');
             errorMessage.classList.add('chat-message');
             errorMessage.innerHTML = `<div class="message-content"><p>エラーが発生しました。</p></div>`;
@@ -863,8 +832,7 @@
             button.innerText = 'Run';
             button.classList.remove('loading');
             button.disabled = false;
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            isRequesting = false; // AIリクエスト停止
           });
       } else {
         fetch('/' + provider + encodeURIComponent(text) + '&system=' + encodeURIComponent(systems), { signal })
@@ -876,8 +844,19 @@
               var decodedData = unicodeToUtf8(data);
             }
 
-            addMessageToChat(decodedData, false);
+            // 新しいメッセージ要素を作成
+            var messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            messageElement.innerHTML = `
+              <div class="message-content">
+                <p>${decodedData}</p>
+              </div>
+            `;
 
+            // メッセージをチャットウィンドウに追加
+            document.querySelector('.chat-messages').appendChild(messageElement);
+
+            // チャットウィンドウを一番下までスクロール
             document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
             clearInterval(dotsInterval);
@@ -886,8 +865,7 @@
             setTimeout(function () {
               button.disabled = false;
             }, 3000);
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            isRequesting = false; // AIリクエスト停止
           })
           .catch(error => {
             console.error('Error:', error);
@@ -906,24 +884,28 @@
             button.innerText = 'Run';
             button.classList.remove('loading');
             button.disabled = false;
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            isRequesting = false; // AIリクエスト停止
           });
       }
     }
 
+    // AIリクエストを停止する関数
     function stopRequest() {
+      // AIリクエストを停止する処理を実装
       console.log("AIリクエストを停止します。");
 
+      // AbortController を使用してリクエストをキャンセル
       if (currentFetchController) {
         currentFetchController.abort();
-        currentFetchController = null; 
+        currentFetchController = null; // AbortController をリセット
       }
 
-      isRequesting = false; 
+      isRequesting = false; // AIリクエスト停止
 
+      // アイコンを変更
       button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.193-.824-.149-.742-.592l.83-4.73L.173 6.765c-.33-.33-.03-.86.52-.86h12.693c.55 0 .85.53.52.86l-3.057 3.057L13.067 14.852c.392.392.117.986-.237.986H3.85c-.354 0-.628-.595-.237-.986z"/></svg> Run';
 
+      // ローディングアニメーションを停止
       clearInterval(dotsInterval);
       button.innerText = 'Run';
       button.classList.remove('loading');
@@ -974,39 +956,39 @@
       }, false);
     }
 
+    // サイドバーを開閉する関数
     function toggleSidebar() {
-      const sidebar = document.querySelector('.sidebar');
-      const chatWindow = document.querySelector('.chat-window'); 
-      sidebar.classList.toggle('open');
-      chatWindow.classList.toggle('open'); 
-    }
+    const sidebar = document.querySelector('.sidebar');
+    const chatWindow = document.querySelector('.chat-window'); // chatWindow を取得
+    sidebar.classList.toggle('open');
+    chatWindow.classList.toggle('open'); // chatWindow に open クラスを追加/削除
+  }
 
+    // DOMContentLoadedイベントリスナー
     document.addEventListener('DOMContentLoaded', () => {
-      loadConversationsFromCookie(); 
-      loadSettings(); //設定を読み込み
-      if (conversations.length === 0) {
-        createNewConversation();
-      } else {
-        currentConversationIndex = 0; 
-        loadConversation(currentConversationIndex);
-      }
+      // 新しい会話の作成
+      createNewConversation();
 
+      // 新しい会話ボタンのイベントリスナー
       document.getElementById('new-conversation').addEventListener('click', createNewConversation);
+
+      // 会話リストのイベントリスナーは updateConversationList() 内に移動
+
+      // メッセージ送信ボタンのイベントリスナー
       document.getElementById('send-message').addEventListener('click', askQuestion);
 
+      // 設定モーダルの制御
       const modal = document.getElementById("settingsModal");
       const btn = document.getElementById("openSettings");
       const span = document.getElementsByClassName("close")[0];
       const showSystemPromptCheckbox = document.getElementById('showSystemPrompt');
       const systemPromptInput = document.getElementById('system-prompt-input');
-      const userNameInput = document.getElementById('userName');
 
       btn.onclick = function() {
         modal.style.display = "block";
       }
 
       span.onclick = function() {
-        saveSettings(); // 設定を保存
         modal.style.display = "none";
       }
 
@@ -1016,14 +998,12 @@
         }
       }
 
+      // システムプロンプト表示チェックボックスのイベントリスナー
       showSystemPromptCheckbox.addEventListener('change', () => {
         systemPromptInput.style.display = showSystemPromptCheckbox.checked ? 'block' : 'none';
       });
 
-      userNameInput.addEventListener('change', () => {
-        userName = userNameInput.value || 'ユーザー'; 
-      });
-
+      // 会話リストを初期化
       updateConversationList();
     });
   </script>

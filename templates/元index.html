@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="description" content="AI Chatbotへようこそ!このページは会話AI:Gemini-pro,Gemini,画像生成AI：Bing creator images,を使用して作成されています">
+    <meta name="apple-mobile-web-app-title" content="MenuClient|AIChat">
+    <link rel="icon" id="appIcon" type="image/png" href="/home/icon.png">       
+    <link rel="icon" href="/home/icon.png"  />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="/home/css/home.css">
+
+<script>
+function openWindow() {
+  var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
+}
+
+// ユーザーの質問とAIの回答を保存する関数
+function saveTextAsFile() {
+    console.log('saveTextAsFile function called'); // 関数が呼び出されたことを確認
+    var userQuestion = 'User Chat: ' + document.getElementById('question').value;
+    var aiAnswer = 'Answer: ' + document.getElementById('answer').innerText;
+    var textToWrite = 'User:'+ document.getElementById('question').value + '\n' + 'AI:'+document.getElementById('answer').innerText;
+    console.log('Text to write:', textToWrite); // 保存するテキストの内容を確認
+    var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+    var fileNameToSaveAs = "chat_history.txt";
+
+    var downloadLink = document.createElement("a");
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = "Download File";
+    if (window.webkitURL != null) {
+        // Chrome allows the link to be clicked without actually adding it to the DOM.
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    } else {
+        // Firefox requires the link to be added to the DOM before it can be clicked.
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = destroyClickedElement;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+    }
+
+    downloadLink.click();
+}
+
+// ダウンロードリンクをクリックした後にリンクを削除する関数
+function destroyClickedElement(event) {
+    document.body.removeChild(event.target);
+}
+
+
+function saveDivAsImage() {
+    // html2canvasライブラリを使用して、特定のDOM要素をCanvasに変換
+    user_chatlist
+    html2canvas(document.querySelector("#user_chatlist")).then(canvas => {
+        // Canvasを画像としてエクスポート
+        var link = document.createElement('a');
+        link.download = 'chat-image.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+
+// システムプロンプトの表示/非表示を切り替える関数
+function toggleSystemPrompt() {
+    var systemPrompt = document.getElementById('system');
+    if (systemPrompt.style.display === "none") {
+        systemPrompt.style.display = "block";
+    } else {
+        systemPrompt.style.display = "none";
+    }
+}
+
+// 切り替えボタンをクリックしたときに関数を呼び出す
+document.getElementById('toggleButton').addEventListener('click', toggleSystemPrompt);
+
+
+var button;
+var dots = 0;
+var dotsInterval;
+
+function askQuestion() {
+    var text = document.getElementById('question').value;
+    var provider = document.getElementById('provider').value;
+    var systems = document.getElementById('system').value;
+    button = document.querySelector('button');
+    
+    button.disabled = true;
+    button.innerText = '質問中';
+    button.classList.add('loading');
+
+    // Start the dots animation
+    dotsInterval = setInterval(function () {
+        dots = (dots + 1) % 4;
+        button.innerText = '質問中' + '.'.repeat(dots);
+    }, 500);
+
+    // Clear the previous answer and images
+    document.getElementById('answer').innerText = '';
+    document.getElementById('error').innerText = '';
+
+    if (text.startsWith('!image ')) {
+        var imagePrompt = text.slice(7);
+        fetch('/generate_image?prompt=' + encodeURIComponent(imagePrompt))
+            .then(response => response.json())
+            .then(data => {
+                data.images.forEach(imageData => {
+                    var img = document.createElement('img');
+                    img.src = 'data:image/png;base64,' + imageData;
+                    img.style.width = '300px';  // 画像の幅を300pxに制限
+                    document.getElementById('answer').appendChild(img);
+                });
+                clearInterval(dotsInterval);
+                button.innerText = '質問する';
+                button.classList.remove('loading');
+                setTimeout(function () {
+                    button.disabled = false;
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                clearInterval(dotsInterval);
+                document.getElementById('error').innerText = 'エラーが起きました';
+                button.innerText = '質問する';
+                button.classList.remove('loading');
+                button.disabled = false;
+            });
+    } else {
+        fetch('/' + provider + encodeURIComponent(text) + '&system=' + encodeURIComponent(systems))
+            .then(response => response.json())
+            .then(data => {
+                // Check if the data is an object and has a property named 'response'
+                if (typeof data === 'object' && data.hasOwnProperty('response')) {
+                    // If so, use the value of the 'response' property
+                    var decodedData = unicodeToUtf8(data.response);
+                } else {
+                    // Otherwise, use the data as is
+                    var decodedData = unicodeToUtf8(data);
+                }
+                document.getElementById('answer').innerText = decodedData;
+                document.getElementById('answer').innerText = decodedData;
+                clearInterval(dotsInterval);
+                button.innerText = '質問する';
+                button.classList.remove('loading');
+                setTimeout(function () {
+                    button.disabled = false;
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                clearInterval(dotsInterval);
+                document.getElementById('error').innerText = 'エラーが起きました';
+                button.innerText = '質問する';
+                button.classList.remove('loading');
+                button.disabled = false;
+            });
+
+
+    }
+}
+
+
+function unicodeToUtf8(unicode) {
+    if (typeof unicode === 'string') {
+        return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function (match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+    } else {
+        // If unicode is not a string, return it as is
+        return unicode;
+    }
+}
+
+
+window.onload = function () {
+    var textarea = document.getElementById('question');
+    textarea.addEventListener('input', autoResize, false);
+    textarea.addEventListener('keyup', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            askQuestion();
+        }
+        autoResize.call(this);
+    }, false);
+    textarea.addEventListener('focus', function () {
+        this.classList.add('focused');
+    }, false);
+    textarea.addEventListener('blur', function () {
+        this.classList.remove('focused');
+    }, false);
+
+    function autoResize() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    }
+
+    // Call autoResize at the beginning to adjust the initial text.
+    autoResize.call(textarea);
+
+    button = document.querySelector('button');
+    button.addEventListener('mouseover', function () {
+        this.classList.add('hovered');
+    }, false);
+    button.addEventListener('mouseout', function () {
+        this.classList.remove('hovered');
+    }, false);
+
+}
+</script>
+
+
+    <style>
+.select-container {
+    width: 150px;
+    margin-left: 0; /* 左寄せ */
+}
+
+/* ドロップダウンスタイル */
+.select-container select {
+    width: 100%;
+    padding: 10px 20px;
+    border: 1px solid #007aff; /* Mac風のボーダー */
+    border-radius: 5px; /* Mac風のボーダーラディウス */
+    background-color: #007aff; /* Mac風の背景色 */
+    font-size: 16px;
+    color: #f2f2f2; /* Mac風のテキスト色 */
+    -webkit-appearance: none; /* デフォルトのブラウザスタイルを削除 */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* ドロップダウンホバースタイル */
+.select-container select:hover {
+    border-color: #69c8e6; /* ホバー時のボーダーカラー */
+}
+
+/* ドロップダウンフォーカススタイル */
+.select-container select:focus {
+    outline: none;
+    border-color: #007aff; /* フォーカス時のボーダーカラー */
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.button-group button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.button-group button:hover {
+    background-color: #0056b3;
+}
+
+#toggleButton {
+    background-color: #4CAF50; /* ボタンの背景色 */
+    border: none; /* ボーダーを非表示に */
+    color: white; /* テキストの色 */
+    padding: 15px 32px; /* パディング（上下15px、左右32px） */
+    text-align: center; /* テキストを中央寄せに */
+    text-decoration: none; /* テキストの装飾を無効に */
+    display: inline-block;
+    font-size: 16px; /* フォントサイズ */
+    margin: 4px 2px; /* マージン（上下4px、左右2px） */
+    cursor: pointer; /* カーソルをポインターに */
+}
+
+#toggleButton:hover {
+    background-color: #45a049; /* ホバー時の背景色 */
+}
+
+body {
+    font-family: 'Hannari' sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #dcdcdc; /* 薄色のグレーに変更 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+h1 {
+    background-color: #282626cb;
+    font-family: "Dela Gothic One", sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    color: #fdfdfd;
+    padding: 10px 0;
+    margin: 0;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+textarea, button {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+    outline: none;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+textarea {
+    flex-grow: 1;
+    margin-right: 10px;
+    resize: vertical;
+    overflow: auto;
+    width: 100%;
+    border-radius: 10px;
+    word-wrap: break-word;
+}
+
+button {
+    background-color: #007aff;
+    color: white;
+    border-radius: 10px;
+    padding: 10px 20px;
+    border: none;
+    transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+   background-color: #0051a1;
+   cursor: pointer;
+}
+
+pre {
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+}
+
+#answer {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+    border: 2px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* 影を加える */
+}
+
+#error {
+    color: red;
+}
+
+
+
+
+</style>
+</head>
+<body>
+    <h1>AIライブラリへようこそ！!</h1>
+    <br />
+    <div class="container">
+        <h2>AIチャットボットについて</h2>
+        <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のプロバイダーが使用できます
+            <ui>
+            <li><a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>(HuggingChat)</li>
+            <li>Gemini(Google)</li>
+            <li>ChatGPT(OpenAI)</li>
+            <li>reka-core(reka.AI)</li>
+            <li>GeminiPro(Google)</li>
+            <li><a href="https://www.anthropic.com/claude">claude-3-opus</a>(Liaobots)</li>
+        　　</ui>また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
+        <h2>画像生成</h2>
+        <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
+        <h2>【お知らせ】</h2>
+        <p> 現時点でエラーが起きているAIは<ui>
+            <li>c4ai-command-r-plus</li>
+            <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
+        </ui><br>
+        6/13の更新でclaude3のみSystemプロンプトに対応させました SystemプロンプトにはAIにこんな動作をさせたい！というリクエストを含める事ができます<br>
+        例：アシスタント： お喋り君 あなたの名前は{アシスタント}です,以下の指令に沿って行動してください {アシスタント}はユーザとお友達です,{アシスタント}の口調には語尾にワン！が付きますまた敬語無しでフレンドリーに接します
+        </p>
+        
+        <div class="select-container">
+        <select id="provider">
+          <option value="ask?text=">Default(修正中)</option>
+          <option value="gemini?prompt=">Gemini</option>
+          <option value="chat?prompt=">ChatGPT(修正完了)</option>
+          <option value="Reka?prompt=">Reka(新規)</option>
+          <option value="geminiPro?prompt=">geminiPro</option>
+          <option value="claude3?prompt=">claude-3-opus(検証中)</option>
+        </select>
+        </div>
+        <div id="user_chatlist">
+        <button id="toggleButton">システムプロンプトを表示/非表示</button>
+
+        <textarea id="system" type="text" placeholder="システムプロンプト入力欄(6/13)時点Claude3のみシステムプロンプトに対応しています"></textarea>
+        <textarea id="question" type="text" placeholder="質問欄"></textarea>
+        <button onclick="askQuestion()">質問</button>
+        
+        <div id="answer"></div>
+        <div id="error"></div>
+        </div>
+        <br>
+        <button onclick="saveTextAsFile()">テキストをダウンロード</button>
+        <br>
+        <div class="button-group">
+        <button onclick="saveDivAsImage()">画像として保存</button>
+        <button onclick="openWindow()">更新履歴</button>
+        <button onclick="location.href='https://gamelist1990.github.io/gamelist1990/page/';">ホームへ</button>
+    </div>
+        <h2>サンプルコード</h2>
+        <p>以下のコードはこのサイトを利用するためのサンプルコードです/リクエストを送るにはテキストは"https://webapi-8trs.onrender.com/ask?text=hello"<br><br>画像生成の場合は"https://webapi-8trs.onrender.com/generate_image?prompt=cat"という感じでリクエストしてください画像はbase64で返されます</p>
+        <h3>Python</h3>
+        <p>
+            import requests
+
+            url = "https://webapi-8trs.onrender.com/ask"
+            params = {"text": "こんにちは"}
+
+            response = requests.get(url, params=params)
+
+            print(response.json())
+        </p>
+        <h3>JavaScript</h3>
+        <p>
+            const axios = require('axios');
+
+            const url = 'https://webapi-8trs.onrender.com/ask';
+            const params = { text: 'こんにちは'};
+
+            axios.get(url, { params })
+              .then(response => {
+                console.log(response.data);
+              })
+              .catch(error => {
+                console.error(error);
+              });
+        </p>
+    </div>
+</body>
+<widgetbot
+  server="1069498529866842173"
+  channel="1069498529866842173"
+  width="auto"
+  height="auto"
+></widgetbot>
+<script src='https://cdn.jsdelivr.net/npm/@widgetbot/crate@3' async defer>
+    new Crate({
+        server: '1069498529866842173', // 
+        channel: '1069498532068872193' // htmlコードを勝手に使わないでね
+    })
+</script>
+<script src="/home/js/main.js"></script>
+</html>
