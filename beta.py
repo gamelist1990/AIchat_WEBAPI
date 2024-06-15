@@ -1,4 +1,6 @@
-from fastapi import FastAPI, File, Request,HTTPException, Response, UploadFile
+import asyncio
+from fastapi import FastAPI, File, Form, Request,HTTPException, Response, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse,FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -27,7 +29,6 @@ import psutil,socket
 import platform
 from g4f.cookies import set_cookies, set_cookies_dir, read_cookie_files
 from APIandCookes import *
-
 
 
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
