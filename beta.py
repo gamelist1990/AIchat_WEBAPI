@@ -26,6 +26,7 @@ import uuid
 import psutil,socket
 import platform
 from g4f.cookies import set_cookies, set_cookies_dir, read_cookie_files
+from APIandCookes import *
 
 
 
@@ -97,14 +98,10 @@ g4f.debug.version_check = False  # Disable automatic version checking
 
 logging.basicConfig(level=logging.INFO)
 
-Token = "1N2UBYpdfU4eJwirtmKcfjkg_vC-ZRo87nos2mInIk2FnVIUkc_9QohBn-mkZzK5PDxkL54U2P397MUljrqoCJf-EFg4fiIeFZ-czbQcBiXtGb_8DVklPSkSm48C2MYa-U5L0dgP7M0BHkSinnBPe4c5nDk9YaMET9AXxPGRA23fHu-_3jCUpTX5V3gCGYew_CP9KdL5xzwy1_xG90Hytsw"
-Kiev_cookies = 'FABaBBRaTOJILtFsMkpLVWSG6AN6C/svRwNmAAAEgAAACByOcJ9FqsSwGAT8ZFLWWOB8HKIRvE4mMdH0LkTWsiv8EZNiQmzWiIBQu4EWLRF9r028TAsvRVTtPj0p9zzGpUnE036UhxLt6BGicz1REAiJigwpprgzNbSFT55dOudD4BSuPiNil8pfmV7tu1hopuY+6ozx/BnJqiS7IwrEztTpjrG2ilr3YqenaZbfBgOoLqAFrPm0Lmx2uk6b8ebPEv6mZDxeUA5YXbO/F6MIbG87celBjD2qcHUNQjEM+QYi6KlK4H39zYADhEU6KnmGHeRdZsJyEKParv0ABPSWYVWGTaYCgbXIaUPncC56paJz64OTEUuIUTfYopIefQ7re4UWsBwb9NbYF0ZSf5Pt6k+QPQGbb6rFpVbsWnaT3amodtmHVPInf1eAuT/c4wgwxMdV6tD0JJISp8c2mjf7FYbtNucHsgPMai/g0mxLRZMuND5j4PykS7MVhwIGrZFyJcVlFFAi/ktwtHfqa/7f3XhCatIsNK+XoVnSScaoEM0CuSu4Mjizv7Ll9+OrCXPefy5c6NO5b5nTk9BTBs3TU80OYxyoP6i/70EDj5B2GEnWR1oLxm5CuGEEOLXWK0Agl34g3nH1S3StGpOg0TcTnZPjBn/r3xTlmZffjHcSVt25x7KmP5FDAvkVf4pf1Z9FhcPJKJMc2iU2QNqmWiYFpaDGuf4oqtva17fBtpDLarViIJaa0hVmLV68+sMPr5g6+C0nctLiUTitqJuR6TGhDnm6cTdRYWb5ByvFEkXgSpFUicJj6XVxaeeJOuyofsmMEHPHyDeYjF9fip0GZ6d/JTcldmkvdXqAwtCbLiyaTxX4UApfBxyEw6LhI4qslJiC1O0d65wrV2eexEI8pGZT7EWhIPKZsDoYQ05OtrQfEDEjmg9N6VSR0uJcwC3u2qSXLi4c7hCbs1lOsg3BC4jDVxMSclK3MzaH3vGd30PTqnEGlNWj6mWcD9IsXFTGNIrt/4+DWXSjVspccY+pT+UxMkU+qSr/R525ZaBHUAsck9w1nYYZ5bYf4X6ppU7a9qGB1W20hm041gGrBUIKLKVybaURFaEOxuPZlLR6IIaGsRj3+9MJvbsWJbIfDxtBGhH6UN1EgprewLelCKlKbBJoVBvgkdgMVU9SMoOPIu9bXB6AW9hgAmJMf3dJ2mhoMGuKmzkXLNIJ5e3gJ00Of82DQmPg/geld+an7TpM/kQzLvxLaf8te8v3tkbQGZz9iwlKVQLJskvALk+/VSsjRLNpVoBIWveALtXhPPlXRD+zAWZOTTmCuZoFFuK02cpjV5+2hkhumetcQUMrE/WgeB4iJSdhGspdoq+ORVRqTVtFlx3/wG7ydbKmoTzP5rWM9kBKg6hglaQmMDvlKMUYqKoutlzWyoWcUKYkpCGPSoWDf25IG5XQFACwuZ+wAAYFVbkLOShSM3hpeQ8CIQ=='
+Token = Bing_U
+Kiev_cookies = Bing_Kiev
 
-#support model
 
-openAI = "OpenAI"
-gemini_normal = "Gemini"
-bingProvider_normal = "bingProvider"
 
 
 
@@ -113,11 +110,6 @@ app = FastAPI()
 
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
-
-
-
-
-    
 
 
 
@@ -332,7 +324,7 @@ async def lianocloud(user_id: str, prompt: str, system: str):
     try:
         client = AsyncClient(
             provider=g4f.Provider.Liaobots,
-            auth="RSBNJWTer4Orm",
+            auth=Li_auth,
         )
         response = await client.chat.completions.create(
                 model="claude-3-opus-20240229",
@@ -347,52 +339,37 @@ async def lianocloud(user_id: str, prompt: str, system: str):
 AI_prompt = "あなたは有能なAIです"
 
 
-@app.get("/claude3")
-async def chat(request: Request,prompt: str,system:str = AI_prompt):
-    user_id = request.query_params.get('user_id') or request.client.host
-    if not user_id:
-        user_id = str(uuid.uuid4())
+async def process_chat(provider: str, user_id: str, prompt: str, system: str = AI_prompt):
+    if provider == 'OpenAI':
+        response = await chat_with_OpenAI(user_id, prompt)
+    elif provider == 'Gemini':
+        response = await g4f_gemini(user_id, prompt)
+    elif provider == 'GeminiPro':
+        response = await geminipro(user_id, prompt)
+    elif provider == 'Reka':
+        response = await reka_core(user_id, prompt)
+    elif provider == "Claude3":
+        response = await lianocloud(user_id, prompt, system)
+    else:
+        return JSONResponse(content={"error": "Invalid provider specified"}, status_code=400)
 
-    if not prompt:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+    return JSONResponse(content={"response": response})
 
-    if not system:
-         system = AI_prompt
-
-    # 同じコメントが繰り返し使われていないかチェック
-    if user_id in last_comment and prompt == last_comment[user_id]:
-        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
-
-    # 最後のコメントを更新
-    last_comment[user_id] = prompt
-
-    # ユーザーがブロックされているかどうかをチェック
-    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-
-    # リクエストカウントと最後のリクエスト時間を更新
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
-
-    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
-    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
-
-
-    response = await lianocloud(user_id,prompt,system)
-
-    return JSONResponse(content={"response": response}) 
 
 
 
 @app.get("/chat")
-async def chat(request: Request,prompt: str,system:str = AI_prompt):
+async def chat(request: Request, provider: str, prompt: str, system: str = AI_prompt):
     user_id = request.query_params.get('user_id') or request.client.host
     if not user_id:
         user_id = str(uuid.uuid4())
 
     if not prompt:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
+    
+    if not system:
+         system = AI_prompt
+
 
     # 同じコメントが繰り返し使われていないかチェック
     if user_id in last_comment and prompt == last_comment[user_id]:
@@ -413,110 +390,8 @@ async def chat(request: Request,prompt: str,system:str = AI_prompt):
     if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
+    return await process_chat(provider, user_id, prompt, system)
 
-    response = await chat_with_OpenAI(user_id,prompt)
-
-    return JSONResponse(content={"response": response})
-
-
-
-
-
-@app.get("/gemini")
-async def gemini(request: Request,prompt: str,system:str = AI_prompt):
-    user_id = request.query_params.get('user_id') or request.client.host
-    if not user_id:
-        user_id = str(uuid.uuid4())
-
-    if not prompt:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
-
-    # 同じコメントが繰り返し使われていないかチェック
-    if user_id in last_comment and prompt == last_comment[user_id]:
-        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
-
-    # 最後のコメントを更新
-    last_comment[user_id] = prompt
-
-    # ユーザーがブロックされているかどうかをチェック
-    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-
-    # リクエストカウントと最後のリクエスト時間を更新
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
-
-    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
-    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
-
-    response = await g4f_gemini(user_id,prompt)
-    return JSONResponse(content={"response": response})
-
-@app.get("/geminiPro")
-async def gemini(request: Request,prompt: str,system:str = AI_prompt):
-    user_id = request.query_params.get('user_id') or request.client.host
-    if not user_id:
-        user_id = str(uuid.uuid4())
-
-    if not prompt:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
-
-    # 同じコメントが繰り返し使われていないかチェック
-    if user_id in last_comment and prompt == last_comment[user_id]:
-        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
-
-    # 最後のコメントを更新
-    last_comment[user_id] = prompt
-
-    # ユーザーがブロックされているかどうかをチェック
-    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-
-    # リクエストカウントと最後のリクエスト時間を更新
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
-
-    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
-    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
-
-    response = await geminipro(user_id,prompt)
-    return JSONResponse(content={"response": response})
-
-
-@app.get("/Reka")
-async def chat(request: Request,prompt: str,system:str = AI_prompt):
-    user_id = request.query_params.get('user_id') or request.client.host
-    if not user_id:
-        user_id = str(uuid.uuid4())
-
-    if not prompt:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
-
-    # 同じコメントが繰り返し使われていないかチェック
-    if user_id in last_comment and prompt == last_comment[user_id]:
-        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
-
-    # 最後のコメントを更新
-    last_comment[user_id] = prompt
-
-    # ユーザーがブロックされているかどうかをチェック
-    if user_id in blocked_users and datetime.now() < blocked_users[user_id]:
-        return JSONResponse(content={"response": "ご利用のIPから大量のリクエストを検知した為1時間はアクセスできません"}, status_code=429)
-
-    # リクエストカウントと最後のリクエスト時間を更新
-    request_count[user_id] += 1
-    last_request[user_id] = datetime.now()
-
-    # リクエスト数が一定の値を超えた場合、ユーザーを一時的にブロック
-    if datetime.now() - last_request[user_id] < ban_duration and request_count[user_id] > max_requests_per_second:
-        blocked_users[user_id] = datetime.now() + timedelta(hours=1)
-
-
-    response = await reka_core(user_id,prompt)
-
-    return JSONResponse(content={"response": response})
 
 
 

@@ -275,6 +275,7 @@
       background-color: rgb(0, 0, 0);
       background-color: rgba(0, 0, 0, 0.4);
     }
+    
 
     .modal-content {
       background-color: #fefefe;
@@ -297,6 +298,40 @@
       color: black;
       text-decoration: none;
       cursor: pointer;
+    }
+
+    /* 設定ボタンのアニメーション */
+    #openSettings.open-animation {
+      animation: openAnimation 0.3s ease-in-out;
+    }
+
+    @keyframes openAnimation {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* モーダルのアニメーション */
+    .modal.show-animation {
+      animation: showModal 0.3s ease-in-out; 
+      opacity: 1; /* モーダルの初期透明度 */
+    }
+
+    @keyframes showModal {
+      0% {
+        opacity: 0; /* モーダルの初期透明度 */
+        transform: translateY(20px); /* モーダルを少し上にずらしておく */
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0); /* モーダルを元の位置に戻す */
+      }
     }
 
     /* 設定オプション */
@@ -325,6 +360,8 @@
     .setting-option input[type="checkbox"] {
       margin-right: 5px;
     }
+
+
 
     /* その他 */
     button:hover {
@@ -411,11 +448,11 @@
           <label for="provider">AI Provider:</label>
           <select id="provider">
             <option value="ask?text=">Default (修正中)</option>
-            <option value="gemini?prompt=">Gemini</option>
-            <option value="chat?prompt=">ChatGPT (修正完了)</option>
-            <option value="Reka?prompt=">Reka (新規)</option>
-            <option value="geminiPro?prompt=">geminiPro</option>
-            <option value="claude3?prompt=">claude-3-opus (検証中)</option>
+            <option value="chat?provider=Gemini&prompt=">Gemini</option>
+            <option value="chat?provider=OpenAI&prompt=">ChatGPT (修正完了)</option>
+            <option value="chat?provider=Reka&prompt=">Reka (新規)</option>
+            <option value="chat?provider=GeminiPro&prompt=">geminiPro</option>
+            <option value="chat?provider=Claude3&prompt=">claude-3-opus (検証中)</option>
           </select>
         </div>
         <div class="setting-option">
@@ -450,7 +487,7 @@
         <button onclick="location.href='https://gamelist1990.github.io/gamelist1990/page/';">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door" viewBox="0 0 16 16">
             <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6V13.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V2.052l-.589-.589H7.354z"/>
-            <path d="M8 2.828v9.904a1 1 0 0 1-1 1H5.5A1.5 1.5 0 0 1 4 13.5V8.828l-2.5-2.5a.5.5 0 0 1 .708-.708L5.293 8H10.5a.5.5 0 0 1 .354.146l2.5 2.5a.5.5 0 0 1-.708.708L8 8.828v3.646A.5.5 0 0 1 7.5 13H5.5A1.5 1.5 0 0 1 4 11.5V2.828a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5z"/>
+            <path d="M8 2.828v9.904a1 1 0 0 1-1 1H5.5A1.5 1.5 0 0 1 4 11.5V8.828l-2.5-2.5a.5.5 0 0 1 .708-.708L5.293 8H10.5a.5.5 0 0 1 .354.146l2.5 2.5a.5.5 0 0 1-.708.708L8 8.828v3.646A.5.5 0 0 1 7.5 13H5.5A1.5 1.5 0 0 1 4 11.5V2.828a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5z"/>
           </svg>
           ホームへ
         </button>
@@ -462,16 +499,22 @@
           Reset Conversations
         </button>
         <button onclick="openSummaryModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
-          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-          <path d="m8.93 6.588-2.29.287-.082.107-.64.64-1.281 1.281a.5.5 0 0 1-.65.65l-.287 2.29a.5.5 0 0 1-.708.162l-1.414-1.414a.5.5 0 1 1 .708-.708L7.5 8.793l2.29-2.29a.5.5 0 0 1 .162-.708L11 7.414l1.281-1.281a.5.5 0 0 1 .65-.65l.64-.64.107-.082.287-2.29a.5.5 0 0 1 .708-.162l1.414 1.414a.5.5 0 0 1-.708.708L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
+            <path d="M14 3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12zm-1 1H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/>
+            <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+            </svg>  
         概要
+      </button>
+      <button onclick="deleteAllCookies()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        全ての設定を削除
       </button>
       </div>
     </div>
   </div>
-
 
   <div id="summaryModal" class="modal">
     <div class="modal-content">
@@ -549,6 +592,23 @@
   </div>
 
     <script>
+
+   function deleteAllCookies() {
+    var cookies = document.cookie.split(";");
+
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var eqPos = cookie.indexOf("=");
+        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+
+    if (document.cookie.length == 0) {
+        console.log("成功しました：すべてのクッキーが削除されました");
+    } else {
+        console.log("警告：一部のクッキーが削除されませんでした");
+    }
+}
 
     function openSummaryModal() {
       document.getElementById("settingsModal").style.display = "none"; // 設定モーダルを閉じる
@@ -1231,8 +1291,17 @@ let autoSaveInterval;
       const systemPromptInput = document.getElementById('system-prompt-input');
       const userNameInput = document.getElementById('userName');
 
-      btn.onclick = function() {
-        modal.style.display = "block";
+       btn.onclick = function() {
+        // モーダルを表示する前に、ボタンにアニメーションを適用
+        btn.classList.add("open-animation"); 
+        setTimeout(() => {
+          modal.style.display = "block";
+          // アニメーション完了後にボタンのクラスを削除
+          btn.classList.remove("open-animation"); 
+        }, 300); // アニメーション時間（ミリ秒）
+
+        // モーダルを表示し、アニメーションを開始
+        modal.classList.add("show-animation"); 
       }
 
       span.onclick = function() {
