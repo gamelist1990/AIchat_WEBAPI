@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/rasterizehtml/1.3.0/rasterizeHTML.allinone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 
   <style>
@@ -435,10 +436,18 @@
         display: none;
       }
     }
+    .chat-message h1 { /* 1番大きい見出し */
+  font-size: 2em;
+  color: blue;
+}
+
+.chat-message h2 { /* 2番目に大きい見出し */
+  font-size: 1.5em;
+  color: green;
+}
   </style>
 </head>
 <body>
-  <!-- モーダルウィンドウ -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="saveSettings()">×</span> 
@@ -491,7 +500,7 @@
           </svg>
           ホームへ
         </button>
-         <button onclick="resetConversations()">
+        <button onclick="resetConversations()">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
@@ -499,19 +508,19 @@
           Reset Conversations
         </button>
         <button onclick="openSummaryModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
             <path d="M14 3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12zm-1 1H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/>
             <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
-            </svg>  
-        概要
-      </button>
-      <button onclick="deleteAllCookies(); resetConversations()"> 
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
-    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-  </svg>
-  全ての設定を削除
-</button>
+          </svg>  
+          概要
+        </button>
+        <button onclick="deleteAllCookies(); resetConversations()"> 
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+          全ての設定を削除
+        </button>
       </div>
     </div>
   </div>
@@ -520,26 +529,29 @@
     <div class="modal-content">
       <span class="close" onclick="closeSummaryModal()">×</span>
       <h2>概要</h2>
-      <p><p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のプロバイダーが使用できます
-            <ui>
-            <li><a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>(HuggingChat)</li>
-            <li>Gemini(Google)</li>
-            <li>ChatGPT(OpenAI)</li>
-            <li>reka-core(reka.AI)</li>
-            <li>GeminiPro(Google)</li>
-            <li><a href="https://www.anthropic.com/claude">claude-3-opus</a>(Liaobots)</li>
-        　　</ui>また通常の会話なら3秒で回答されます(会話の内容によって変わります)</p>
-        <h2>画像生成</h2>
-        <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
-        <h2>【お知らせ】</h2>
-        <p>元のUIが良いって方は<a href="/home/oldindex.html">[旧UI]</a>があるのでそちらを使っても構いません</p>
-        <p> 現時点でエラーが起きているAIは<ui>
-            <li>c4ai-command-r-plus</li>
-            <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
-        </ui><br>
+      <p>このサイトでは、AIチャットボットがあなたの質問に答えてくれます。6/3の更新によりプロバイダーを指定できるようになりました具体的には以下のプロバイダーが使用できます
+        <ul>
+          <li><a href="https://cohere.com/blog/command-r-plus-microsoft-azure">c4ai-command-r-plus</a>(HuggingChat)</li>
+          <li>Gemini(Google)</li>
+          <li>ChatGPT(OpenAI)</li>
+          <li>reka-core(reka.AI)</li>
+          <li>GeminiPro(Google)</li>
+          <li><a href="https://www.anthropic.com/claude">claude-3-opus</a>(Liaobots)</li>
+        </ul>
+        また通常の会話なら3秒で回答されます(会話の内容によって変わります)
+      </p>
+      <h2>画像生成</h2>
+      <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
+      <h2>【お知らせ】</h2>
+      <p>元のUIが良いって方は<a href="/home/oldindex.html">[旧UI]</a>があるのでそちらを使っても構いません</p>
+      <p>現時点でエラーが起きているAIは
+        <ul>
+          <li>c4ai-command-r-plus</li>
+          <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
+        </ul><br>
         6/13の更新でclaude3のみSystemプロンプトに対応させました SystemプロンプトにはAIにこんな動作をさせたい！というリクエストを含める事ができます<br>
         例：アシスタント： お喋り君 あなたの名前は{アシスタント}です,以下の指令に沿って行動してください {アシスタント}はユーザとお友達です,{アシスタント}の口調には語尾にワン！が付きますまた敬語無しでフレンドリーに接します
-        </p></p>
+      </p>
     </div>
   </div>
 
@@ -563,7 +575,7 @@
       <div class="conversations">
       </div>
     </div>
-    
+
     <div class="chat-window">
       <div class="chat-header">
         <div class="chat-title">System prompt</div>
@@ -577,7 +589,7 @@
           </button>
         </div>
       </div>
-      <div id="image"class="chat-messages">
+      <div id="image" class="chat-messages">
       </div>
       <div class="chat-input">
         <textarea id="question" placeholder="質問を入力してください..." rows="1"></textarea>
@@ -591,100 +603,90 @@
     </div>
   </div>
 
-    <script>
 
-   function deleteAllCookies() {
-    var cookies = document.cookie.split(";");
-
-    for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i];
-        var eqPos = cookie.indexOf("=");
-        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+<script>  
+     function deleteAllCookies() {
+      document.cookie.split(";").forEach(cookie => {
+        document.cookie = cookie.split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      });
+      if (document.cookie.length === 0) {
+        alert("成功しました：すべてのクッキーが削除されました");
+      } else {
+        alert("警告：一部のクッキーが削除されませんでした");
+      }
     }
-
-    if (document.cookie.length == 0) {
-        Alert("成功しました：すべてのクッキーが削除されました");
-    } else {
-        Alert("警告：一部のクッキーが削除されませんでした");
-    }
-}
 
     function openSummaryModal() {
-      document.getElementById("settingsModal").style.display = "none"; // 設定モーダルを閉じる
+      document.getElementById("settingsModal").style.display = "none"; 
       document.getElementById("summaryModal").style.display = "block";
     }
 
-    // 概要モーダルを閉じる
     function closeSummaryModal() {
       document.getElementById("summaryModal").style.display = "none";
     }
 
     function resetConversations() {
   if (confirm("すべての会話履歴を削除します。よろしいですか？")) {
+    // すべての会話データをlocalStorageから削除
+    conversations.forEach((conversation, index) => {
+      const conversationKey = `conversation-${index}`;
+      localStorage.removeItem(conversationKey);
+    });
+
     conversations = [];
     currentConversationIndex = -1;
     saveConversationsToCookie(); 
     createNewConversation(); 
   }
 }
+
+
     let conversations = [];
     let currentConversationIndex = -1; 
     let userName = 'ユーザー';
+    let messageCount = 0; 
+    let autoSaveInterval;
 
     function loadConversationsFromCookie() {
-      const cookie = document.cookie;
-      const parts = cookie.split('; ');
-      for (const part of parts) {
-        const [key, value] = part.split('=');
-        if (key === 'conversations') {
-          try {
-            conversations = JSON.parse(decodeURIComponent(value));
-          } catch (error) {
-            conversations = [];
-          }
-          break;
+      const cookieValue = document.cookie.split('; ').find(row => row.startsWith('conversations='))?.split('=')[1];
+      if (cookieValue) {
+        try {
+          conversations = JSON.parse(decodeURIComponent(cookieValue));
+        } catch (error) {
+          conversations = [];
         }
       }
     }
 
     function saveConversationsToCookie() {
-      const cookieValue = encodeURIComponent(JSON.stringify(conversations));
-      document.cookie = `conversations=${cookieValue}; path=/`;
+      document.cookie = `conversations=${encodeURIComponent(JSON.stringify(conversations))}; path=/`;
     }
-    
-    //設定の保存と読み込み
+
     function saveSettings() {
-  const settings = {
-    provider: document.getElementById('provider').value,
-    userName: document.getElementById('userName').value,
-    showSystemPrompt: document.getElementById('showSystemPrompt').checked
-  };
-  // encodeURIComponent を使用してエンコードしてからcookieに設定
-  document.cookie = `settings=${encodeURIComponent(JSON.stringify(settings))}; path=/`;
-}
-    function loadSettings() {
-  const cookie = document.cookie;
-  const parts = cookie.split('; ');
-  for (const part of parts) {
-    const [key, value] = part.split('=');
-    if (key === 'settings') {
-      try {
-        // デコードしてからパースする
-        const settings = JSON.parse(decodeURIComponent(value));
-        document.getElementById('provider').value = settings.provider;
-        document.getElementById('userName').value = settings.userName;
-        document.getElementById('showSystemPrompt').checked = settings.showSystemPrompt;
-        if (settings.showSystemPrompt) {
-          document.getElementById('system-prompt-input').style.display = 'block';
-        }
-      } catch (error) {
-        console.error('設定の読み込み中にエラーが発生しました。', error);
-      }
-      break;
+      const settings = {
+        provider: document.getElementById('provider').value,
+        userName: document.getElementById('userName').value,
+        showSystemPrompt: document.getElementById('showSystemPrompt').checked
+      };
+      document.cookie = `settings=${encodeURIComponent(JSON.stringify(settings))}; path=/`;
     }
-  }
-}
+
+    function loadSettings() {
+      const cookieValue = document.cookie.split('; ').find(row => row.startsWith('settings='))?.split('=')[1];
+      if (cookieValue) {
+        try {
+          const settings = JSON.parse(decodeURIComponent(cookieValue));
+          document.getElementById('provider').value = settings.provider;
+          document.getElementById('userName').value = settings.userName;
+          document.getElementById('showSystemPrompt').checked = settings.showSystemPrompt;
+          if (settings.showSystemPrompt) {
+            document.getElementById('system-prompt-input').style.display = 'block';
+          }
+        } catch (error) {
+          console.error('設定の読み込み中にエラーが発生しました。', error);
+        }
+      }
+    }
 
     function updateConversationList() {
       const conversationsList = document.querySelector('.conversations');
@@ -708,92 +710,45 @@
         const renameButton = document.createElement('button');
         renameButton.textContent = 'Rename';
         renameButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const oldName = conversation.name || `会話履歴 ${index + 1}`;
-        const newName = prompt("新しい名前を入力してください:", oldName);
-        if (newName !== null && newName.trim() !== "") { // キャンセル以外で、空白以外の入力があれば名前を変更
-          renameConversation(index, newName);
-        }
-      });
+          event.stopPropagation();
+          const oldName = conversation.name || `会話履歴 ${index + 1}`;
+          const newName = prompt("新しい名前を入力してください:", oldName);
+          if (newName !== null && newName.trim() !== "") { 
+            renameConversation(index, newName);
+          }
+        });
 
         const actionsContainer = document.createElement('div');
         actionsContainer.classList.add('actions');
         actionsContainer.appendChild(renameButton);
         actionsContainer.appendChild(deleteButton);
-
         conversationElement.appendChild(actionsContainer);
         conversationsList.appendChild(conversationElement);
 
-        const renameForm = document.createElement('form');
-        renameForm.classList.add('rename-form');
-        renameForm.innerHTML = `
-          <input type="text" value="${conversation.name || `会話履歴 ${index + 1}`}" required>
-          <button type="submit">保存</button>
-        `;
-        renameForm.addEventListener('submit', (event) => {
-          event.preventDefault();
-          const newName = renameForm.querySelector('input[type="text"]').value;
-          renameConversation(index, newName);
-        });
-        conversationElement.appendChild(renameForm);
-
         conversationElement.addEventListener('click', () => {
           switchConversation(index);
-
-          const activeConversation = document.querySelector('.conversation.active');
-          if (activeConversation) {
+          document.querySelectorAll('.conversation.active').forEach(activeConversation => {
             activeConversation.classList.remove('active');
-          }
+          });
           conversationElement.classList.add('active');
         });
       });
     }
 
     function createNewConversation() {
-       conversations.push({ name: `会話履歴 ${conversations.length + 1}`, history: [] }); 
+      conversations.push({ name: `会話履歴 ${conversations.length + 1}`, history: [] }); 
       currentConversationIndex = conversations.length - 1;
       updateConversationList();
       clearChatWindow();
       saveConversationsToCookie(); 
     }
 
-    function deleteConversation(index) {
-  if (conversations.length === 1) {
-    alert("最後の会話は削除できません。");
-    return;
-  }
-
-  // 削除対象の会話に関連する画像データを LocalStorage から削除
-  conversations[index].history.forEach((messageData, messageIndex) => {
-    if (messageData.content && messageData.content.startsWith('message-')) {
-      localStorage.removeItem(messageData.content);
-    }
-  });
-
-  conversations.splice(index, 1);
-
-  if (currentConversationIndex === index) {
-    currentConversationIndex = 0;
-  } else if (currentConversationIndex > index) {
-    currentConversationIndex--;
-  }
-
-  updateConversationList();
-  loadConversation(currentConversationIndex);
-  saveConversationsToCookie();
-}
+    
 
     function renameConversation(index, newName) {
       conversations[index].name = newName;
       updateConversationList();
-      const renameForm = document.querySelectorAll('.rename-form')[index];
-      renameForm.style.display = 'none';
       saveConversationsToCookie(); 
-    }
-
-    function openRenameForm(index) {
-      const renameForm = document.querySelectorAll('.rename-form')[index];
-      renameForm.style.display = 'block';
     }
 
     function switchConversation(index) {
@@ -810,147 +765,156 @@
       askQuestion(); 
     });
 
-    function saveCurrentConversation() {
+   function saveCurrentConversation() {
   const messages = document.querySelectorAll('.chat-message');
+  const conversationKey = `conversation-${currentConversationIndex}`;
   const conversationData = Array.from(messages).map((message, index) => {
     const messageContentElement = message.querySelector('.message-content');
-    // img タグが存在するかどうかを確認
     const hasImage = messageContentElement.querySelector('img') !== null;
 
     if (hasImage) {
       const imageSrc = messageContentElement.querySelector('img').src;
-      // 画像を LocalStorage に保存し、キーを message-[index] とする
       localStorage.setItem(`message-${index}`, imageSrc);
-      return {
-        content: `message-${index}`, // キーを content に保存
-        isUser: message.classList.contains('user')
-      };
+      return { content: `message-${index}`, isUser: message.classList.contains('user') };
     } else {
-      return {
-        content: messageContentElement.innerHTML,
-        isUser: message.classList.contains('user')
-      };
+      // マークダウン形式で保存
+      const markdownContent = messageContentElement.textContent;
+      const originalMarkdown = messageContentElement.dataset.markdown; // マークダウンの元のテキストを取得
+      return { content: markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
     }
   });
 
-  conversations[currentConversationIndex].history = conversationData;
+  // Save the conversation data to localStorage
+  localStorage.setItem(conversationKey, JSON.stringify(conversationData));
+
+  // Save the conversation key to a cookie
+  document.cookie = `${conversationKey}=true; path=/`;
+}
+
+
+
+
+
+function deleteConversation(index) {
+  if (conversations.length === 1) {
+    alert("最後の会話は削除できません。");
+    return;
+  }
+
+  const conversationKey = `conversation-${index}`;
+  localStorage.removeItem(conversationKey);
+  document.cookie = `${conversationKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+
+  conversations.splice(index, 1);
+  currentConversationIndex = index === currentConversationIndex ? 0 : 
+                              currentConversationIndex > index ? currentConversationIndex - 1 : currentConversationIndex;
+
+  updateConversationList();
+  loadConversation(currentConversationIndex);
   saveConversationsToCookie();
 }
 
 function loadConversation(index) {
   clearChatWindow();
 
-  if (conversations[index] && conversations[index].history) {
-    const conversationData = conversations[index].history;
+  const conversationKey = `conversation-${index}`;
+  const conversationData = JSON.parse(localStorage.getItem(conversationKey));
 
-    if (conversationData) {
-      conversationData.forEach((messageData, messageIndex) => {
-        // もし content が message- で始まれば、LocalStorage から画像を取得
-        if (messageData.content && messageData.content.startsWith('message-')) {
-          const imageSrc = localStorage.getItem(messageData.content);
-          if (imageSrc) {
-            const img = document.createElement('img');
-            img.src = imageSrc;
-            img.style.width = '300px';
-            let imageMessage = document.createElement('div');
-            imageMessage.classList.add('chat-message');
-            if (messageData.isUser) {
+  if (conversationData) {
+    conversationData.forEach((messageData, messageIndex) => {
+      if (messageData.content && messageData.content.startsWith('message-')) {
+        const imageSrc = localStorage.getItem(messageData.content);
+        if (imageSrc) {
+          const img = document.createElement('img');
+          img.src = imageSrc;
+          img.style.width = '300px';
+          let imageMessage = document.createElement('div');
+          imageMessage.classList.add('chat-message');
+          if (messageData.isUser) {
+            if ('user' === '') {
+              console.error('Error: Trying to add an empty class name.');
+            } else {
               imageMessage.classList.add('user');
             }
-            imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
-            document.querySelector('.chat-messages').appendChild(imageMessage);
-
-            const messageNameElement = document.createElement('div');
-            messageNameElement.classList.add('message-name');
-            messageNameElement.textContent = messageData.isUser ? userName : document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-            imageMessage.prepend(messageNameElement);
           }
-        } else {
-          // そうでなければ、テキストメッセージとして追加する
-          addMessageToChat(messageData.content, messageData.isUser);
+          imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
+          document.querySelector('.chat-messages').appendChild(imageMessage);
+
+          const messageNameElement = document.createElement('div');
+          messageNameElement.classList.add('message-name');
+          messageNameElement.textContent = messageData.isUser ? userName : document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+          imageMessage.prepend(messageNameElement); 
         }
-      });
-    }
+      } else {
+        // 保存したマークダウンを解釈して表示
+        addMessageToChat(messageData.content, messageData.isUser, true); // true を渡してマークダウンとして解釈
+      }
+    });
   } else {
     console.error("会話履歴が読み込めません。");
   }
 }
 
-     function addMessageToChat(message, isUser) {
+
+
+    
+  
+function addMessageToChat(message, isUser, isMarkdown = false) {
   const messageElement = document.createElement('div');
-  messageElement.classList.add('chat-message');
+  messageElement.classList.add('chat-message'); 
   if (isUser) {
     messageElement.classList.add('user');
   }
 
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-  if (isUser) {
-    messageNameElement.textContent = userName; 
-  } else {
-    messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-  }
+  messageNameElement.textContent = isUser ? userName : document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
   messageElement.appendChild(messageNameElement);
 
-  // messageContent を作成し、message をそのまま innerHTML に設定
   const messageContent = document.createElement('div');
   messageContent.classList.add('message-content');
-  messageContent.innerHTML = message; // message をそのまま innerHTML に設定
+
+  // 正規表現を用いてマークダウンの特徴的な記号（#, *, -, _, `など）が含まれているかチェック
+  const markdownRegex = /(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*]+\*)|(_[^_]+_)|(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\n\s*\n)|(\r?\n\s*-)|(>\s[^>]+)/;
+  const isMessageMarkdown = markdownRegex.test(message);
+
+  if (isMessageMarkdown) {
+    // Markdownを解釈してHTMLに変換
+    const converter = new showdown.Converter();
+    messageContent.innerHTML = converter.makeHtml(message);
+    messageContent.dataset.markdown = message; // マークダウンの元のテキストを保存
+  } else {
+    messageContent.textContent = message;
+  }
   messageElement.appendChild(messageContent);
 
   document.querySelector('.chat-messages').appendChild(messageElement);
   document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-
-  messageCount++;
 }
 
-
-// メッセージID用のカウンター
-let messageCount = 0; 
 
     function clearChatWindow() {
       document.querySelector('.chat-messages').innerHTML = '';
     }
 
-   function saveTextAsFile() {
-  const messages = document.querySelectorAll('.chat-message');
-  let textToWrite = '';
+    function saveTextAsFile() {
+      const messages = Array.from(document.querySelectorAll('.chat-message')).map(message => {
+        const messageContent = message.querySelector('.message-content p')?.textContent || '';
+        const isUser = message.classList.contains('user');
+        return (isUser ? 'ユーザー：' : 'AI：') + messageContent;
+      }).join('\n');
 
-  messages.forEach(message => {
-    // .message-content 内の p タグが存在することを確認してからテキストを取得
-    const messageContentElement = message.querySelector('.message-content p');
-    const messageContent = messageContentElement ? messageContentElement.textContent : ''; // p タグが存在しない場合は空文字列を設定
+      const textFileAsBlob = new Blob([messages], { type: 'text/plain' });
+      const downloadLink = document.createElement("a");
+      downloadLink.download = "chat_history.txt";
+      downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+      downloadLink.click();
+    }
 
-    const isUser = message.classList.contains('user');
+    function saveDivAsImage() {
+      const divToDownload = document.getElementById('image');
+      const divHtml = divToDownload.outerHTML;
 
-    textToWrite += (isUser ? 'ユーザー：' : 'AI：') + messageContent + '\n';
-  });
-
-  const textFileAsBlob = new Blob([textToWrite], { type: 'text/plain' });
-  const fileNameToSaveAs = "chat_history.txt";
-
-  const downloadLink = document.createElement("a");
-  downloadLink.download = fileNameToSaveAs;
-  downloadLink.innerHTML = "Download File";
-  if (window.webkitURL != null) {
-    downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-  } else {
-    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-    downloadLink.onclick = destroyClickedElement;
-    downloadLink.style.display = "none";
-    document.body.appendChild(downloadLink);
-  }
-
-  downloadLink.click();
-}
-
-
-function saveDivAsImage() {
-  // 画像としてダウンロードする div 要素を取得
-  const divToDownload = document.getElementById('image');
-
-  // div 要素の HTML コードを取得
-  const divHtml = divToDownload.outerHTML;
 
   // 変換する HTML を作成
   const convertedHtml = `
@@ -1090,96 +1054,52 @@ function saveDivAsImage() {
     </body>
 </html>
   `;
-  // ランダムなスレIDを生成
-function generateRandomId() {
-  const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let id = "";
-  for (let i = 0; i < 8; i++) {
-    id += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return id;
-}
+const temporaryDiv = document.createElement('div');
+      temporaryDiv.innerHTML = convertedHtml;
+      document.body.appendChild(temporaryDiv);
 
-// ランダムな日時を生成 (過去1年間)
-function generateRandomDateTime() {
-  const now = new Date();
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(now.getFullYear() - 1);
-
-  const randomTimestamp = oneYearAgo.getTime() + Math.random() * (now.getTime() - oneYearAgo.getTime());
-  const randomDate = new Date(randomTimestamp);
-
-  return randomDate.toLocaleString();
-}
-
-  // 一時的な div 要素を作成
-  const temporaryDiv = document.createElement('div');
-
-  // 一時的な div 要素に HTML コードをセット
-  temporaryDiv.innerHTML = convertedHtml;
-
-  // 一時的に DOM に追加
-  document.body.appendChild(temporaryDiv);
-
-  // html2canvas に一時的な div 要素を渡す
-  html2canvas(temporaryDiv, { allowTaint: true, useCORS: false }).then(canvas => {
-    // キャンバスから画像データを取得
-    const imageData = canvas.toDataURL('image/png');
-
-    // 画像データをダウンロードするリンクを作成
-    const link = document.createElement('a');
-    link.download = 'chat-image.png';
-    link.href = imageData;
-
-    // リンクをクリックして画像をダウンロード
-    link.click();
-
-    // 一時的な div 要素を削除
-    temporaryDiv.remove();
-  });
-}
-
-function convertDivToP(divHtml) {
-  let userIds = {}; // ユーザーIDを格納するオブジェクト
-  let nextUserId = 1; // 次に割り当てるユーザーID
-
-  return divHtml.replace(/<div class="chat-message( user)?"/g, (match, isUser) => {
-    if (isUser) {
-      let userId = getUserID(userIds, nextUserId); 
-      nextUserId++;
-      return `<p class="chat-message user">`; 
-    } else {
-      return `<p class="chat-message ai">`;
+      html2canvas(temporaryDiv, { allowTaint: true, useCORS: false }).then(canvas => {
+        const imageData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'chat-image.png';
+        link.href = imageData;
+        link.click();
+        temporaryDiv.remove();
+      });
     }
-  })
-  .replace(/<div class="message-name">([^<]+)<\/div>/g, (match, userName) => {
-    // ユーザー名が存在する場合はユーザー名、存在しない場合は名無しXXXXを表示
-    let userId = userName ? userName : getUserID(userIds, nextUserId++);
-    return `<span class="user_name">${userId}:</span>`;
-  })
-  .replace(/<div class="message-content">/g, '') // message-contentのdivは不要なので置換
-  .replace(/<\/div>/g, '</span><br>') // divの閉じタグをspanの閉じタグと改行に変更
-  .replace(/<p id="message-\d+">/g, '') // 不要なpタグを削除
-  .replace(/<\/p>/g, ''); // 不要なpタグを削除
-}
 
-// ユーザーIDを取得する関数
-function getUserID(userIds, nextUserId) {
-  // すでにIDが割り当てられている場合はそれを返す
-  for (const key in userIds) {
-    if (userIds[key] === nextUserId) {
-      return `名無し${userIds[key]}`;
+    function generateRandomId() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     }
-  }
 
-  // 新しいIDを割り当てる
-  userIds[nextUserId] = nextUserId;
-  return `名無し${userIds[nextUserId]}`; 
-}
-
+    function generateRandomDateTime() {
+      const now = new Date();
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+      return new Date(oneYearAgo.getTime() + Math.random() * (now.getTime() - oneYearAgo.getTime())).toLocaleString();
+    }
+    function convertDivToP(divHtml) {
+      let userIds = {};
+      let nextUserId = 1;
+      return divHtml.replace(/<div class="chat-message( user)?"/g, (match, isUser) =>
+        isUser ? `<p class="chat-message user">` : `<p class="chat-message ai">`
+      )
+      .replace(/<div class="message-name">([^<]+)<\/div>/g, (match, userName) => {
+        let userId = userName || `名無し${nextUserId++}`;
+        userIds[userId] = userId;
+        return `<span class="user_name">${userId}:</span>`;
+      })
+      .replace(/<div class="message-content">/g, '')
+      .replace(/<\/div>/g, '</span><br>') 
+      .replace(/<p id="message-\d+">/g, '') 
+      .replace(/<\/p>/g, ''); 
+    }
 
     function openWindow() {
-      var myWindow = window.open("/home/update.html", "MsgWindow", "width=400,height=400");
+      window.open("/home/update.html", "MsgWindow", "width=400,height=400");
     }
 
     var button;
@@ -1200,9 +1120,7 @@ function getUserID(userIds, nextUserId) {
       }
 
       isRequesting = true; 
-
       button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 8.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5z"/></svg> Stop';
-
       button.disabled = true;
       button.innerText = '質問中';
       button.classList.add('loading');
@@ -1213,28 +1131,26 @@ function getUserID(userIds, nextUserId) {
       }, 500);
 
       document.getElementById('question').value = '';
-
       addMessageToChat(text, true);
-
       document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
       currentFetchController = new AbortController();
       const signal = currentFetchController.signal;
 
       if (text.startsWith('!image ')) {
-        var imagePrompt = text.slice(7);
+        const imagePrompt = text.slice(7);
         fetch('/generate_image?prompt=' + encodeURIComponent(imagePrompt), { signal })
           .then(response => response.json())
           .then(data => {
-             saveCurrentConversation(); // 会話履歴を保存
+            saveCurrentConversation(); 
             data.images.forEach(imageData => {
-              if (imageData) { // imageDataが空でないことを確認
-                var img = document.createElement('img');
+              if (imageData) {
+                const img = document.createElement('img');
                 img.src = 'data:image/png;base64,' + imageData;
                 img.style.width = '300px';
-                let imageMessage = document.createElement('div');
+                const imageMessage = document.createElement('div');
                 imageMessage.classList.add('chat-message');
-                imageMessage.innerHTML = `<div class="message-content"><img src="${img.src}" style="width: 300px;"></div>`;
+                imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
                 document.querySelector('.chat-messages').appendChild(imageMessage);
 
                 const messageNameElement = document.createElement('div');
@@ -1243,135 +1159,114 @@ function getUserID(userIds, nextUserId) {
                 imageMessage.prepend(messageNameElement); 
               }
             });
-            clearInterval(dotsInterval);
-            button.innerText = 'Run';
-            button.classList.remove('loading');
-            setTimeout(function () {
-              button.disabled = false;
-            }, 3000);
-            isRequesting = false;
-            saveCurrentConversation(); // 会話履歴を保存
+            resetButtonState();
+            saveCurrentConversation();
           })
           .catch(error => {
-             saveCurrentConversation(); // 会話履歴を保存
+            saveCurrentConversation(); 
             console.error('Error:', error);
-            clearInterval(dotsInterval);
-            let errorMessage = document.createElement('div');
-            errorMessage.classList.add('chat-message');
-            errorMessage.innerHTML = `<div class="message-content"><p>エラーが発生しました。</p></div>`;
-            document.querySelector('.chat-messages').appendChild(errorMessage);
-            button.innerText = 'Run';
-            button.classList.remove('loading');
-            button.disabled = false;
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            handleError();
+            saveCurrentConversation();
           });
       } else {
         fetch('/' + provider + encodeURIComponent(text) + '&system=' + encodeURIComponent(systems), { signal })
           .then(response => response.json())
           .then(data => {
-            if (typeof data === 'object' && data.hasOwnProperty('response')) {
-              var decodedData = unicodeToUtf8(data.response);
-            } else {
-              var decodedData = unicodeToUtf8(data);
-            }
-
+            const decodedData = typeof data === 'object' && data.hasOwnProperty('response') ? unicodeToUtf8(data.response) : unicodeToUtf8(data);
             addMessageToChat(decodedData, false);
-
             document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-
-            clearInterval(dotsInterval);
-            button.innerText = 'Run';
-            button.classList.remove('loading');
-            setTimeout(function () {
-              button.disabled = false;
-            }, 3000);
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            resetButtonState();
+            saveCurrentConversation(); 
           })
           .catch(error => {
             console.error('Error:', error);
-            clearInterval(dotsInterval);
-
-            var messageElement = document.createElement('div');
-            messageElement.classList.add('chat-message');
-            messageElement.innerHTML = `
-              <div class="message-content">
-                <p>エラーが発生しました。</p>
-              </div>
-            `;
-            document.querySelector('.chat-messages').appendChild(messageElement);
-            document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-
-            button.innerText = 'Run';
-            button.classList.remove('loading');
-            button.disabled = false;
-            isRequesting = false; 
-            saveCurrentConversation(); // 会話履歴を保存
+            handleError(); 
+            saveCurrentConversation();
           });
       }
     }
-let autoSaveInterval;
+
+    function resetButtonState() {
+      clearInterval(dotsInterval);
+      button.innerText = 'Run';
+      button.classList.remove('loading');
+      setTimeout(() => button.disabled = false, 3000);
+      isRequesting = false;
+    }
+
     function stopRequest() {
       console.log("AIリクエストを停止します。");
-
-      if (currentFetchController) {
-        currentFetchController.abort();
-        currentFetchController = null; 
-      }
-
-      isRequesting = false; 
-
+      currentFetchController?.abort();
+      currentFetchController = null;
+      resetButtonState();
       button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.193-.824-.149-.742-.592l.83-4.73L.173 6.765c-.33-.33-.03-.86.52-.86h12.693c.55 0 .85.53.52.86l-3.057 3.057L13.067 14.852c.392.392.117.986-.237.986H3.85c-.354 0-.628-.595-.237-.986z"/></svg> Run';
+    }
 
+    function unicodeToUtf8(unicode) {
+      return typeof unicode === 'string' 
+        ? unicode.replace(/\\u([a-fA-F0-9]{4})/g, (match, grp) => String.fromCharCode(parseInt(grp, 16)))
+        : unicode;
+    }
+
+    function handleError() {
       clearInterval(dotsInterval);
+      const errorMessage = document.createElement('div');
+      errorMessage.classList.add('chat-message');
+      errorMessage.innerHTML = `<div class="message-content"><p>エラーが発生しました。</p></div>`;
+      document.querySelector('.chat-messages').appendChild(errorMessage);
       button.innerText = 'Run';
       button.classList.remove('loading');
       button.disabled = false;
     }
 
-    function unicodeToUtf8(unicode) {
-      if (typeof unicode === 'string') {
-        return unicode.replace(/\\u([a-fA-F0-9]{4})/g, function (match, grp) {
-          return String.fromCharCode(parseInt(grp, 16));
-        });
-      } else {
-        return unicode;
+    // Cookie操作をまとめる
+    const cookieManager = {
+      get: (key) => {
+        const cookieValue = document.cookie.split('; ').find(row => row.startsWith(`${key}=`))?.split('=')[1];
+        try {
+          return cookieValue ? JSON.parse(decodeURIComponent(cookieValue)) : null;
+        } catch (error) {
+          console.error(`Cookieの取得中にエラーが発生しました。 key: ${key}`, error);
+          return null;
+        }
+      },
+      set: (key, value) => {
+        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))}; path=/`;
+      },
+      delete: (key) => {
+        document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       }
-    }
+    };
 
     window.onload = function () {
-      var textarea = document.getElementById('question');
-      textarea.addEventListener('input', autoResize, false);
+      const textarea = document.getElementById('question');
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+      });
       textarea.addEventListener('keyup', function (event) {
         if (event.key === 'Enter') {
           event.preventDefault();
           askQuestion();
         }
-        autoResize.call(this);
-      }, false);
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      });
       textarea.addEventListener('focus', function () {
         this.classList.add('focused');
-      }, false);
+      });
       textarea.addEventListener('blur', function () {
         this.classList.remove('focused');
-      }, false);
-
-      function autoResize() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-      }
-
-      autoResize.call(textarea);
+      });
 
       button = document.querySelector('#send-message');
       button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.193-.824-.149-.742-.592l.83-4.73L.173 6.765c-.33-.33-.03-.86.52-.86h12.693c.55 0 .85.53.52.86l-3.057 3.057L13.067 14.852c.392.392.117.986-.237.986H3.85c-.354 0-.628-.595-.237-.986z"/></svg> Run';
       button.addEventListener('mouseover', function () {
         this.classList.add('hovered');
-      }, false);
+      });
       button.addEventListener('mouseout', function () {
         this.classList.remove('hovered');
-      }, false);
+      });
     }
 
     function toggleSidebar() {
@@ -1382,10 +1277,14 @@ let autoSaveInterval;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      loadConversationsFromCookie(); 
-      loadSettings(); //設定を読み込み
-      loadUserNameFromCookie();
+      // Cookieから設定値を読み込み
+      loadConversationsFromCookie();
+      loadSettings();
+      userName = cookieManager.get('userName') || 'ユーザー';
+      document.getElementById('userName').value = userName;
+
       autoSaveInterval = setInterval(saveCurrentConversation, 5 * 60 * 1000);
+
       if (conversations.length === 0) {
         createNewConversation();
       } else {
@@ -1403,21 +1302,17 @@ let autoSaveInterval;
       const systemPromptInput = document.getElementById('system-prompt-input');
       const userNameInput = document.getElementById('userName');
 
-       btn.onclick = function() {
-        // モーダルを表示する前に、ボタンにアニメーションを適用
+      btn.onclick = function() {
         btn.classList.add("open-animation"); 
         setTimeout(() => {
           modal.style.display = "block";
-          // アニメーション完了後にボタンのクラスを削除
           btn.classList.remove("open-animation"); 
-        }, 300); // アニメーション時間（ミリ秒）
-
-        // モーダルを表示し、アニメーションを開始
+        }, 300); 
         modal.classList.add("show-animation"); 
       }
 
       span.onclick = function() {
-        saveSettings(); // 設定を保存
+        saveSettings(); 
         modal.style.display = "none";
       }
 
@@ -1432,34 +1327,11 @@ let autoSaveInterval;
       });
 
       userNameInput.addEventListener('change', () => {
-    userName = userNameInput.value || 'ユーザー';
-    // ユーザー名をCookieに保存
-    saveUserNameToCookie();
-  });
-
-  // ユーザー名をCookieに保存する関数
-function saveUserNameToCookie() {
-  document.cookie = `userName=${encodeURIComponent(userName)}; path=/`;
-}
-
-// Cookieからユーザー名を読み込む関数
-function loadUserNameFromCookie() {
-  const cookie = document.cookie;
-  const parts = cookie.split('; ');
-  for (const part of parts) {
-    const [key, value] = part.split('=');
-    if (key === 'userName') {
-      try {
-        userName = decodeURIComponent(value);
-        return userName; // 見つかったらuserNameを返す
-      } catch (error) {
-        console.error('ユーザー名の読み込み中にエラーが発生しました。', error);
-      }
-      break;
-    }
-  }
-  return 'ユーザー'; // 見つからない場合はデフォルト値を返す
-}
+        userName = userNameInput.value || 'ユーザー';
+        cookieManager.set('userName', userName);
+      });
+      
+      
 
       updateConversationList();
     });
