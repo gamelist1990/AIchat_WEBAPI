@@ -44,13 +44,15 @@ blocked_users = {}
 
 last_prompt = {}
 
-# Define a dictionary to store the request count for each IP
-request_count = defaultdict(int)
+# リクエスト間隔（秒）
+request_interval = 2
 
-# Define a dictionary to store the time of the last request for each IP
-last_request = defaultdict(datetime.now)
+# ユーザーIDと最後のリクエスト時間のマッピング
+last_request = {}
 
-# Define the maximum number of requests per second for each IP
+# ユーザーIDとリクエストカウントのマッピング
+request_count = {}
+
 max_requests_per_second = 10
 
 # Define the ban duration
@@ -61,9 +63,6 @@ last_comment = {}
 conversation_history = {}
 
 start_time = datetime.now()
-
-# ロガーの設定
-
 
 # ファイルハンドラの設定
 handler = logging.FileHandler('console.log')
@@ -371,7 +370,6 @@ async def chat(request: Request, provider: str, prompt: str, system: str = AI_pr
     if not system:
          system = AI_prompt
 
-
     # 同じコメントが繰り返し使われていないかチェック
     if user_id in last_comment and prompt == last_comment[user_id]:
         return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
@@ -392,6 +390,7 @@ async def chat(request: Request, provider: str, prompt: str, system: str = AI_pr
         blocked_users[user_id] = datetime.now() + timedelta(hours=1)
 
     return await process_chat(provider, user_id, prompt, system)
+
 
 
 
