@@ -765,7 +765,7 @@
       askQuestion(); 
     });
 
-   function saveCurrentConversation() {
+function saveCurrentConversation() {
   const messages = document.querySelectorAll('.chat-message');
   const conversationKey = `conversation-${currentConversationIndex}`;
   const conversationData = Array.from(messages).map((message, index) => {
@@ -780,7 +780,8 @@
       // マークダウン形式で保存
       const markdownContent = messageContentElement.textContent;
       const originalMarkdown = messageContentElement.dataset.markdown; // マークダウンの元のテキストを取得
-      return { content: markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
+      const prefix = message.classList.contains('user') ? 'ユーザー：' : 'AI:'; // メッセージのプレフィックスを追加
+      return { content: prefix + markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
     }
   });
 
@@ -790,6 +791,8 @@
   // Save the conversation key to a cookie
   document.cookie = `${conversationKey}=true; path=/`;
 }
+
+
 
 
 
@@ -898,18 +901,19 @@ function addMessageToChat(message, isUser, isMarkdown = false) {
     }
 
     function saveTextAsFile() {
-      const messages = Array.from(document.querySelectorAll('.chat-message')).map(message => {
-        const messageContent = message.querySelector('.message-content p')?.textContent || '';
-        const isUser = message.classList.contains('user');
-        return (isUser ? 'ユーザー：' : 'AI：') + messageContent;
-      }).join('\n');
+  const messages = Array.from(document.querySelectorAll('.chat-message')).map(message => {
+    const messageContent = message.querySelector('.message-content')?.innerText || '';
+    const isUser = message.classList.contains('user');
+    return (isUser ? 'ユーザー：' : 'AI:') + messageContent;
+  }).join('\n');
 
-      const textFileAsBlob = new Blob([messages], { type: 'text/plain' });
-      const downloadLink = document.createElement("a");
-      downloadLink.download = "chat_history.txt";
-      downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-      downloadLink.click();
-    }
+  const textFileAsBlob = new Blob([messages], { type: 'text/plain' });
+  const downloadLink = document.createElement("a");
+  downloadLink.download = "chat_history.txt";
+  downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+  downloadLink.click();
+}
+
 
     function saveDivAsImage() {
       const divToDownload = document.getElementById('image');
