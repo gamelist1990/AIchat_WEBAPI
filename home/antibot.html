@@ -325,8 +325,7 @@
         <div class="icon" onclick="openWindow('notepad-window')">📝</div>
         <div class="icon" onclick="openWindow('resource-monitor-window')">📊</div>
         <div class="icon" onclick="openWindow('calculator-window')">🧮</div>
-        <div class="icon" onclick="openWindow('clock-window')">⏱️</div>
-        
+        <div class="icon" onclick="openWindow('clock-window')">⏱️</div>        
     </div>
 
     <div id="desktop">
@@ -372,12 +371,12 @@
 
                 <div id="processes" class="tabcontent">
                     <h3>実行中のプロセス</h3>
-                    <ul id="processes-list"></ul>
+                    <pre id="processes-list"></pre>
                 </div>
 
                 <div id="console" class="tabcontent">
                     <h3>コンソール出力</h3>
-                    <div id="console-output"></div>
+                    <pre id="console-output"></pre>
                 </div>
 
                 <div id="ban-management" class="tabcontent">
@@ -419,7 +418,7 @@
                             <input type="text" id="show-file" name="file_name" required>
                             <button class="button" type="submit">表示</button>
                         </form>
-                        <div id="show-result" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 10px;"></div> 
+                        <pre id="show-result" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 10px;"></pre>
                     </div>
                     <div class="management-section">
                         <form id="update-json-form">
@@ -431,6 +430,14 @@
                         </form>
                         <br>
                         <div id="update-json-result"></div>
+                    </div>
+                    <div class="management-section">
+                        <form id="execute-command-form">
+                            <label for="command-to-execute">コマンド:</label>
+                            <input type="text" id="command-to-execute" name="command_to_execute" required>
+                            <button class="button" type="submit">実行</button>
+                        </form>
+                        <div id="command-result"></div>
                     </div>
                 </div>
             </div>
@@ -552,20 +559,23 @@
             dragElement(document.getElementById("clock-window"));
 
             // 最初にステータスタブを開く
-           // document.querySelector('#server-management .tab button:first-child').click();
+           document.querySelector('#server-management .tab button:first-child').click();
     });
 
+    let ws; // WebSocket オブジェクトをグローバルスコープに
+
     // ログイン処理
-    async function login() {
+    // ログイン処理
+async function login() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/admin', { 
+        const response = await fetch('/antibot', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify({ password: password })
+            body: `password=${password}`
         });
 
         if (response.ok) {
@@ -573,17 +583,36 @@
             document.getElementById('login-form').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('server-management').style.display = 'block';
-            updateServerStatus();
-            updateProcesses();
-            updateConsoleLog();
-            updateBanHistory();
-            setInterval(updateServerStatus, 5000);
-            setInterval(updateProcesses, 5000);
-            setInterval(updateConsoleLog, 5000);
             document.getElementById('taskbar').style.display = 'flex';
 
-            // リソースモニターの定期更新を開始
-            setInterval(updateResourceMonitor, 2000);
+            // WebSocket 接続を開始
+            ws = new WebSocket('ws://' + window.location.host + '/ws'); // ホスト名とポートを自動取得
+
+            ws.onopen = () => {
+                console.log("WebSocket connection established");
+                getServerStatus();
+                getProcesses();
+                getConsoleLog();
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === "server_status") {
+                    updateServerStatus(data.data);
+                } else if (data.type === "processes") {
+                    updateProcesses(data.data);
+                } else if (data.type === "console_log") {
+                    updateConsoleLog(data.data);
+                } else if (data.type === "command_result") {
+                    document.getElementById('command-result').textContent = data.data.message;
+                }  else if (data.type === "resources") {
+      updateResourceMonitor(data.data);
+  
+                    
+                }
+            };
+
         } else {
             document.getElementById('error-message').textContent = 'パスワードが間違っています。';
         }
@@ -704,96 +733,44 @@ function openWindow(windowId) {
         evt.currentTarget.className += " active";
     }
 
-    //サーバー更新  
-    async function updateServerStatus() {
-  try {
-    const response = await fetch('/admin/status', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ password: document.getElementById('password').value })
-    });
+    // サーバー情報の取得
+            function getServerStatus() {
+                ws.send(JSON.stringify({ command: "get_server_status" }));
+            }
 
-    if (response.ok) {
-      const data = await response.json();
-      let statusHTML = '';
+            // プロセス一覧の取得
+            function getProcesses() {
+                ws.send(JSON.stringify({ command: "get_processes" }));
+            }
 
-      // 全てのキーと値を表示
-      for (const [key, value] of Object.entries(data)) {
-        // ネットワーク情報を文字列に変換して表示
-        if (key === "ネットワーク情報") {
-          // 新しい変数 displayValue を作成
-          let displayValue = JSON.stringify(value);
-          statusHTML += `<p><strong>${key}:</strong> ${displayValue}</p>`; // displayValue を使用
-        } else {
-          // それ以外のキーは元の value を使用
-          statusHTML += `<p><strong>${key}:</strong> ${value}</p>`;
-        }
-      }
+            // コンソールログの取得
+            function getConsoleLog() {
+                ws.send(JSON.stringify({ command: "get_console_log" }));
+            }
 
-      document.getElementById('server-status-content').innerHTML = statusHTML;
-    } else {
-      console.error('サーバー情報の取得に失敗しました。', response.status);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}
-    
-
-    // プロセス一覧の更新
-    async function updateProcesses() {
-        try {
-            const response = await fetch('/admin/processes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password: document.getElementById('password').value })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const processesList = document.getElementById('processes-list');
-                processesList.innerHTML = ''; // リストをクリア
-
-                data.processes.split('\n').forEach(process => {
-                    if (process.trim() !== '') {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = process;
-                        processesList.appendChild(listItem);
+            // サーバー情報の更新
+            function updateServerStatus(data) {
+                let statusHTML = '';
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === "ネットワーク情報") {
+                        let displayValue = JSON.stringify(value, null, 2); // 整形して表示
+                        statusHTML += `<p><strong>${key}:</strong></p><pre>${displayValue}</pre>`;
+                    } else {
+                        statusHTML += `<p><strong>${key}:</strong> ${value}</p>`;
                     }
-                });
-            } else {
-                console.error('プロセス一覧の取得に失敗しました。');
+                }
+                document.getElementById('server-status-content').innerHTML = statusHTML;
             }
-        } catch (error) {
-            console.error(error);
-        }
-    }
 
-    // コンソールログの更新
-    async function updateConsoleLog() {
-        try {
-            const response = await fetch('/admin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password: document.getElementById('password').value })
-            });
+            // プロセス一覧の更新
+            function updateProcesses(data) {
+                document.getElementById('processes-list').textContent = data.processes;
+            }
 
-            if (response.ok) {
-                const data = await response.json();
+            // コンソールログの更新
+            function updateConsoleLog(data) {
                 document.getElementById('console-output').textContent = data.console_log.join('');
-            } else {
-                console.error('コンソールログの取得に失敗しました。');
             }
-        } catch (error) {
-            console.error(error);
-        }
-    }
 
     // BAN履歴の更新
     async function updateBanHistory() {
@@ -991,78 +968,65 @@ document.getElementById('update-json-form').addEventListener('submit', async (ev
             webBrowserWindow.style.display = 'block';
         }
 
-    // サーバー停止フォームの送信イベント
-    document.getElementById('stop-server-form').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const password = document.getElementById('password').value;
-        try {
-            const response = await fetch('/admin/update_server_status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `status=stop&password=${password}`
+    // サーバー停止
+            document.getElementById('stop-server-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    const response = await fetch('/admin/update_server_status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `status=stop&password=${document.getElementById('password').value}`
+                    });
+                    if (response.ok) {
+                        alert("サーバーを停止しました。");
+                        getServerStatus(); // WebSocket でステータス情報を更新
+                    } else {
+                        alert("サーバーの停止に失敗しました。");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("サーバーの停止中にエラーが発生しました。");
+                }
             });
-            if (response.ok) {
-                alert("サーバーを停止しました。");
-                updateServerStatus();
-            } else {
-                alert("サーバーの停止に失敗しました。");
-            }
-        } catch (error) {
-            console.error(error);
-            alert("サーバーの停止中にエラーが発生しました。");
-        }
-    });
 
-    // サーバー起動フォームの送信イベント
-    document.getElementById('start-server-form').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const password = document.getElementById('password').value;
-        try {
-            const response = await fetch('/admin/update_server_status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `status=start&password=${password}`
+            // サーバー起動
+            document.getElementById('start-server-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    const response = await fetch('/admin/update_server_status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `status=start&password=${document.getElementById('password').value}`
+                    });
+                    if (response.ok) {
+                        alert("サーバーを起動しました。");
+                        getServerStatus(); // WebSocket でステータス情報を更新
+                    } else {
+                        alert("サーバーの起動に失敗しました。");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("サーバーの起動中にエラーが発生しました。");
+                }
             });
-            if (response.ok) {
-                alert("サーバーを起動しました。");
-                updateServerStatus();
-            } else {
-                alert("サーバーの起動に失敗しました。");
-            }
-        } catch (error) {
-            console.error(error);
-            alert("サーバーの起動中にエラーが発生しました。");
-        }
-    });
 
-    async function updateResourceMonitor() {
-    try {
-        const response = await fetch('/admin/resources', { 
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ password: document.getElementById('password').value })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            // ここにチャート描画ライブラリを用いた処理を追加
-            // 例：CPU使用率を円グラフで表示
-            drawChart('cpu-usage', 'CPU使用率', [data.cpu_usage, 100 - data.cpu_usage]);
-            // 例：メモリ使用率をプログレスバーで表示
-            drawChart('memory-usage', 'メモリ使用率', [data.memory_usage, 100 - data.memory_usage]);
-        } else {
-            console.error('リソース情報の取得に失敗しました。');
-        }
-    } catch (error) {
-        console.error(error);
-    }
+    function getResources() {
+    ws.send(JSON.stringify({ command: "get_resources" }));
 }
+
+// リソース情報の更新
+function updateResourceMonitor(data) {
+  // ここにチャート描画ライブラリを用いた処理を追加
+  // 例：CPU使用率を円グラフで表示
+  drawChart('cpu-usage', 'CPU使用率', [data.cpu_usage, 100 - data.cpu_usage]);
+  // 例：メモリ使用率をプログレスバーで表示
+  drawChart('memory-usage', 'メモリ使用率', [data.memory_usage, 100 - data.memory_usage]);
+}
+setInterval(getResources, 2000);
 
 // チャート描画関数（ダミー、実際のライブラリに置き換えてください）
 function drawChart(elementId, title, data) {

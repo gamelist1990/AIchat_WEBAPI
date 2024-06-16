@@ -1,15 +1,21 @@
 import asyncio
+import json
+import os
+import platform
+import psutil
 import subprocess
-from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header
+from datetime import datetime, timedelta
+from typing import Optional, Dict, List
+
+from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header, WebSocket
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from typing import Optional, Dict, List
 from bingart import BingArt
 
-
+import websockets  # WebSocket server のためのライブラリ
 import g4f
 import json
 import os
@@ -40,7 +46,6 @@ from passlib.context import CryptContext
 
 load_dotenv()  # .env ファイルから環境変数をロード
 
-
 server_status = {
     "running": True,
     "stop_message":""
@@ -58,9 +63,7 @@ read_cookie_files(cookies_dir)
 conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
 last_prompt = {}
-
 last_comment = {}
-
 conversation_history = {}
 
 start_time = datetime.now()
@@ -91,6 +94,7 @@ Token = Bing_U
 Kiev_cookies = Bing_Kiev
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates") 
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
@@ -109,7 +113,6 @@ def cleanup_directories(root_dir, delay):
 
 # Start the cleanup task in a separate thread
 threading.Thread(target=cleanup_directories, args=('.', 5*60)).start()
-
 
 def read_server_status():
     """loads.jsonからサーバーのステータスを読み込みます。"""
@@ -414,13 +417,11 @@ def clear_log():
             f.truncate(0)
         next_clear_time = datetime.now() + timedelta(minutes=interval)
 
-
 def execute_command(command):
     """コマンドを実行し、結果をconsole.logに保存します。"""
     result = os.popen(command).read()  # コマンドを実行し、結果を取得します
     with open('console.log', 'a') as f:
         f.write(result)  # 結果をconsole.logに保存します
-
 
 def show_status():
     """サーバーの状態情報を取得します。"""
@@ -445,22 +446,20 @@ def show_status():
         "CPU使用率": f"{cpu_usage}%",
         "メモリ使用率": f"{memory_usage}%",
         "ディスク使用率": f"{disk_usage}%",
-        "ネットワーク情報": net_info,
+        "ネットワーク情報": net_info._asdict(),  # NamedTuple を辞書に変換
         "時間": boot_time,
         "OS": os_version,
         "Pythonバージョン": python_version,
         "グローバルIPアドレス": global_ip,
-        "stop_message": server_status["stop_message"]  # stop_message を追加
+        "stop_message": server_status.get("stop_message", "") # stop_message を追加
     }
     return status_info  # 状態情報をJSON形式で直接返す
-
 
 def check_files():
     """現在のディレクトリのファイル一覧を取得します。"""
     directory = os.getcwd()
     files = os.listdir(directory)
     return json.dumps(files, ensure_ascii=False)
-
 
 def change_name(old_name: str, new_name: str):
     """ファイルまたはフォルダの名前を変更します。"""
@@ -485,18 +484,19 @@ async def get_processes():
         process = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
     return {"processes": process.stdout}
 
-
-
 @app.get("/check")
 async def check_device(request: Request):
     client_host = request.client.host
     headers = request.headers
     return {"client_host": client_host, "headers": headers}
+
 @app.post("/admin")
 async def admin_console(request: Request, command: str = Form(None), rename: Dict[str, str] = Form(None),show: str = Form(None)): 
     """管理者用コンソールコマンド処理（パスワード認証が必要な操作のみ）"""
     form = await request.json()  # JSONデータを取得
     password = form.get("password")
+
+    print(password)
 
     if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
         # コマンドの実行
@@ -568,6 +568,70 @@ def write_json_file(file_name, data):
             json.dump(data, f, indent=4, ensure_ascii=False)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ファイル '{file_name}' への書き込み中にエラーが発生しました: {str(e)}")
+
+# 接続中のWebSocketクライアント
+connected_clients = set()
+
+@app.get("/antibot")
+async def antibot_page(request: Request):
+    return templates.TemplateResponse("antibot.html", {"request": request})
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    await handler(websocket)
+
+async def handler(websocket: WebSocket):
+    """WebSocket接続時の処理"""
+    connected_clients.add(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            command = data.get("command")
+
+            if command == "get_server_status":
+                status_info = show_status()
+                await send_message(websocket, {
+                    "type": "server_status",
+                    "data": status_info
+                })
+            elif command == "get_processes":
+                processes = await get_processes()
+                await send_message(websocket, {
+                    "type": "processes",
+                    "data": processes
+                })
+            elif command == "get_console_log":
+                console_log = get_console_log()
+                await send_message(websocket, {
+                    "type": "console_log",
+                    "data": console_log
+                })
+            elif command == "execute_command":
+                command_to_execute = data.get("command_to_execute")
+                if command_to_execute:
+                    result = execute_and_log_command(command_to_execute)
+                    await send_message(websocket, {
+                        "type": "command_result",
+                        "data": result
+                    })
+            elif command == "get_resources":
+                resources = await get_system_resources_async()  # get_system_resources を非同期で実行
+                await send_message(websocket, {
+                    "type": "resources",
+                    "data": resources
+                })
+            # ... 他のコマンド処理 ...
+
+    finally:
+        connected_clients.remove(websocket)
+
+async def send_message(websocket: WebSocket, message: dict):
+    """指定されたクライアントにメッセージを送信"""
+    try:
+        await websocket.send_text(json.dumps(message))
+    except websockets.exceptions.ConnectionClosed:
+        pass
 
 @app.post("/admin/status")
 async def admin_status(request: Request):
@@ -653,8 +717,6 @@ async def admin_showfile(request: Request):
     file_name = form.get("file_name")  # form から file_name を取得
     password = form.get("password")
 
-
-
     if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
         file_content = show_file(file_name)
         if isinstance(file_content, dict):  # エラーの場合
@@ -664,7 +726,6 @@ async def admin_showfile(request: Request):
     else:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-
 @app.post("/admin/update_server_status")
 async def update_server_status(request: Request, status: str = Form(...)):
     """サーバーのステータスを更新します。"""
@@ -690,11 +751,6 @@ async def update_server_status(request: Request, status: str = Form(...)):
 
     return {"message": f"サーバーのステータスを{status}に更新しました。"}
 
-
-
-
-        
-
 @app.post("/antibot")
 async def antibot_login(password: str = Form(...)):
     if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
@@ -713,16 +769,72 @@ async def antibot_history():
     banned_count = get_banned_count()  # antibot.py の関数を呼び出す
     return {"banHistory": ban_history, "bannedCount": banned_count}
 
-@app.post("/admin/resources")
-async def get_system_resources(request: Request):
+# get_system_resources を非同期関数として定義
+async def get_system_resources_async():
     """システムリソース情報を返します。"""
-    form = await request.json()
-    password = form.get("password")
-
-    if not pwd_context.verify(password, ADMIN_PASSWORD_HASH):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
     cpu_usage = psutil.cpu_percent()
     memory = psutil.virtual_memory()
     memory_usage = memory.percent
-    return JSONResponse({'cpu_usage': cpu_usage, 'memory_usage': memory_usage})
+    return {'cpu_usage': cpu_usage, 'memory_usage': memory_usage}
+
+# FastAPI起動時にWebSocketサーバーも起動
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(start_websocket_server())
+
+async def start_websocket_server():
+    async with websockets.serve(websocket_endpoint, "0.0.0.0", 8000):
+        print("WebSocket server started on ws://0.0.0.0:8000")
+        await asyncio.Future()  # run forever
+
+async def websocket_endpoint(websocket: WebSocket, path: str):
+    await websocket.accept()
+    connected_clients.add(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            command = data.get("command")
+            print(f"Received command: {command}") # デバッグ用に出力
+
+            if command == "get_server_status":
+                status_info = show_status()
+                await send_message(websocket, {
+                    "type": "server_status",
+                    "data": status_info
+                })
+            elif command == "get_processes":
+                processes = await get_processes()
+                await send_message(websocket, {
+                    "type": "processes",
+                    "data": processes
+                })
+            elif command == "get_console_log":
+                console_log = get_console_log()
+                await send_message(websocket, {
+                    "type": "console_log",
+                    "data": console_log
+                })
+            elif command == "execute_command":
+                command_to_execute = data.get("command_to_execute")
+                if command_to_execute:
+                    result = execute_and_log_command(command_to_execute)
+                    await send_message(websocket, {
+                        "type": "command_result",
+                        "data": result
+                    })
+            elif command == "get_resources":
+                resources = await get_system_resources_async()
+                await send_message(websocket, {
+                    "type": "resources",
+                    "data": resources
+                })
+
+    finally:
+        connected_clients.remove(websocket)
+
+async def send_message(websocket: WebSocket, message: dict):
+    """指定されたクライアントにメッセージを送信"""
+    try:
+        await websocket.send_text(json.dumps(message))
+    except websockets.exceptions.ConnectionClosed:
+        pass
