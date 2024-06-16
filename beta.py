@@ -783,8 +783,8 @@ async def startup_event():
     asyncio.create_task(start_websocket_server())
 
 async def start_websocket_server():
-    async with websockets.serve(websocket_endpoint, "0.0.0.0", 8000):
-        print("WebSocket server started on ws://0.0.0.0:8000")
+    async with websockets.serve(websocket_endpoint, "0.0.0.0", 5000):
+        print("WebSocket server started on ws://0.0.0.0:5000")
         await asyncio.Future()  # run forever
 
 async def websocket_endpoint(websocket: WebSocket, path: str):
