@@ -603,6 +603,10 @@ async function login() {
                 } else if (data.type === "processes") {
                     updateProcesses(data.data);
                 } else if (data.type === "console_log") {
+                    const consoleOutput = document.getElementById('console-output');
+                    const logMessage = document.createElement('p');
+                    logMessage.textContent = data.data;
+                    consoleOutput.appendChild(logMessage);
                     updateConsoleLog(data.data);
                 } else if (data.type === "command_result") {
                     document.getElementById('command-result').textContent = data.data.message;

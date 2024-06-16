@@ -1,18 +1,12 @@
 import asyncio
-import json
-import os
-import platform
-import psutil
 import subprocess
-from datetime import datetime, timedelta
-from typing import Optional, Dict, List
-
 from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header, WebSocket
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from typing import Optional, Dict, List
 from bingart import BingArt
 
 import websockets  # WebSocket server のためのライブラリ
@@ -94,7 +88,7 @@ Token = Bing_U
 Kiev_cookies = Bing_Kiev
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates") 
+templates = Jinja2Templates(directory="templates")  # テンプレートエンジンの設定
 
 app.mount("/home", StaticFiles(directory="home"), name="home")
 
@@ -129,7 +123,6 @@ read_server_status()
 
 @app.get('/')
 def home(request: Request):
-    templates = Jinja2Templates(directory="templates")
     return templates.TemplateResponse("index.html", {"request": request})
 
 geminis = {}
@@ -576,18 +569,30 @@ connected_clients = set()
 async def antibot_page(request: Request):
     return templates.TemplateResponse("antibot.html", {"request": request})
 
+
+class WebSocketHandler(logging.Handler):
+    def emit(self, record):
+        msg = self.format(record)
+        asyncio.create_task(send_log_to_clients(msg))
+
+async def send_log_to_clients(msg):
+    for client in connected_clients.copy():  # 接続が切断される可能性があるのでコピー
+        try:
+            await client.send_text(json.dumps({"type": "console_log", "data": msg}))
+        except websockets.exceptions.ConnectionClosed:
+            # 接続が閉じている場合はセットから削除
+            connected_clients.remove(client)
+
+# WebSocket エンドポイント (FastAPI と同じポート)
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await handler(websocket)
-
-async def handler(websocket: WebSocket):
-    """WebSocket接続時の処理"""
     connected_clients.add(websocket)
     try:
         while True:
             data = await websocket.receive_json()
             command = data.get("command")
+            print(f"Received command: {command}") # デバッグ用に出力
 
             if command == "get_server_status":
                 status_info = show_status()
@@ -616,12 +621,11 @@ async def handler(websocket: WebSocket):
                         "data": result
                     })
             elif command == "get_resources":
-                resources = await get_system_resources_async()  # get_system_resources を非同期で実行
+                resources = await get_system_resources_async()
                 await send_message(websocket, {
                     "type": "resources",
                     "data": resources
                 })
-            # ... 他のコマンド処理 ...
 
     finally:
         connected_clients.remove(websocket)
@@ -632,6 +636,15 @@ async def send_message(websocket: WebSocket, message: dict):
         await websocket.send_text(json.dumps(message))
     except websockets.exceptions.ConnectionClosed:
         pass
+
+# ロガーの設定
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# WebSocket ハンドラを追加
+ws_handler = WebSocketHandler()
+ws_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(ws_handler)
 
 @app.post("/admin/status")
 async def admin_status(request: Request):
@@ -738,7 +751,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
     if status == "stop":
         server_status["running"] = False
         # service.json から stop_message を取得
-        server_status["stop_message"] = read_json_file("service.json").get("stop_message", "サーバーは停止中です。") 
+        server_status["stop_message"] = read_json_file("loads.json").get("stop_message", "サーバーは停止中です。") 
     elif status == "start":
         server_status["running"] = True
         server_status["stop_message"] = ""  # 稼働中は空文字列
@@ -746,7 +759,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
         raise HTTPException(status_code=400, detail="無効なステータスです。")
 
     # service.json にサーバーのステータスを書き込む
-    with open(os.path.join(os.path.dirname(__file__), "service.json"), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__), "loads.json"), 'w', encoding='utf-8') as f:
         json.dump(server_status, f, indent=4, ensure_ascii=False)
 
     return {"message": f"サーバーのステータスを{status}に更新しました。"}
@@ -762,6 +775,7 @@ async def antibot_login(password: str = Form(...)):
 async def antibot_unban(user_id: str = Form(...)):
     unban_user(user_id)  # antibot.py の関数を呼び出す
     return {"success": True}
+
 
 @app.get("/antibot/history")
 async def antibot_history():
@@ -782,59 +796,14 @@ async def get_system_resources_async():
 async def startup_event():
     asyncio.create_task(start_websocket_server())
 
+# WebSocket サーバー起動 (FastAPI と同じポート)
 async def start_websocket_server():
-    async with websockets.serve(websocket_endpoint, "0.0.0.0", 5000):
-        print("WebSocket server started on ws://0.0.0.0:5000")
-        await asyncio.Future()  # run forever
+    port = int(os.environ.get("PORT", 8000))  # OnRender のポート番号を取得、なければ 8000 を使用
+    async with websockets.serve(websocket_endpoint, "0.0.0.0", port):
+        print(f"WebSocket server started on ws://0.0.0.0:{port}")
+        await asyncio.Future()
 
-async def websocket_endpoint(websocket: WebSocket, path: str):
-    await websocket.accept()
-    connected_clients.add(websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            command = data.get("command")
-            print(f"Received command: {command}") # デバッグ用に出力
-
-            if command == "get_server_status":
-                status_info = show_status()
-                await send_message(websocket, {
-                    "type": "server_status",
-                    "data": status_info
-                })
-            elif command == "get_processes":
-                processes = await get_processes()
-                await send_message(websocket, {
-                    "type": "processes",
-                    "data": processes
-                })
-            elif command == "get_console_log":
-                console_log = get_console_log()
-                await send_message(websocket, {
-                    "type": "console_log",
-                    "data": console_log
-                })
-            elif command == "execute_command":
-                command_to_execute = data.get("command_to_execute")
-                if command_to_execute:
-                    result = execute_and_log_command(command_to_execute)
-                    await send_message(websocket, {
-                        "type": "command_result",
-                        "data": result
-                    })
-            elif command == "get_resources":
-                resources = await get_system_resources_async()
-                await send_message(websocket, {
-                    "type": "resources",
-                    "data": resources
-                })
-
-    finally:
-        connected_clients.remove(websocket)
-
-async def send_message(websocket: WebSocket, message: dict):
-    """指定されたクライアントにメッセージを送信"""
-    try:
-        await websocket.send_text(json.dumps(message))
-    except websockets.exceptions.ConnectionClosed:
-        pass
+# uvicorn を使用して FastAPI アプリケーションを起動
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
