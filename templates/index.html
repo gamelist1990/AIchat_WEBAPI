@@ -780,8 +780,7 @@ function saveCurrentConversation() {
       // マークダウン形式で保存
       const markdownContent = messageContentElement.textContent;
       const originalMarkdown = messageContentElement.dataset.markdown; // マークダウンの元のテキストを取得
-      const prefix = message.classList.contains('user') ? 'ユーザー：' : 'AI:'; // メッセージのプレフィックスを追加
-      return { content: prefix + markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
+      return { content: markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
     }
   });
 

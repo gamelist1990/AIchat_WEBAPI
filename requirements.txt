@@ -25,4 +25,5 @@ flask
 pywebview
 plyer
 cryptography
-
+passlib
+bcrypt
