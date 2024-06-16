@@ -1,6 +1,7 @@
+
 import asyncio
 import subprocess
-from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header, WebSocket
+from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +10,6 @@ from pathlib import Path
 from typing import Optional, Dict, List
 from bingart import BingArt
 
-import websockets  # WebSocket server のためのライブラリ
 import g4f
 import json
 import os
@@ -37,6 +37,9 @@ from antibot import check_and_ban, ban_user, unban_user, get_ban_history, get_ba
 import os
 from dotenv import load_dotenv
 from passlib.context import CryptContext
+
+# Pusherのインポート
+from pusher import Pusher
 
 load_dotenv()  # .env ファイルから環境変数をロード
 
@@ -486,10 +489,8 @@ async def check_device(request: Request):
 @app.post("/admin")
 async def admin_console(request: Request, command: str = Form(None), rename: Dict[str, str] = Form(None),show: str = Form(None)): 
     """管理者用コンソールコマンド処理（パスワード認証が必要な操作のみ）"""
-    form = await request.json()  # JSONデータを取得
+    form = await request.form()  # Form dataを取得
     password = form.get("password")
-
-    print(password)
 
     if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
         # コマンドの実行
@@ -562,114 +563,12 @@ def write_json_file(file_name, data):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ファイル '{file_name}' への書き込み中にエラーが発生しました: {str(e)}")
 
-# 接続中のWebSocketクライアント
-connected_clients = set()
-
 @app.get("/antibot")
 async def antibot_page(request: Request):
     return templates.TemplateResponse("antibot.html", {"request": request})
 
 
-class WebSocketHandler(logging.Handler):
-    def emit(self, record):
-        msg = self.format(record)
-        asyncio.create_task(send_log_to_clients(msg))
 
-async def send_log_to_clients(msg):
-    for client in connected_clients.copy():  # 接続が切断される可能性があるのでコピー
-        try:
-            await client.send_text(json.dumps({"type": "console_log", "data": msg}))
-        except websockets.exceptions.ConnectionClosed:
-            # 接続が閉じている場合はセットから削除
-            connected_clients.remove(client)
-
-# WebSocket エンドポイント (FastAPI と同じポート)
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    connected_clients.add(websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            command = data.get("command")
-            print(f"Received command: {command}") # デバッグ用に出力
-
-            if command == "get_server_status":
-                status_info = show_status()
-                await send_message(websocket, {
-                    "type": "server_status",
-                    "data": status_info
-                })
-            elif command == "get_processes":
-                processes = await get_processes()
-                await send_message(websocket, {
-                    "type": "processes",
-                    "data": processes
-                })
-            elif command == "get_console_log":
-                console_log = get_console_log()
-                await send_message(websocket, {
-                    "type": "console_log",
-                    "data": console_log
-                })
-            elif command == "execute_command":
-                command_to_execute = data.get("command_to_execute")
-                if command_to_execute:
-                    result = execute_and_log_command(command_to_execute)
-                    await send_message(websocket, {
-                        "type": "command_result",
-                        "data": result
-                    })
-            elif command == "get_resources":
-                resources = await get_system_resources_async()
-                await send_message(websocket, {
-                    "type": "resources",
-                    "data": resources
-                })
-
-    finally:
-        connected_clients.remove(websocket)
-
-async def send_message(websocket: WebSocket, message: dict):
-    """指定されたクライアントにメッセージを送信"""
-    try:
-        await websocket.send_text(json.dumps(message))
-    except websockets.exceptions.ConnectionClosed:
-        pass
-
-# ロガーの設定
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-# WebSocket ハンドラを追加
-ws_handler = WebSocketHandler()
-ws_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-logger.addHandler(ws_handler)
-
-@app.post("/admin/status")
-async def admin_status(request: Request):
-    """サーバーの稼働状態とステータス情報を返します。"""
-    form = await request.json()
-    password = form.get("password")
-
-    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
-        if server_status["running"]:
-            return show_status()  # サーバー稼働中の場合、ステータス情報を返す
-        else:
-            return JSONResponse(content={"message": server_status["stop_message"]})  # 停止中の場合、停止メッセージを返す
-    else:
-        raise HTTPException(status_code=401, detail="Unauthorized")  # 認証失敗
-
-@app.post("/admin/processes")
-async def admin_processes(request: Request):
-    form = await request.json()
-    password = form.get("password")
-
-    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
-        # 非同期関数としてget_processesを呼び出す
-        return await get_processes()
-    else:
-        raise HTTPException(status_code=401, detail="Unauthorized")
 
 @app.post("/admin/restart")
 async def admin_restart(request: Request):
@@ -679,7 +578,7 @@ async def admin_restart(request: Request):
     if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
         # サーバーを再起動する代わりに、別のプロセスで実行する
         # 例：`uvicorn main:app --reload`
-        subprocess.Popen(['python', 'beta.py'], close_fds=True)  # 独立したプロセスで実行
+        subprocess.Popen(['python', 'combined_server.py'], close_fds=True)  # 独立したプロセスで実行 combined_server.pyに変更
         return {"message": "FastAPI を再起動しました。"}
     else:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -751,7 +650,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
     if status == "stop":
         server_status["running"] = False
         # service.json から stop_message を取得
-        server_status["stop_message"] = read_json_file("loads.json").get("stop_message", "サーバーは停止中です。") 
+        server_status["stop_message"] = read_json_file("service.json").get("stop_message", "サーバーは停止中です。") 
     elif status == "start":
         server_status["running"] = True
         server_status["stop_message"] = ""  # 稼働中は空文字列
@@ -759,7 +658,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
         raise HTTPException(status_code=400, detail="無効なステータスです。")
 
     # service.json にサーバーのステータスを書き込む
-    with open(os.path.join(os.path.dirname(__file__), "loads.json"), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__), "service.json"), 'w', encoding='utf-8') as f:
         json.dump(server_status, f, indent=4, ensure_ascii=False)
 
     return {"message": f"サーバーのステータスを{status}に更新しました。"}
@@ -776,34 +675,104 @@ async def antibot_unban(user_id: str = Form(...)):
     unban_user(user_id)  # antibot.py の関数を呼び出す
     return {"success": True}
 
-
 @app.get("/antibot/history")
 async def antibot_history():
     ban_history = get_ban_history()  # antibot.py の関数を呼び出す
     banned_count = get_banned_count()  # antibot.py の関数を呼び出す
     return {"banHistory": ban_history, "bannedCount": banned_count}
 
-# get_system_resources を非同期関数として定義
+
+
+
+# リソース情報の取得
 async def get_system_resources_async():
-    """システムリソース情報を返します。"""
+    """システムリソース情報をPusher経由で送信します。"""
     cpu_usage = psutil.cpu_percent()
     memory = psutil.virtual_memory()
     memory_usage = memory.percent
-    return {'cpu_usage': cpu_usage, 'memory_usage': memory_usage}
+    pusher_client.trigger("private-my-channel", "resources", {'cpu_usage': cpu_usage, 'memory_usage': memory_usage})
 
-# FastAPI起動時にWebSocketサーバーも起動
+# 定期的にリソース情報を取得・送信
+async def periodic_resource_update():
+    while True:
+        await get_system_resources_async()
+        await asyncio.sleep(2)  # 2秒ごとに更新
+
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(start_websocket_server())
+    asyncio.create_task(periodic_resource_update())
+# Pusher のインスタンスを作成
+pusher_client = Pusher(
+  app_id='1820345',
+  key='4cbc3c15bfd521142b7a',
+  secret='e2c6238a65b9b7ae8603',
+  cluster='ap3',
+)
 
-# WebSocket サーバー起動 (FastAPI と同じポート)
-async def start_websocket_server():
-    port = int(os.environ.get("PORT", 8000))  # OnRender のポート番号を取得、なければ 8000 を使用
-    async with websockets.serve(websocket_endpoint, "0.0.0.0", port):
-        print(f"WebSocket server started on ws://0.0.0.0:{port}")
-        await asyncio.Future()
+class PusherHandler(logging.Handler):
+    def emit(self, record):
+        msg = self.format(record)
+        pusher_client.trigger("private-my-channel", "console_log", {"message": msg})  # privateチャンネルに変更
 
-# uvicorn を使用して FastAPI アプリケーションを起動
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+
+
+@app.post("/admin/status")
+async def admin_status(request: Request):
+    """サーバーの稼働状態とステータス情報をPusher経由で送信します。"""
+    form = await request.json()
+    password = form.get("password")
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        status_info = show_status() # show_status() を呼び出してサーバー情報を取得
+        # 'server_status' イベントでサーバー情報を送信
+        pusher_client.trigger("private-my-channel", "server_status", {"data": status_info})
+        return {"message": "Server status sent via Pusher."}
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")  # 認証失敗
+    
+
+@app.post("/admin/processes")
+async def admin_processes(request: Request):
+    """実行中のプロセス一覧をPusher経由で送信します。"""
+    form = await request.json()
+    password = form.get("password")
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        processes = await get_processes()
+        # 'processes' イベントでプロセス情報を送信
+        pusher_client.trigger("private-my-channel", "processes", {"data": processes})
+        return {"message": "Processes list sent via Pusher."}
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+# ロガーの設定
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# PusherHandlerを追加
+pusher_handler = PusherHandler()
+pusher_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(pusher_handler)
+
+# ログ出力の例
+logger.info("This is a test log message.")
+
+@app.post("/pusher/auth")
+async def pusher_authenticate(request: Request):
+    form = await request.form()
+    socket_id = form.get('socket_id')
+    channel_name = form.get('channel_name')
+
+    if not socket_id or not channel_name:
+        raise HTTPException(status_code=400, detail="Missing socket_id or channel_name")
+
+    # 認証が必要な場合、ここでユーザー認証を行う
+    # ...
+
+    # privateチャンネルの場合、認証を行う
+    if channel_name.startswith("private-"):
+        auth = pusher_client.authenticate(channel=channel_name, socket_id=socket_id)
+        return JSONResponse(auth)
+    else:
+        raise HTTPException(status_code=403, detail="Authentication failed")

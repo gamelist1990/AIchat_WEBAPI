@@ -27,3 +27,4 @@ plyer
 cryptography
 passlib
 bcrypt
+pusher
