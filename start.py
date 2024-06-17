@@ -19,7 +19,7 @@ with open('console.log', 'a') as f:
         sys.stdout.write(line + '\n')
         sys.stdout.flush()
         f.write(line + '\n')
-        f.flush()  # バッファをフラッシュ
+        f.flush() 
 
 # subprocessが終了するまで待機
 process.communicate()

@@ -1,15 +1,16 @@
 
 import asyncio
 import subprocess
-from fastapi import Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header
+from fastapi import BackgroundTasks, Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Optional, Dict, List
 from bingart import BingArt
 
+import gzip
 import g4f
 import json
 import os
@@ -45,7 +46,7 @@ load_dotenv()  # .env ファイルから環境変数をロード
 
 server_status = {
     "running": True,
-    "stop_message":""
+    "stop_message":"サーバーメンテナンス中です"
 }
 
 # パスワードハッシュ化の設定
@@ -70,7 +71,7 @@ handler = logging.FileHandler('console.log')
 handler.setLevel(logging.INFO)
 
 # ログファイルをクリアする時間間隔（分）
-interval = 30
+interval = 10
 
 # 次にログファイルをクリアする時間
 next_clear_time = datetime.now() + timedelta(minutes=interval)
@@ -134,7 +135,7 @@ geminis = {}
 async def ask(request: Request):
 
     if not server_status["running"]:
-        return JSONResponse(content={"response": server_status["message"]})  # 停止メッセージを返す
+        return JSONResponse(content={"response": server_status["stop_message"]})  # 停止メッセージを返す
     
     text = request.query_params.get('text')
     user_id = request.query_params.get('user_id') or request.client.host
@@ -319,7 +320,7 @@ AI_prompt = "あなたは有能なAIです"
 async def process_chat(provider: str, user_id: str, prompt: str, system: str = AI_prompt):
 
     if not server_status["running"]:
-        return JSONResponse(content={"response": server_status["message"]})  # 停止メッセージを返す
+        return JSONResponse(content={"response": server_status["stop_message"]})  # 停止メッセージを返す
     if provider == 'OpenAI':
         response = await chat_with_OpenAI(user_id, prompt)
     elif provider == 'Gemini':
@@ -376,7 +377,7 @@ async def generate_image(request: Request, prompt: Optional[str] = None):
         return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
     
     if not server_status["running"]:
-        return JSONResponse(content={"response": server_status["message"]})  # 停止メッセージを返す
+        return JSONResponse(content={"response": server_status["stop_message"]})  # 停止メッセージを返す
 
     # 最後のコメントを更新
     last_prompt[user_id] = prompt
@@ -436,18 +437,15 @@ def show_status():
     # ディスク使用率を取得
     disk_usage = psutil.disk_usage('/').percent
     # ネットワーク情報を取得
-    net_info = psutil.net_io_counters()
     # 状態情報を辞書として保存
     status_info = {
         "CPU使用率": f"{cpu_usage}%",
         "メモリ使用率": f"{memory_usage}%",
         "ディスク使用率": f"{disk_usage}%",
-        "ネットワーク情報": net_info._asdict(),  # NamedTuple を辞書に変換
         "時間": boot_time,
         "OS": os_version,
         "Pythonバージョン": python_version,
         "グローバルIPアドレス": global_ip,
-        "stop_message": server_status.get("stop_message", "") # stop_message を追加
     }
     return status_info  # 状態情報をJSON形式で直接返す
 
@@ -472,13 +470,7 @@ def shutdown_server():
     """FastAPI を停止します。"""
     return {"message": "FastAPI を停止します。"}  # 実行中のプロセスを終了
 
-async def get_processes():
-    """実行中のプロセス一覧を取得します。"""
-    if platform.system() == "Windows":
-        process = subprocess.run(['tasklist'], capture_output=True, text=True)
-    else:  # Ubuntu などの Linux 環境を想定
-        process = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
-    return {"processes": process.stdout}
+
 
 @app.get("/check")
 async def check_device(request: Request):
@@ -534,12 +526,14 @@ def show_file(file_name: str) -> str:
             return f.read()
     else:
         return {"error": "指定されたファイルは存在しません。"}
-
 def get_console_log():
     """コンソールログを表示します。"""
-    with open('console.log', 'r') as f:
-        console_log = f.readlines()
-    return {"console_log": console_log}
+    try:
+        with open('console.log', 'r') as f:
+            console_log = f.readlines()
+        return {"console_log": console_log}
+    except FileNotFoundError:
+        return {"error": "console.log が見つかりません。"}
 
 
 def read_json_file(file_name):
@@ -566,6 +560,23 @@ def write_json_file(file_name, data):
 @app.get("/antibot")
 async def antibot_page(request: Request):
     return templates.TemplateResponse("antibot.html", {"request": request})
+
+print(ADMIN_PASSWORD_HASH)
+@app.post("/antibot")
+async def antibot_login(request: Request):
+    form = await request.form()  # JSONデータを取得
+    password = form.get("password")  # JSONデータからパスワードを取得
+
+    print(password)
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        # ログイン成功
+        # セッショントークンなどを発行する場合はここで行う
+        raise HTTPException(status_code=200, detail="OK")
+    else:
+        # ログイン失敗
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 
 
@@ -650,7 +661,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
     if status == "stop":
         server_status["running"] = False
         # service.json から stop_message を取得
-        server_status["stop_message"] = read_json_file("service.json").get("stop_message", "サーバーは停止中です。") 
+        server_status["stop_message"] = read_json_file("loads.json").get("stop_message", "サーバーは停止中です。") 
     elif status == "start":
         server_status["running"] = True
         server_status["stop_message"] = ""  # 稼働中は空文字列
@@ -658,7 +669,7 @@ async def update_server_status(request: Request, status: str = Form(...)):
         raise HTTPException(status_code=400, detail="無効なステータスです。")
 
     # service.json にサーバーのステータスを書き込む
-    with open(os.path.join(os.path.dirname(__file__), "service.json"), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__), "loads.json"), 'w', encoding='utf-8') as f:
         json.dump(server_status, f, indent=4, ensure_ascii=False)
 
     return {"message": f"サーバーのステータスを{status}に更新しました。"}
@@ -671,15 +682,19 @@ async def antibot_login(password: str = Form(...)):
         return {"success": False}
 
 @app.post("/antibot/unban")
-async def antibot_unban(user_id: str = Form(...)):
-    unban_user(user_id)  # antibot.py の関数を呼び出す
-    return {"success": True}
+async def antibot_unban(request: Request):
+    unban = await request.json()  # JSON データを取得
+    user_id = unban.get("user_id")  # JSON から user_id を取得
+
+    if user_id:
+        unban_user(user_id)  # antibot.py の関数を呼び出す
+        return {"success": True}
+    else:
+        return {"success": False, "error": "user_id が見つかりません"} 
 
 @app.get("/antibot/history")
 async def antibot_history():
-    ban_history = get_ban_history()  # antibot.py の関数を呼び出す
-    banned_count = get_banned_count()  # antibot.py の関数を呼び出す
-    return {"banHistory": ban_history, "bannedCount": banned_count}
+    return {"banHistory": get_ban_history(), "bannedCount": get_banned_count()}
 
 
 
@@ -692,10 +707,56 @@ async def get_system_resources_async():
     memory_usage = memory.percent
     pusher_client.trigger("private-my-channel", "resources", {'cpu_usage': cpu_usage, 'memory_usage': memory_usage})
 
+
+
+@app.post("/admin/console_log")
+async def admin_console_log(request: Request):
+    """コンソールログをPOSTで返します。"""
+    form = await request.json()
+    password = form.get("password")
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        console_log = get_console_log()
+        if 'error' in console_log:  # エラーがある場合
+            return console_log  # エラーメッセージをそのまま返す
+        else:
+            return JSONResponse(console_log)  # コンソールログをJSONとして返す
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+
+
+
+@app.post("/admin/status")
+async def admin_status(request: Request, background_tasks: BackgroundTasks):
+    """サーバーの稼働状態とステータス情報をPusher経由で送信します。"""
+    form = await request.json()
+    password = form.get("password")
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        status_info = show_status() 
+        background_tasks.add_task(pusher_client.trigger, "private-my-channel", "server_status", {"data": status_info})
+        return JSONResponse({"message": "Server status fetched successfully.", "data": status_info}) # レスポンスにデータを追加
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized") 
+
+async def admin_status_server():
+    """サーバーの稼働状態とステータス情報をPusher経由で送信します。"""
+    status = show_status()
+    pusher_client.trigger("private-my-channel", "server_status", {"data": status}) 
+
+
+
+async def admin_console():
+    consolelog =get_console_log()
+    pusher_client.trigger("private-my-channel", "consolelog", {"message": consolelog})  # privateチャンネルに変更
+
+
 # 定期的にリソース情報を取得・送信
 async def periodic_resource_update():
     while True:
         await get_system_resources_async()
+        await admin_status_server()
         await asyncio.sleep(2)  # 2秒ごとに更新
 
 @app.on_event("startup")
@@ -709,54 +770,13 @@ pusher_client = Pusher(
   cluster='ap3',
 )
 
-class PusherHandler(logging.Handler):
-    def emit(self, record):
-        msg = self.format(record)
-        pusher_client.trigger("private-my-channel", "console_log", {"message": msg})  # privateチャンネルに変更
 
-
-
-@app.post("/admin/status")
-async def admin_status(request: Request):
-    """サーバーの稼働状態とステータス情報をPusher経由で送信します。"""
-    form = await request.json()
-    password = form.get("password")
-
-    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
-        status_info = show_status() # show_status() を呼び出してサーバー情報を取得
-        # 'server_status' イベントでサーバー情報を送信
-        pusher_client.trigger("private-my-channel", "server_status", {"data": status_info})
-        return {"message": "Server status sent via Pusher."}
-    else:
-        raise HTTPException(status_code=401, detail="Unauthorized")  # 認証失敗
-    
-
-@app.post("/admin/processes")
-async def admin_processes(request: Request):
-    """実行中のプロセス一覧をPusher経由で送信します。"""
-    form = await request.json()
-    password = form.get("password")
-
-    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
-        processes = await get_processes()
-        # 'processes' イベントでプロセス情報を送信
-        pusher_client.trigger("private-my-channel", "processes", {"data": processes})
-        return {"message": "Processes list sent via Pusher."}
-    else:
-        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 # ロガーの設定
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# PusherHandlerを追加
-pusher_handler = PusherHandler()
-pusher_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-logger.addHandler(pusher_handler)
-
-# ログ出力の例
-logger.info("This is a test log message.")
 
 @app.post("/pusher/auth")
 async def pusher_authenticate(request: Request):

@@ -1,0 +1,43 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\issei\\Music\\api-1']
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+INFO:     Started reloader process [30072] using WatchFiles
+INFO:     Started server process [20588]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+$2b$12$houpnLgnSbQ4vmkQVEflxOylUPSebz/xsAYVyH5mOMgPlXCYkVXY2
+INFO:     192.168.128.167:60826 - "GET /home/antibot.html HTTP/1.1" 304 Not Modified
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "c:\Users\issei\Music\api-1\.venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+gamelist1990s
+INFO:     192.168.128.167:60826 - "POST /antibot HTTP/1.1" 200 OK
+gamelist1990s
+INFO:     192.168.128.167:60825 - "POST /antibot HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60827 - "GET /antibot/history HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60825 - "POST /admin/status HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60826 - "POST /admin/console_log HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60839 - "POST /admin/status HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60838 - "POST /admin/console_log HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60827 - "GET /antibot/history HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60826 - "POST /pusher/auth HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60844 - "POST /pusher/auth HTTP/1.1" 200 OK
+INFO:     192.168.128.167:60844 - "GET / HTTP/1.1" 200 OK
+INFO:root:Successfully started a new conversation. ID: 666fe840d9d245112d9defc6
+INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/666fe840d9d245112d9defc6/__data.json) [200 OK]>
+<CIMultiDictProxy('Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Vary': 'Accept-Encoding', 'Date': 'Mon, 17 Jun 2024 07:39:44 GMT', 'Cache-Control': 'private, no-store', 'Vary': 'Accept', 'Content-Encoding': 'gzip', 'X-Cache': 'Miss from cloudfront', 'Via': '1.1 a2a18b761c57d2eb35b02af9e68b39ec.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': 'PxzwSlu11XZJH7_9hHFjCI3nKZjNyvZQ4z_7HobTMPzphuMk2qBxrg==')>
+
+INFO:root:option:{'id': '6d8f98e3-3a79-4add-88ab-d10b645ac19e', 'inputs': 'hello\n', 'is_continue': False, 'is_retry': False, 'web_search': False}
+INFO:root:Successfully sent a new message in the conversation. ID: 666fe840d9d245112d9defc6
+INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/666fe840d9d245112d9defc6) [500 Internal Server Error]>
+<CIMultiDictProxy('Content-Type': 'application/json', 'Content-Length': '80', 'Connection': 'keep-alive', 'Date': 'Mon, 17 Jun 2024 07:39:45 GMT', 'Set-Cookie': 'hf-chat=c1f93d9f-505b-45a1-b977-5b63ff0d17f2; Path=/; Expires=Mon, 01 Jul 2024 07:39:45 GMT; HttpOnly; Secure; SameSite=None', 'X-Cache': 'Error from cloudfront', 'Via': '1.1 a2a18b761c57d2eb35b02af9e68b39ec.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': '_fORMktBeeNaSPp1cLPxdcAO31xbMbSmLDjwvLzLl72hvstjO13GZA==')>
+
+ERROR:root:Error occurred: Response 500:
+Using HuggingChat provider and CohereForAI/c4ai-command-r-plus model
+INFO:     192.168.128.167:60844 - "GET /ask?text=hello%0A&system= HTTP/1.1" 500 Internal Server Error
+INFO:root:Successfully started a new conversation. ID: 666fe84a361c47d9c4e70a5a
+INFO:root:<ClientResponse(https://huggingface.co/chat/conversation/666fe84a361c47d9c4e70a5a/__data.json) [200 OK]>
+<CIMultiDictProxy('Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Vary': 'Accept-Encoding', 'Date': 'Mon, 17 Jun 2024 07:39:54 GMT', 'Cache-Control': 'private, no-store', 'Vary': 'Accept', 'Content-Encoding': 'gzip', 'X-Cache': 'Miss from cloudfront', 'Via': '1.1 3c3704d1d972509b35eb599b7ec5b18e.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'NRT12-P2', 'X-Amz-Cf-Id': 'V3O7fD5RSXZyzrMv36xFeE_eEpjH-gkBno6DHBHgWKCAL3dlcXuhHw==')>
+

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 blocked_users = {}
 
 # リクエスト間隔（秒）
-request_interval = 2
+request_interval = 1
 
 # ユーザーIDと最後のリクエスト時間のマッピング
 last_request = {}
@@ -14,7 +14,7 @@ last_request = {}
 request_count = {}
 
 # 1秒あたりの最大リクエスト数
-max_requests_per_second = 10
+max_requests_per_second = 8
 
 # BANの持続時間（時間）
 ban_duration = timedelta(hours=1)
@@ -73,7 +73,11 @@ def unban_user(user_id: str):
         user_id (str): ユーザーID。
     """
     if user_id in blocked_users:
-        del blocked_users[user_id]
+        del blocked_users[user_id]  # blocked_users から user_id を削除
+
+    # ban_history から user_id に対応する履歴を削除
+    global ban_history
+    ban_history = [entry for entry in ban_history if entry["user_id"] != user_id] 
 
 def get_ban_history():
     """BAN履歴を取得します。

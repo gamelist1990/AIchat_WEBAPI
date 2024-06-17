@@ -5,6 +5,7 @@
     <title>サーバー管理システム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
     <style>
         /* 全体的なスタイル */
         body {
@@ -352,7 +353,6 @@
             <div class="window-content">
                 <div class="tab">
                     <button class="tablinks" onclick="openTab(event, 'server-status')">ステータス</button>
-                    <button class="tablinks" onclick="openTab(event, 'processes')">プロセス</button>
                     <button class="tablinks" onclick="openTab(event, 'console')">コンソール</button>
                     <button class="tablinks" onclick="openTab(event, 'ban-management')">BAN管理</button>
                     <button class="tablinks" onclick="openTab(event, 'file-management')">ファイル管理</button>
@@ -370,14 +370,12 @@
                     </form>
                 </div>
 
-                <div id="processes" class="tabcontent">
-                    <h3>実行中のプロセス</h3>
-                    <pre id="processes-list"></pre>
-                </div>
-
                 <div id="console" class="tabcontent">
                     <h3>コンソール出力</h3>
                     <pre id="console-output"></pre>
+                    <br>
+                    <button class="button" onclick="getConsoleLog()">更新</button>
+                    <br>
                 </div>
 
                 <div id="ban-management" class="tabcontent">
@@ -394,9 +392,10 @@
                         <tbody>
                         </tbody>
                     </table>
+                    <button class="button" onclick="updateBanHistory()">BANリスト更新</button>
                     <form id="unban-form">
                         <label for="user-id">ユーザーID:</label>
-                        <input type="text" id="user-id" name="user-id" required>
+                        <input type="text" id="user-id" name="user_id" required>
                         <button class="button" type="submit">BAN解除</button>
                     </form>
                 </div>
@@ -456,9 +455,7 @@
             </div>
         </div>
 
-        
-
-        <div id="resource-monitor-window" class="window" style="display: none; width: 400px; height: 300px; top: 250px; left: 250px;">
+        <div id="resource-monitor-window" class="window" style="display: none; width: 200px; height: 300px; top: 250px; left: 250px;">
             <div class="window-titlebar">
                 <h2>システムリソースモニター</h2>
                 <div class="controls">
@@ -564,6 +561,14 @@
         // document.querySelector('#server-management .tab button:first-child').click();
     });
 
+    document.addEventListener('DOMContentLoaded', () => {
+        // ログインフォームの送信イベント
+        document.getElementById('login-form-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await login();
+        });
+        });
+        
     // ログイン処理
     async function login() {
         const password = document.getElementById('password').value;
@@ -606,19 +611,16 @@
                     updateServerStatus(data.data);
                 });
 
-                // processes イベントを購読
-                channel.bind('processes', function (data) {
-                    updateProcesses(data.data);
-                });
-
-                // resources イベントを購読
+                               // resources イベントを購読
                 channel.bind('resources', function (data) {
                     updateResourceMonitor(data);
                 });
+                
 
                 // ログイン後にサーバー情報とプロセス情報を取得
                 getServerStatus();
-                getProcesses();
+                getConsoleLog(); // ログイン後にコンソールログを取得
+                updateBanHistory(); //BAN者を検知
             } else {
                 document.getElementById('error-message').textContent = 'パスワードが間違っています。';
             }
@@ -728,105 +730,134 @@ function openWindow(windowId) {
         evt.currentTarget.className += " active";
     }
 
-     // サーバー情報の取得
-    async function getServerStatus() {
-        try {
-            const response = await fetch('/admin/status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 必要であれば認証情報を含める
-                },
-                body: JSON.stringify({ password: document.getElementById('password').value }) // パスワードを送信
-            });
 
-            if (response.ok) {
-                const data = await response.json();
-                updateServerStatus(data.data); // サーバー情報の更新
-            } else {
-                console.error('サーバー情報の取得に失敗しました。');
-            }
-        } catch (error) {
-            console.error(error);
+    // サーバー情報の取得
+function getServerStatus() {
+    fetch('/admin/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: document.getElementById('password').value })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+        return response.json();
+    })
+    .then(data => {
+        // 受信したデータを使ってサーバー情報を更新
+        updateServerStatus(data.data);
+    })
+    .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
+// プロセス情報の取得
+
+
+
+     // サーバー情報の更新
+function updateServerStatus(data) {
+    // 'server-status-content' などの要素にサーバー情報を出力
+    let output = '';
+    for (const key in data) {
+        output += `<p>${key}: ${data[key]}</p>`;
+    }
+    document.getElementById('server-status-content').innerHTML = output;
+}
+
+
+
+
+          // コンソールログを取得する関数
+    async function getConsoleLog() {
+      const password = document.getElementById('password').value; // パスワードを取得
+
+      try {
+        const response = await fetch('/admin/console_log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password: password })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          updateConsoleLog(data.console_log); // data.console_log にコンソールログが入っている
+        } else {
+          console.error('コンソールログの取得に失敗しました');
+        }
+
+      } catch (error) {
+        console.error('コンソールログの取得中にエラーが発生しました:', error);
+      }
     }
 
-    // プロセス情報の取得
-    async function getProcesses() {
-        try {
-            const response = await fetch('/admin/processes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 必要であれば認証情報を含める
-                },
-                body: JSON.stringify({ password: document.getElementById('password').value }) // パスワードを送信
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                updateProcesses(data.data); // プロセス情報の更新
-            } else {
-                console.error('プロセス情報の取得に失敗しました。');
-            }
-        } catch (error) {
-            console.error(error);
-        }
+    // コンソールログの更新
+    function updateConsoleLog(data) {
+      // 'console-output' 要素にコンソールログを出力
+      document.getElementById('console-output').textContent = data.join(''); // data.join('') でリストを文字列に変換
     }
 
-            // コンソールログの更新
-           // function updateConsoleLog(data) {
-            //    document.getElementById('console-output').textContent = data.console_log.join('');
-            //}
 
-    // BAN履歴の更新
+
+
     async function updateBanHistory() {
-        try {
-            const response = await fetch('/antibot/history');
-            const data = await response.json();
+    try {
+        const response = await fetch('/antibot/history');
+        const data = await response.json();
 
-            document.getElementById('banned-count').textContent = data.bannedCount;
-            const banHistoryTable = document.getElementById('ban-history').querySelector('tbody');
-            banHistoryTable.innerHTML = ''; // テーブルをクリア
+        document.getElementById('banned-count').textContent = data.bannedCount;
+        const banHistoryTable = document.getElementById('ban-history').querySelector('tbody');
 
-            data.banHistory.forEach(ban => {
-                const row = banHistoryTable.insertRow();
-                row.insertCell().textContent = ban.user_id;
-                row.insertCell().textContent = ban.ban_time;
-
-                const unbanButton = document.createElement('button');
-                unbanButton.textContent = '解除';
-                unbanButton.classList.add('button');
-                unbanButton.addEventListener('click', () => {
-                    unbanUser(ban.user_id);
-                });
-                row.insertCell().appendChild(unbanButton);
-            });
-        } catch (error) {
-            console.error(error);
+        // 既存の行を削除
+        while (banHistoryTable.firstChild) {
+            banHistoryTable.removeChild(banHistoryTable.firstChild);
         }
+
+        data.banHistory.forEach(ban => {
+            const row = banHistoryTable.insertRow();
+            row.insertCell().textContent = ban.user_id;
+            row.insertCell().textContent = ban.ban_time;
+
+            const unbanButton = document.createElement('button');
+            unbanButton.textContent = '解除';
+            unbanButton.classList.add('button');
+            unbanButton.addEventListener('click', () => {
+                unbanUser(ban.user_id);
+            });
+            row.insertCell().appendChild(unbanButton);
+        });
+    } catch (error) {
+        console.error(error);
     }
+}
 
     // ユーザーのBAN解除
     async function unbanUser(userId) {
-        try {
-            const response = await fetch('/antibot/unban', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ user_id: userId })
-            });
+    try {
+        const response = await fetch('/antibot/unban', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId }) // JSON データとして user_id を送信
+        });
 
-            if (response.ok) {
-                updateBanHistory();
-            } else {
-                console.error('ユーザーのBAN解除に失敗しました。');
-            }
-        } catch (error) {
-            console.error(error);
+        if (response.ok) {
+            // BAN解除後にBAN履歴を更新
+            updateBanHistory(); 
+        } else {
+            console.error('ユーザーのBAN解除に失敗しました。');
         }
+    } catch (error) {
+        console.error(error);
     }
+}
 
     // サーバーの再起動
     async function restartServer() {
@@ -1024,6 +1055,7 @@ document.getElementById('update-json-form').addEventListener('submit', async (ev
     function getResources() {
     ws.send(JSON.stringify({ command: "get_resources" }));
 }
+
 
  // リソース情報の更新
     function updateResourceMonitor(data) {
