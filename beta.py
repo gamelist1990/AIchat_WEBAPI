@@ -451,7 +451,7 @@ def show_status():
 
 def check_files():
     """現在のディレクトリのファイル一覧を取得します。"""
-    directory = os.getcwd()
+    directory = os.path.dirname(__file__)  # __file__ を使用
     files = os.listdir(directory)
     return json.dumps(files, ensure_ascii=False)
 
@@ -738,7 +738,34 @@ async def admin_status(request: Request, background_tasks: BackgroundTasks):
         background_tasks.add_task(pusher_client.trigger, "private-my-channel", "server_status", {"data": status_info})
         return JSONResponse({"message": "Server status fetched successfully.", "data": status_info}) # レスポンスにデータを追加
     else:
-        raise HTTPException(status_code=401, detail="Unauthorized") 
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+
+
+@app.post("/admin/command")
+async def admin_command(request: Request, background_tasks: BackgroundTasks):
+    """サーバーでコマンドを実行し、その結果をPusher経由で送信します。"""
+    form = await request.json()
+    password = form.get("password")
+    command = form.get("command")
+
+    if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        try:
+            # コマンドを実行し、その出力を取得します。
+            result = subprocess.run(command, shell=True, check=True, text=True, capture_output=True)
+            output = result.stdout
+            status = "success"
+        except subprocess.CalledProcessError as e:
+            output = e.output
+            status = "failure"
+
+        
+        print(output)
+        data = {"output": output, "status": status}
+        return JSONResponse({"message": "Command executed successfully.", "data": data})
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 async def admin_status_server():
     """サーバーの稼働状態とステータス情報をPusher経由で送信します。"""
@@ -788,7 +815,6 @@ async def pusher_authenticate(request: Request):
         raise HTTPException(status_code=400, detail="Missing socket_id or channel_name")
 
     # 認証が必要な場合、ここでユーザー認証を行う
-    # ...
 
     # privateチャンネルの場合、認証を行う
     if channel_name.startswith("private-"):
@@ -796,3 +822,113 @@ async def pusher_authenticate(request: Request):
         return JSONResponse(auth)
     else:
         raise HTTPException(status_code=403, detail="Authentication failed")
+
+@app.post("/admin/file_manager")
+async def file_manager(request: Request):
+    """ファイルマネージャーの操作を処理します。"""
+    form = await request.json()
+    password = form.get("password")
+    action = form.get("action")
+    path = form.get("path")
+    name = form.get("name")
+    new_name = form.get("new_name")
+    old_path = form.get("old_path")
+    new_path = form.get("new_path")  
+
+    if not pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    base_dir = os.path.dirname(__file__)
+
+    if action == "list":
+        full_path = os.path.join(base_dir, path.lstrip('/'))
+        try:
+            file_list = []
+            for item in os.listdir(full_path):
+                item_path = os.path.join(full_path, item)
+                file_list.append({
+                    "name": item,
+                    "isDirectory": os.path.isdir(item_path),
+                    "size": os.path.getsize(item_path) if os.path.isfile(item_path) else 0
+                })
+            return JSONResponse({"files": file_list})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    elif action == "create_folder":
+        full_path = os.path.join(base_dir, path.lstrip('/'), name)
+        try:
+            os.makedirs(full_path)
+            return JSONResponse({"message": "フォルダが作成されました"})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    elif action == "delete":
+        full_path = os.path.join(base_dir, path.lstrip('/'), name)
+        try:
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+            elif os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            return JSONResponse({"message": "削除されました"})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    elif action == "rename":
+        full_old_path = os.path.join(base_dir, path.lstrip('/'), name)
+        full_new_path = os.path.join(base_dir, path.lstrip('/'), new_name)
+        try:
+            os.rename(full_old_path, full_new_path)
+            return JSONResponse({"message": "名前が変更されました"})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    elif action == "move":
+        full_old_path = os.path.join(base_dir, old_path.lstrip('/'))
+        full_new_path = os.path.join(base_dir, new_path.lstrip('/'))
+        try:
+            shutil.move(full_old_path, full_new_path)
+            return JSONResponse({"message": "移動しました"})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    elif action == "save":
+        full_path = os.path.join(base_dir, path.lstrip('/'), name)
+        try:
+            content = form.get("content")
+            with open(full_path, "w", encoding='utf-8') as f:
+                f.write(content)
+            return JSONResponse({"message": "ファイルが保存されました"})
+        except Exception as e:
+            return JSONResponse({"error": str(e)})
+
+    else:
+        return JSONResponse({"error": "無効なアクションです"})
+    
+# ファイルアップロード
+@app.post("/admin/upload")
+async def upload_file(request: Request, file: UploadFile = File(...), password: str = Form(...), path: str = Form(...)):
+    if not pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    base_dir = os.path.dirname(__file__)
+    full_path = os.path.join(base_dir, path.lstrip('/'), file.filename)
+
+    try:
+        contents = await file.read()
+        with open(full_path, "wb") as f:
+            f.write(contents)
+        return {"message": f"{file.filename} をアップロードしました。"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# ファイルダウンロード
+@app.get("/admin/download")
+async def download_file(password: str, path: str):
+    if not pwd_context.verify(password, ADMIN_PASSWORD_HASH):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    base_dir = os.path.dirname(__file__)
+    full_path = os.path.join(base_dir, path.lstrip('/'))
+
+    return FileResponse(full_path)

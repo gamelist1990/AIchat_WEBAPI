@@ -3,49 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <title>サーバー管理システム</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
     <style>
         /* 全体的なスタイル */
         body {
-            font-family: 'Consolas', monospace;
-            background-color: #eee;
-            margin: 0;
-            padding: 0;
-            color: #222;
-            overflow: hidden;
-        }
+      font-family: 'Consolas', monospace;
+      margin: 0;
+      padding: 0;
+      color: #222;
+      overflow: hidden;
+    }
 
         /* デスクトップ */
         #desktop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%; 
-    padding-bottom: 40px; 
-            background: #007bff;
-            background: -webkit-linear-gradient(to bottom, #007bff, #663399);
-            background: linear-gradient(to bottom, #007bff, #663399); 
-            overflow: hidden;
-        }
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #007bff, #663399); /* ライトテーマのグラデーション */
+      z-index: 1; /* #overlay よりも上に表示 */
+    }
+
+    
 
         /* タスクバー */
         #taskbar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 40px;
-            background-color: #ccc;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            z-index: 2;
-            display: none; 
-            bottom: 0; 
-        }
+      position: fixed; /* タスクバーを画面下部に固定 */
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      z-index: 2;
+      display: none;
+    }
+
         #taskbar .icon {
             width: 30px;
             height: 30px;
@@ -68,7 +66,7 @@
             min-width: 300px;
             min-height: 200px;
             resize: both;
-            overflow-y: hidden; 
+            overflow: hidden;
             z-index: 1;
         }
 
@@ -80,15 +78,17 @@
             font-weight: bold;
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
-            cursor: move; 
+            cursor: move;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
         .window-titlebar h2 {
             margin: 0;
-            font-size: 14px; 
+            font-size: 14px;
         }
+
         .window-titlebar .controls button {
             background: none;
             border: none;
@@ -111,6 +111,7 @@
             border: 1px solid #ccc;
             background-color: #f1f1f1;
         }
+
         .tab button {
             background-color: inherit;
             float: left;
@@ -121,27 +122,31 @@
             transition: background-color 0.3s;
             font-size: 13px;
         }
+
         .tab button:hover {
             background-color: #ddd;
         }
+
         .tab button.active {
             background-color: #ccc;
         }
+
         .tabcontent {
             display: none;
             padding: 10px;
             border: 1px solid #ccc;
             border-top: none;
         }
-        .tablinks {
-    overflow-y: auto; 
-    -ms-overflow-style: none; 
-    scrollbar-width: none; 
-}
 
-.tablinks::-webkit-scrollbar { 
-    display: none;
-}
+        .tablinks {
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tablinks::-webkit-scrollbar {
+            display: none;
+        }
 
         /* コンソール出力 */
         #console-output {
@@ -160,11 +165,13 @@
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
             text-align: left;
             padding: 6px;
             border: 1px solid #ddd;
         }
+
         th {
             background-color: #f2f2f2;
         }
@@ -174,6 +181,7 @@
             display: block;
             margin-bottom: 5px;
         }
+
         input[type="text"],
         input[type="password"],
         textarea {
@@ -198,9 +206,11 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         .button:hover {
             background-color: #45a049;
         }
+
         .close-button {
             background-color: #f44336;
             border: none;
@@ -213,6 +223,7 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         .close-button:hover {
             background-color: #d32f2f;
         }
@@ -223,6 +234,7 @@
             margin: 0;
             padding: 0;
         }
+
         li {
             margin-bottom: 5px;
         }
@@ -248,333 +260,634 @@
 
         /* 背景を暗くする */
         #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none; 
-            z-index: 5; 
-        }
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 0; /* #desktop よりも下に表示 */
+    }
+
         /* iframeのスタイル */
         iframe {
             width: 100%;
             height: calc(100% - 36px);
             border: none;
         }
-        
 
-/* 電卓アプリのスタイル */
-#calculator-window {
-  width: 240px; /* 横幅を縮小 */
-  height: 300px; /* 高さを縮小 */
-}
+        /* 電卓アプリのスタイル */
+        #calculator-window {
+            width: 240px;
+            height: 300px;
+        }
 
-#calculator input[type="button"] {
-  width: 40px;  /* ボタンの横幅を縮小 */
-  height: 40px;  /* ボタンの高さを縮小 */
-  margin: 4px;  /* マージンを縮小 */
-  font-size: 16px; /* フォントサイズを縮小 */
-}
+        #calculator input[type="button"] {
+            width: 40px;
+            height: 40px;
+            margin: 4px;
+            font-size: 16px;
+        }
 
-#calculator #display {
-  width: calc(100% - 18px); /* 表示領域の幅を調整 */
-  height: 30px;  /* 表示領域の高さを縮小 */
-  margin: 4px; /* マージンを縮小 */
-  font-size: 18px; /* フォントサイズを縮小 */
-}
+        #calculator #display {
+            width: calc(100% - 18px);
+            height: 30px;
+            margin: 4px;
+            font-size: 18px;
+        }
 
-/* 時計アプリのスタイル */
-#clock-window {
-  width: 300px;
-  height: 100px;
-}
+        /* 時計アプリのスタイル */
+        #clock-window {
+            width: 300px;
+            height: 100px;
+        }
 
-#clock {
-  width: 100%;
-  height: 100%;
-  font-size: 36px;
-  text-align: center;
-  line-height: 80px; /* 時計の文字を中央に配置 */
-}
-@media (max-width: 768px) {
-  .window {
-    min-width: 90%; /* 画面幅の90%に */
-    min-height: 60%; /* 画面高さの60%に */
-    top: 10%; /* 上からの位置を調整 */
-    left: 5%; /* 左からの位置を調整 */
-  }
+        #clock {
+            width: 100%;
+            height: 100%;
+            font-size: 36px;
+            text-align: center;
+            line-height: 80px;
+        }
 
-  #taskbar {
-    height: 60px; /* タスクバーの高さを大きく */
-  }
+        /* ファイルマネージャーのスタイル */
+        #file-manager-window {
+            width: 800px;
+            height: 600px;
+            top: 100px;
+            left: 100px;
+        }
 
-  #taskbar .icon {
-    width: 40px; /* アイコンサイズを大きく */
-    height: 40px; 
-    font-size: 24px;
-  }
+        #file-manager-window .window-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 36px);
+        }
 
- 
-}
+        #file-manager-path-container {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #file-manager-path {
+            width: calc(100% - 70px);
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #file-manager-refresh {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #file-manager-toolbar {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+        }
+
+        #file-manager-toolbar button {
+            margin-right: 5px;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #file-manager-toolbar button:hover {
+            background-color: #f0f0f0;
+        }
+
+        #file-manager-toolbar button img {
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        #file-manager-toolbar label {
+            margin-right: 5px;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #file-manager-toolbar input[type="file"] {
+            display: none;
+        }
+
+        #file-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: white;
+        }
+
+        #file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-gap: 10px;
+            list-style: none;
+            padding: 0;
+        }
+
+        #file-list li {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            background-color: white;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #file-list li:hover {
+            background-color: #f5f5f5;
+        }
+
+        #file-list li.folder {
+            background-color: #f0f0f0;
+        }
+
+        #file-list li img {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 10px;
+        }
+
+        #file-list li.selected {
+            background-color: #f0f0f0;
+            border: 2px solid #007bff;
+        }
+
+        #file-manager-error {
+            margin-top: 10px;
+            color: red;
+        }
+
+        #file-view-window .window-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 36px);
+        }
+
+        #file-view-content {
+            flex-grow: 1;
+        }
+
+        /* 設定ウィンドウのスタイル */
+        #settings-window {
+            width: 500px;
+            height: 400px;
+        }
+
+        #settings-window .window-content {
+            padding: 20px;
+        }
+
+        #settings-window h3 {
+            margin-top: 0;
+        }
+
+        #settings-window label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #settings-window input[type="text"],
+        #settings-window input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        #settings-window .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #settings-window .button:hover {
+            background-color: #45a049;
+        }
+
+        /* タスクバーの時計と日付のスタイル */
+        #taskbar-datetime {
+            margin-left: auto;
+            padding: 9px;
+            color: black;
+            width: 12%;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .window {
+                min-width: 90%;
+                min-height: 60%;
+                top: 10%;
+                left: 5%;
+            }
+
+            #taskbar {
+                height: 60px;
+            }
+
+            #taskbar .icon {
+                width: 40px;
+                height: 40px;
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="taskbar">
-        <div class="icon" onclick="openWindow('server-management')">⚙️</div>
-        <div class="icon" onclick="openWindow('web-browser-window')">🌐</div>
-        <div class="icon" onclick="openWindow('notepad-window')">📝</div>
-        <div class="icon" onclick="openWindow('resource-monitor-window')">📊</div>
-        <div class="icon" onclick="openWindow('calculator-window')">🧮</div>
-        <div class="icon" onclick="openWindow('clock-window')">⏱️</div>        
+<div id="taskbar">
+    <div class="icon" onclick="openWindow('server-management')">🔧</div>
+    <div class="icon" onclick="openWindow('web-browser-window')">🌐</div>
+    <div class="icon" onclick="openWindow('notepad-window')">📝</div>
+    <div class="icon" onclick="openWindow('resource-monitor-window')">📊</div>
+    <div class="icon" onclick="openWindow('calculator-window')">🧮</div>
+    <div class="icon" onclick="openWindow('clock-window')">⏱️</div>
+    <div class="icon" onclick="openWindow('file-manager-window')">📁</div>
+    <div class="icon" onclick="openWindow('settings-window')">⚙️</div>
+    <div id="taskbar-datetime"></div>
+</div>
+
+<div id="desktop">
+    <div id="overlay"></div>
+
+    <div id="login-form">
+        <h2>サーバー管理システム</h2>
+        <form id="login-form-form">
+            <label for="password">パスワード:</label>
+            <input type="password" id="password" name="password" required autocomplete="new-password">
+            <button class="button" type="submit">ログイン</button>
+            <div id="error-message" class="error"></div>
+        </form>
     </div>
 
-    <div id="desktop">
-        <div id="overlay"></div>
-
-        <div id="login-form">
-            <h2>サーバー管理システム</h2>
-            <form id="login-form-form">
-                <label for="password">パスワード:</label>
-                <input type="password" id="password" name="password" required autocomplete="new-password">
-                <button class="button" type="submit">ログイン</button>
-                <div id="error-message" class="error"></div>
-            </form>
-        </div>
-
-        <div id="server-management" class="window" style="display: none; width: 800px; height: 600px; top: 100px; left: 100px;">
-            <div class="window-titlebar">
-                <h2>サーバー管理</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('server-management')">X</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div class="tab">
-                    <button class="tablinks" onclick="openTab(event, 'server-status')">ステータス</button>
-                    <button class="tablinks" onclick="openTab(event, 'console')">コンソール</button>
-                    <button class="tablinks" onclick="openTab(event, 'ban-management')">BAN管理</button>
-                    <button class="tablinks" onclick="openTab(event, 'file-management')">ファイル管理</button>
-                </div>
-
-                <div id="server-status" class="tabcontent">
-                    <h3>サーバー情報</h3>
-                    <div id="server-status-content"></div>
-                    <form id="stop-server-form">
-                        <button class="button" type="submit">サーバー停止</button>
-                    </form>
-                    <br>
-                    <form id="start-server-form">
-                        <button class="button" type="submit">サーバー起動</button>
-                    </form>
-                </div>
-
-                <div id="console" class="tabcontent">
-                    <h3>コンソール出力</h3>
-                    <pre id="console-output"></pre>
-                    <br>
-                    <button class="button" onclick="getConsoleLog()">更新</button>
-                    <br>
-                </div>
-
-                <div id="ban-management" class="tabcontent">
-                    <h3>BAN管理</h3>
-                    <p>現在のBAN人数: <span id="banned-count">0</span></p>
-                    <table id="ban-history">
-                        <thead>
-                        <tr>
-                            <th>ユーザーID</th>
-                            <th>BAN時間</th>
-                            <th>解除</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                    <button class="button" onclick="updateBanHistory()">BANリスト更新</button>
-                    <form id="unban-form">
-                        <label for="user-id">ユーザーID:</label>
-                        <input type="text" id="user-id" name="user_id" required>
-                        <button class="button" type="submit">BAN解除</button>
-                    </form>
-                </div>
-
-                <div id="file-management" class="tabcontent">
-                    <h3>ファイル管理</h3>
-                    <div class="management-section">
-                        <form id="rename-form">
-                            <label for="old-name">旧ファイル名:</label>
-                            <input type="text" id="old-name" name="old-name" required>
-                            <label for="new-name">新ファイル名:</label>
-                            <input type="text" id="new-name" name="new-name" required>
-                            <button class="button" type="submit">名前変更</button>
-                        </form>
-                        <div id="rename-result"></div>
-                    </div>
-                    <div class="management-section">
-                        <form id="show-form">
-                            <label for="show-file">ファイル名(拡張子含む):</label>
-                            <input type="text" id="show-file" name="file_name" required>
-                            <button class="button" type="submit">表示</button>
-                        </form>
-                        <pre id="show-result" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 10px;"></pre>
-                    </div>
-                    <div class="management-section">
-                        <form id="update-json-form">
-                            <label for="json-file-path">ファイル名(拡張子含む):</label>
-                            <input type="text" id="json-file-path" name="file_path" required>
-                            <label for="json-data">データ:</label>
-                            <textarea id="json-data" name="data" rows="5" required></textarea>
-                            <button class="button" type="submit">データ更新</button>
-                        </form>
-                        <br>
-                        <div id="update-json-result"></div>
-                    </div>
-                    <div class="management-section">
-                        <form id="execute-command-form">
-                            <label for="command-to-execute">コマンド:</label>
-                            <input type="text" id="command-to-execute" name="command_to_execute" required>
-                            <button class="button" type="submit">実行</button>
-                        </form>
-                        <div id="command-result"></div>
-                    </div>
-                </div>
+    <div id="server-management" class="window"
+         style="display: none; width: 800px; height: 600px; top: 100px; left: 100px;">
+        <div class="window-titlebar">
+            <h2>サーバー管理</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('server-management')">X</button>
             </div>
         </div>
+        <div class="window-content">
+            <div class="tab">
+                <button class="tablinks" onclick="openTab(event, 'server-status')">ステータス</button>
+                <button class="tablinks" onclick="openTab(event, 'console')">コンソール</button>
+                <button class="tablinks" onclick="openTab(event, 'ban-management')">BAN管理</button>
+                <button class="tablinks" onclick="openTab(event, 'file-management')">ファイル管理</button>
+            </div>
 
-        <div id="web-browser-window" class="window" style="display: none; width: 800px; height: 600px; top: 150px; left: 150px;">
-            <div class="window-titlebar">
-                <h2>Webブラウザ</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('web-browser-window')">X</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <iframe id="web-browser-iframe" src="https://gamelist1990.github.io/gamelist1990/page/"></iframe>
-            </div>
-        </div>
-
-        <div id="resource-monitor-window" class="window" style="display: none; width: 200px; height: 300px; top: 250px; left: 250px;">
-            <div class="window-titlebar">
-                <h2>システムリソースモニター</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('resource-monitor-window')">X</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div id="cpu-usage" style="width: 100%; height: 100px; margin-bottom: 20px;"></div>
-                <div id="memory-usage" style="width: 100%; height: 100px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="calculator-window" class="window" style="display: none; width: 300px; height: 400px; top: 100px; left: 100px;">
-            <div class="window-titlebar">
-                <h2>電卓</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('calculator-window')">X</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div id="calculator">
-                    <input type="text" id="display" readonly>
-                    <input type="button" value="7" onclick="inputDigit('7')"> 
-                    <input type="button" value="8" onclick="inputDigit('8')"> 
-                    <input type="button" value="9" onclick="inputDigit('9')"> 
-                    <input type="button" value="/" onclick="inputOperator('/')"> 
-                    <br>
-                    <input type="button" value="4" onclick="inputDigit('4')"> 
-                    <input type="button" value="5" onclick="inputDigit('5')"> 
-                    <input type="button" value="6" onclick="inputDigit('6')"> 
-                    <input type="button" value="*" onclick="inputOperator('*')"> 
-                    <br>
-                    <input type="button" value="1" onclick="inputDigit('1')"> 
-                    <input type="button" value="2" onclick="inputDigit('2')"> 
-                    <input type="button" value="3" onclick="inputDigit('3')"> 
-                    <input type="button" value="-" onclick="inputOperator('-')"> 
-                    <br>
-                    <input type="button" value="0" onclick="inputDigit('0')"> 
-                    <input type="button" value="." onclick="inputDecimal('.')"> 
-                    <input type="button" value="C" onclick="clearDisplay()"> 
-                    <input type="button" value="+" onclick="inputOperator('+')"> 
-                    <br>
-                    <input type="button" value="=" onclick="calculate()" style="width: 210px;"> 
-                </div>
-            </div>
-        </div>
-
-        <div id="clock-window" class="window" style="display: none; width: 300px; height: 100px; top: 200px; left: 200px;">
-            <div class="window-titlebar">
-                <h2>時計</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('clock-window')">X</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div id="clock"></div>
-            </div>
-        </div>
-     <div id="notepad-window" class="window" style="display: none; width: 600px; height: 400px; top: 200px; left: 200px;">
-            <div class="window-titlebar">
-                <h2>メモ帳</h2>
-                <div class="controls">
-                    <button class="close-button" onclick="closeWindow('notepad-window')">X</button>
-                </div>
-            </div>
-            <div class="window-content" style="padding-bottom: 40px;"> <textarea id="notepad-textarea" style="width: 100%; height: calc(100% - 35px);"></textarea>
+            <div id="server-status" class="tabcontent">
+                <h3>サーバー情報</h3>
+                <div id="server-status-content"></div>
+                <form id="stop-server-form">
+                    <button class="button" type="submit">サーバー停止</button>
+                </form>
                 <br>
-                <button class="button" onclick="saveNotepad()" style="position: absolute; bottom: 10px; left: 10px;">保存</button> </div>
+                <form id="start-server-form">
+                    <button class="button" type="submit">サーバー起動</button>
+                </form>
+            </div>
+
+            <div id="console" class="tabcontent">
+                <h3>コンソール出力</h3>
+                <pre id="console-output"></pre>
+                <br>
+                <button class="button" onclick="getConsoleLog()">更新</button>
+                <br>
+            </div>
+
+            <div id="ban-management" class="tabcontent">
+                <h3>BAN管理</h3>
+                <p>現在のBAN人数: <span id="banned-count">0</span></p>
+                <table id="ban-history">
+                    <thead>
+                    <tr>
+                        <th>ユーザーID</th>
+                        <th>BAN時間</th>
+                        <th>解除</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <button class="button" onclick="updateBanHistory()">BANリスト更新</button>
+                <form id="unban-form">
+                    <label for="user-id">ユーザーID:</label>
+                    <input type="text" id="user-id" name="user_id" required>
+                    <button class="button" type="submit">BAN解除</button>
+                </form>
+            </div>
+
+            <div id="file-management" class="tabcontent">
+                <h3>ファイル管理</h3>
+                <div class="management-section">
+                    <form id="rename-form">
+                        <label for="old-name">旧ファイル名:</label>
+                        <input type="text" id="old-name" name="old-name" required>
+                        <label for="new-name">新ファイル名:</label>
+                        <input type="text" id="new-name" name="new-name" required>
+                        <button class="button" type="submit">名前変更</button>
+                    </form>
+                    <div id="rename-result"></div>
+                </div>
+                <div class="management-section">
+                    <form id="show-form">
+                        <label for="show-file">ファイル名(拡張子含む):</label>
+                        <input type="text" id="show-file" name="file_name" required>
+                        <button class="button" type="submit">表示</button>
+                    </form>
+                    <pre id="show-result"
+                         style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-top: 10px;"></pre>
+                </div>
+                <div class="management-section">
+                    <form id="update-json-form">
+                        <label for="json-file-path">ファイル名(拡張子含む):</label>
+                        <input type="text" id="json-file-path" name="file_path" required>
+                        <label for="json-data">データ:</label>
+                        <textarea id="json-data" name="data" rows="5" required></textarea>
+                        <button class="button" type="submit">データ更新</button>
+                    </form>
+                    <br>
+                    <div id="update-json-result"></div>
+                </div>
+                <div class="management-section">
+                    <form id="execute-command-form">
+                        <label for="command-to-execute">コマンド:</label>
+                        <input type="text" id="command-to-execute" name="command_to_execute" required>
+                        <button class="button" type="submit">実行</button>
+                    </form>
+                    <div id="command-result"></div>
+                    <br>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <div id="web-browser-window" class="window"
+         style="display: none; width: 800px; height: 600px; top: 150px; left: 150px;">
+        <div class="window-titlebar">
+            <h2>Webブラウザ</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('web-browser-window')">X</button>
+            </div>
         </div>
-   </div>
+        <div class="window-content">
+            <iframe id="web-browser-iframe" src="https://gamelist1990.github.io/gamelist1990/page/"></iframe>
+        </div>
+    </div>
 
+    <div id="resource-monitor-window" class="window"
+         style="display: none; width: 200px; height: 300px; top: 250px; left: 250px;">
+        <div class="window-titlebar">
+            <h2>システムリソースモニター</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('resource-monitor-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="cpu-usage" style="width: 100%; height: 100px; margin-bottom: 20px;"></div>
+            <div id="memory-usage" style="width: 100%; height: 100px;"></div>
+        </div>
+    </div>
 
+    <div id="calculator-window" class="window"
+         style="display: none; width: 300px; height: 400px; top: 100px; left: 100px;">
+        <div class="window-titlebar">
+            <h2>電卓</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('calculator-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="calculator">
+                <input type="text" id="display" readonly>
+                <input type="button" value="7" onclick="inputDigit('7')">
+                <input type="button" value="8" onclick="inputDigit('8')">
+                <input type="button" value="9" onclick="inputDigit('9')">
+                <input type="button" value="/" onclick="inputOperator('/')">
+                <br>
+                <input type="button" value="4" onclick="inputDigit('4')">
+                <input type="button" value="5" onclick="inputDigit('5')">
+                <input type="button" value="6" onclick="inputDigit('6')">
+                <input type="button" value="*" onclick="inputOperator('*')">
+                <br>
+                <input type="button" value="1" onclick="inputDigit('1')">
+                <input type="button" value="2" onclick="inputDigit('2')">
+                <input type="button" value="3" onclick="inputDigit('3')">
+                <input type="button" value="-" onclick="inputOperator('-')">
+                <br>
+                <input type="button" value="0" onclick="inputDigit('0')">
+                <input type="button" value="." onclick="inputDecimal('.')">
+                <input type="button" value="C" onclick="clearDisplay()">
+                <input type="button" value="+" onclick="inputOperator('+')">
+                <br>
+                <input type="button" value="=" onclick="calculate()" style="width: 210px;">
+            </div>
+        </div>
+    </div>
 
- 
+    <div id="clock-window" class="window"
+         style="display: none; width: 300px; height: 100px; top: 200px; left: 200px;">
+        <div class="window-titlebar">
+            <h2>時計</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('clock-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="clock"></div>
+        </div>
+    </div>
+    <div id="notepad-window" class="window"
+         style="display: none; width: 600px; height: 400px; top: 200px; left: 200px;">
+        <div class="window-titlebar">
+            <h2>メモ帳</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('notepad-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content" style="padding-bottom: 40px;">
+            <textarea id="notepad-textarea" style="width: 100%; height: calc(100% - 35px);"></textarea>
+            <br>
+            <button class="button" onclick="saveNotepad()" style="position: absolute; bottom: 10px; left: 10px;">保存
+            </button>
+        </div>
+    </div>
 
+    <div id="file-manager-window" class="window" style="display: none;">
+        <div class="window-titlebar">
+            <h2>ファイルマネージャー</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('file-manager-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="file-manager-path-container">
+                <input type="text" id="file-manager-path" value="/" onkeydown="handlePathInput(event)">
+                <button id="file-manager-refresh" onclick="getFileList()">更新</button>
+            </div>
+            <div id="file-manager-toolbar">
+                <button onclick="createFolder()">
+                    📁 新規フォルダ
+                </button>
+                <label for="upload-file">
+                    ⬆️ アップロード
+                </label>
+                <input type="file" id="upload-file" onchange="uploadFile()">
+                <button id="delete-selected-button" onclick="deleteSelectedFile()" disabled>
+                    🗑️ 削除
+                </button>
+                <button id="download-selected-button" onclick="downloadSelectedFile()" disabled>
+                    ⬇️ ダウンロード
+                </button>
+                <button id="rename-selected-button" onclick="renameSelectedFile()" disabled>
+                    ✏️ 名前変更
+                </button>
+                <button id="move-selected-button" onclick="initiateMove()" disabled>
+                    ➡️ 移動
+                </button>
+            </div>
+            <div id="file-list-container">
+                <ul id="file-list"></ul>
+            </div>
+            <div id="file-manager-error" class="error"></div>
+        </div>
+    </div>
+    <div id="file-view-window" class="window"
+         style="display: none; width: 800px; height: 600px; top: 100px; left: 100px;">
+        <div class="window-titlebar">
+            <h2 id="file-view-title">ファイルビューア</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('file-view-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content" style="padding-bottom: 40px;">
+            <textarea id="file-view-content" style="width: 100%; height: calc(100% - 75px);"></textarea>
+            <br>
+            <button class="button" onclick="saveFileContent()" style="position: absolute; bottom: 10px; left: 10px;">
+                保存
+            </button>
+            <button class="button" onclick="exportFileContent()" style="position: absolute; bottom: 10px; left: 100px;">
+                エクスポート
+            </button>
+        </div>
+    </div>
 
+    <div id="settings-window" class="window"
+         style="display: none; width: 600px; height: 400px; top: 200px; left: 200px;">
+        <div class="window-titlebar">
+            <h2>システム設定</h2>
+            <div class="controls">
+                <button class="close-button" onclick="closeWindow('settings-window')">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <h3>デスクトップの背景画像</h3>
+            <label for="background-image-url">画像URL:</label>
+            <input type="text" id="background-image-url">
 
+            <h3>自動ログイン</h3>
+            <input type="checkbox" id="auto-login">
+            <label for="auto-login">次回から自動的にログインする</label>
 
-
-
-
-
+            <h3>解像度の自動調節</h3>
+            <input type="checkbox" id="auto-resolution">
+            <label for="auto-resolution">自動的に解像度を調節する</label>
+            <button class="button" onclick="saveSettings()">設定の保存</button>
+            <br>
+            <br />
+            <br>
+        </div>
+    </div>
+</div>
 
 <!-- JavaScript -->
 <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded',async () => {
         // ログインフォームの送信イベント
         document.getElementById('login-form-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             await login();
         });
 
+        // ウィンドウを動かせるようにする項目
         dragElement(document.getElementById("server-management"));
         dragElement(document.getElementById("web-browser-window"));
         dragElement(document.getElementById("notepad-window"));
-        dragElement(document.getElementById("resource-monitor-window")); // リソースモニターウィンドウを追加
+        dragElement(document.getElementById("resource-monitor-window"));
         dragElement(document.getElementById("calculator-window"));
         dragElement(document.getElementById("clock-window"));
+        dragElement(document.getElementById("file-manager-window"));
+        dragElement(document.getElementById("file-view-window"));
+        dragElement(document.getElementById("settings-window"));
+
+     
 
         // 最初にステータスタブを開く
-        // document.querySelector('#server-management .tab button:first-child').click();
+        document.querySelector('#server-management .tab button:first-child').click();
+
+        
+        // 自動ログイン処理
+  if (localStorage.getItem('autoLogin') === 'true') {
+    const savedPassword = localStorage.getItem('savedPassword');
+    if (savedPassword) {
+      document.getElementById('password').value = savedPassword;
+      await login(); // await を追加
+    }
+  }
+
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // ログインフォームの送信イベント
-        document.getElementById('login-form-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            await login();
-        });
-        });
-        
+    // グローバル変数
+    let globalPassword = "";
+    let currentPath = "/";
+    let selectedFile = null; // 選択されたファイル要素を保持する変数
+
+
     // ログイン処理
     async function login() {
-        const password = document.getElementById('password').value;
+        const passwordInput = document.getElementById('password');
+        const password = passwordInput.value;
 
-        try {
-            const response = await fetch('/antibot', {
+        try { 
+                       const response = await fetch('/antibot', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -599,7 +912,7 @@
                 const channel = pusher.subscribe('private-my-channel');
 
                 // console_log イベントを購読
-                channel.bind('console_log', function(data) {
+                channel.bind('console_log', function (data) {
                     const consoleOutput = document.getElementById('console-output');
                     const logMessage = document.createElement('p');
                     logMessage.textContent = data.message;
@@ -611,17 +924,36 @@
                     updateServerStatus(data.data);
                 });
 
-                               // resources イベントを購読
+                // resources イベントを購読
                 channel.bind('resources', function (data) {
                     updateResourceMonitor(data);
                 });
-                
 
                 // ログイン後にサーバー情報とプロセス情報を取得
+                globalPassword = document.getElementById('password').value; // パスワードをグローバル変数に保存
+
                 getServerStatus();
                 getConsoleLog(); // ログイン後にコンソールログを取得
                 updateBanHistory(); //BAN者を検知
+                getFileList(); //ファイルマネージャー
+                applySettings();
+                loadSettings();
+
+                // 自動ログインが有効であればパスワードを保存
+                if (document.getElementById('auto-login').checked) {
+                    localStorage.setItem('autoLogin', 'true');
+                    localStorage.setItem('savedPassword', password);
+                } else {
+                    localStorage.setItem('autoLogin', 'false');
+                    localStorage.removeItem('savedPassword');
+                }
             } else {
+                // ログイン失敗時の処理
+                if (localStorage.getItem('autoLogin') === 'true') {
+                    // 自動ログインが有効だが失敗した場合、パスワードを削除して再入力を促す
+                    localStorage.removeItem('savedPassword');
+                    alert("自動ログインに失敗しました。パスワードを再入力してください。");
+                }
                 document.getElementById('error-message').textContent = 'パスワードが間違っています。';
             }
         } catch (error) {
@@ -631,88 +963,84 @@
     }
 
     // ウィンドウをドラッグで移動可能にする関数
-function dragElement(elmnt) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    let isDragging = false; // ドラッグ中かどうかを示すフラグ
-
-    // タッチイベントとマウスイベントの両方に対応
-    elmnt.querySelector('.window-titlebar').addEventListener('mousedown', dragMouseDown);
-    elmnt.querySelector('.window-titlebar').addEventListener('touchstart', dragMouseDown);
-
-    function dragMouseDown(e) {
-        e = e || window.event;
-        e.preventDefault();
-
-        // タッチイベントの場合、最初のタッチポイントの座標を取得
-        if (e.type === 'touchstart') {
-            pos3 = e.touches[0].clientX;
-            pos4 = e.touches[0].clientY;
-        } else {
-            // マウスイベントの場合、通常の座標を取得
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-        }
-
-        isDragging = true; // ドラッグ開始
+    function dragElement(elmnt) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let isDragging = false; // ドラッグ中かどうかを示すフラグ
 
         // タッチイベントとマウスイベントの両方に対応
-        document.addEventListener('mouseup', closeDragElement);
-        document.addEventListener('touchend', closeDragElement);
-        document.addEventListener('mousemove', elementDrag);
-        document.addEventListener('touchmove', elementDrag);
-    }
+        elmnt.querySelector('.window-titlebar').addEventListener('mousedown', dragMouseDown);
+        elmnt.querySelector('.window-titlebar').addEventListener('touchstart', dragMouseDown);
 
-    function elementDrag(e) {
-        if (!isDragging) return; // ドラッグ中でない場合は処理しない
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
 
-        e = e || window.event;
-        e.preventDefault();
+            // タッチイベントの場合、最初のタッチポイントの座標を取得
+            if (e.type === 'touchstart') {
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+            } else {
+                // マウスイベントの場合、通常の座標を取得
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+            }
 
-        // タッチイベントの場合、最初のタッチポイントの座標を取得
-        if (e.type === 'touchmove') {
-            pos1 = pos3 - e.touches[0].clientX;
-            pos2 = pos4 - e.touches[0].clientY;
-            pos3 = e.touches[0].clientX;
-            pos4 = e.touches[0].clientY;
-        } else {
-            // マウスイベントの場合、通常の座標を取得
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+            isDragging = true; // ドラッグ開始
+
+            // タッチイベントとマウスイベントの両方に対応
+            document.addEventListener('mouseup', closeDragElement);
+            document.addEventListener('touchend', closeDragElement);
+            document.addEventListener('mousemove', elementDrag);
+            document.addEventListener('touchmove', elementDrag);
         }
 
-        // 要素の位置を更新
-        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        function elementDrag(e) {
+            if (!isDragging) return; // ドラッグ中でない場合は処理しない
+
+            e = e || window.event;
+            e.preventDefault();
+
+            // タッチイベントの場合、最初のタッチポイントの座標を取得
+            if (e.type === 'touchmove') {
+                pos1 = pos3 - e.touches[0].clientX;
+                pos2 = pos4 - e.touches[0].clientY;
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+            } else {
+                // マウスイベントの場合、通常の座標を取得
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+            }
+
+            // 要素の位置を更新
+            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            isDragging = false; // ドラッグ終了
+
+            // イベントリスナーを削除
+            document.removeEventListener('mouseup', closeDragElement);
+            document.removeEventListener('touchend', closeDragElement);
+            document.removeEventListener('mousemove', elementDrag);
+            document.removeEventListener('touchmove', elementDrag);
+        }
     }
 
-    function closeDragElement() {
-        isDragging = false; // ドラッグ終了
 
-        // イベントリスナーを削除
-        document.removeEventListener('mouseup', closeDragElement);
-        document.removeEventListener('touchend', closeDragElement);
-        document.removeEventListener('mousemove', elementDrag);
-        document.removeEventListener('touchmove', elementDrag);
+    // ウィンドウを開く関数
+    function openWindow(windowId) {
+        const appWindow = document.getElementById(windowId); // アプリケーションウィンドウの要素
+        appWindow.style.display = 'block';
+
     }
-}
-
-
-        // ウィンドウを開く関数
-// ウィンドウを開く関数
-function openWindow(windowId) {
-    const appWindow = document.getElementById(windowId); // アプリケーションウィンドウの要素
-    appWindow.style.display = 'block';
-
-}
 
     // ウィンドウを閉じる関数
     function closeWindow(windowId) {
         document.getElementById(windowId).style.display = 'none';
-        // ログインフォームとオーバーレイを表示
-       // document.getElementById('login-form').style.display = 'block';
-       // document.getElementById('overlay').style.display = 'block';
     }
 
     // タブ切り替え関数
@@ -731,176 +1059,518 @@ function openWindow(windowId) {
     }
 
 
-    // サーバー情報の取得
-function getServerStatus() {
-    fetch('/admin/status', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ password: document.getElementById('password').value })
-    })
-    .then(response => {
+    //ファイルマネージャー関数
+    async function fileManagerRequest(action, data = {}) {
+        const response = await fetch('/admin/file_manager', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            },
+            body: JSON.stringify({
+                password: globalPassword,
+                action: action,
+                path: currentPath, // currentPath を使用する
+                ...data
+            })
+        });
+
         if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // 受信したデータを使ってサーバー情報を更新
-        updateServerStatus(data.data);
-    })
-    .catch(error => {
-        console.error('There has been a problem with your fetch operation:', error);
-    });
-}
-
-// プロセス情報の取得
-
-
-
-     // サーバー情報の更新
-function updateServerStatus(data) {
-    // 'server-status-content' などの要素にサーバー情報を出力
-    let output = '';
-    for (const key in data) {
-        output += `<p>${key}: ${data[key]}</p>`;
-    }
-    document.getElementById('server-status-content').innerHTML = output;
-}
-
-
-
-
-          // コンソールログを取得する関数
-    async function getConsoleLog() {
-      const password = document.getElementById('password').value; // パスワードを取得
-
-      try {
-        const response = await fetch('/admin/console_log', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ password: password })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          updateConsoleLog(data.console_log); // data.console_log にコンソールログが入っている
-        } else {
-          console.error('コンソールログの取得に失敗しました');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-      } catch (error) {
-        console.error('コンソールログの取得中にエラーが発生しました:', error);
-      }
+        return await response.json();
     }
 
-    // コンソールログの更新
-    function updateConsoleLog(data) {
-      // 'console-output' 要素にコンソールログを出力
-      document.getElementById('console-output').textContent = data.join(''); // data.join('') でリストを文字列に変換
-    }
-
-
-
-
-    async function updateBanHistory() {
-    try {
-        const response = await fetch('/antibot/history');
-        const data = await response.json();
-
-        document.getElementById('banned-count').textContent = data.bannedCount;
-        const banHistoryTable = document.getElementById('ban-history').querySelector('tbody');
-
-        // 既存の行を削除
-        while (banHistoryTable.firstChild) {
-            banHistoryTable.removeChild(banHistoryTable.firstChild);
+    async function getFileList() {
+        try {
+            const data = await fileManagerRequest("list");
+            displayFileList(data.files);
+            document.getElementById('file-manager-error').textContent = "";
+            currentPath = document.getElementById('file-manager-path').value; // パスを更新
+        } catch (error) {
+            console.error('ファイルリストの取得に失敗しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
         }
+    }
 
-        data.banHistory.forEach(ban => {
-            const row = banHistoryTable.insertRow();
-            row.insertCell().textContent = ban.user_id;
-            row.insertCell().textContent = ban.ban_time;
+    // パス入力フィールドの処理
+    function handlePathInput(event) {
+        if (event.key === "Enter") {
+            getFileList();
+        }
+    }
+    // ファイルの削除
+    async function deleteFile(fileName) {
+        if (!confirm(`"${fileName}" を削除しますか？`)) return;
 
-            const unbanButton = document.createElement('button');
-            unbanButton.textContent = '解除';
-            unbanButton.classList.add('button');
-            unbanButton.addEventListener('click', () => {
-                unbanUser(ban.user_id);
+        try {
+            await fileManagerRequest("delete", {name: fileName});
+            getFileList(); // リストを更新
+        } catch (error) {
+            console.error('ファイルの削除に失敗しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+    // ファイルのアップロード
+    async function uploadFile() {
+        const fileInput = document.getElementById('upload-file');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('password', globalPassword);
+        formData.append('path', currentPath);
+
+        try {
+            const response = await fetch('/admin/upload', {
+                method: 'POST',
+                body: formData
             });
-            row.insertCell().appendChild(unbanButton);
-        });
-    } catch (error) {
-        console.error(error);
-    }
-}
 
-    // ユーザーのBAN解除
-    async function unbanUser(userId) {
-    try {
-        const response = await fetch('/antibot/unban', {
+            if (response.ok) {
+                getFileList(); // リストを更新
+            } else {
+                console.error('ファイルのアップロードに失敗しました。');
+                document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+            }
+        } catch (error) {
+            console.error('ファイルのアップロード中にエラーが発生しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    // ファイルのダウンロード
+    async function downloadFile(fileName) {
+        try {
+            const response = await fetch(`/admin/download?password=${globalPassword}&path=${currentPath}/${fileName}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                console.error('ファイルのダウンロードに失敗しました。');
+                document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+            }
+        } catch (error) {
+            console.error('ファイルのダウンロード中にエラーが発生しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    async function createFolder() {
+        const folderName = prompt("新しいフォルダ名を入力してください:", "新しいフォルダ");
+        if (folderName === null || folderName.trim() === "") return; // キャンセルまたは空文字列の場合は処理を中断
+
+        try {
+            await fileManagerRequest("create_folder", {name: folderName});
+            getFileList(); // リストを更新
+        } catch (error) {
+            console.error('フォルダの作成に失敗しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    // ファイルリストの表示
+    function displayFileList(files) {
+        selectedFile = null; // displayFileList の最初に selectedFile を null に初期化
+        const fileList = document.getElementById('file-list');
+        fileList.innerHTML = '';
+
+        for (const file of files) {
+            const li = document.createElement('li');
+            // ファイル名を表示するための要素を追加
+            const fileNameSpan = document.createElement('span');
+            fileNameSpan.textContent = file.name;
+            fileNameSpan.classList.add('file-name'); // クラスを追加してスタイルを適用できるようにする
+
+            if (file.isDirectory) {
+                li.classList.add("folder");
+                li.innerHTML = ' ';
+                li.appendChild(fileNameSpan); // ファイル名を表示
+                li.addEventListener('click', () => {
+                    currentPath = `${currentPath}/${file.name}`;
+                    document.getElementById('file-manager-path').value = currentPath;
+                    getFileList();
+                });
+            } else {
+                // ファイル名とサイズを表示
+                li.innerHTML = ' ';
+
+                // ファイル名を表示する要素を設定
+                fileNameSpan.textContent = file.name;
+                fileNameSpan.dataset.filename = file.name; // data-filename 属性にファイル名を設定
+                li.appendChild(fileNameSpan);
+
+                const fileSizeDiv = document.createElement('div');
+                fileSizeDiv.textContent = `(${file.size} bytes)`;
+                fileSizeDiv.style.fontSize = '12px';
+                fileSizeDiv.style.color = 'gray';
+                li.appendChild(fileSizeDiv);
+                // ファイルサイズをデータセットに保存
+                li.dataset.size = file.size;
+            }
+
+            // クリックイベントを追加してマーク処理を行う
+            li.addEventListener('click', (event) => {
+                // 既に選択されているファイルがあればマークを外す
+                if (selectedFile && selectedFile !== li) {
+                    selectedFile.classList.remove('selected');
+                }
+
+                // クリックされたファイルが選択されているか確認
+                if (li.classList.contains('selected')) {
+                    li.classList.remove('selected');
+                    selectedFile = null;
+                } else {
+                    li.classList.add('selected');
+                    selectedFile = li;
+                }
+                updateToolbarState(); // ツールバーのボタンの状態を更新
+            });
+
+            // ダブルクリックイベントでファイルビューアを開く
+            li.addEventListener('dblclick', () => {
+                const fileNameSpan = event.currentTarget.querySelector('.file-name');
+                const fileName = fileNameSpan.dataset.filename;
+                viewFileContent(file.name);
+            });
+
+            fileList.appendChild(li);
+        }
+        updateToolbarState(); // 初期状態ではツールバーのボタンを無効にする
+    }
+
+    function updateToolbarState() {
+        const deleteButton = document.getElementById('delete-selected-button');
+        const downloadButton = document.getElementById('download-selected-button');
+        const renameButton = document.getElementById('rename-selected-button');
+        const moveButton = document.getElementById('move-selected-button');
+
+
+        if (selectedFile) {
+            deleteButton.disabled = false;
+            downloadButton.disabled = false;
+            renameButton.disabled = false;
+            moveButton.disabled = !selectedFile;
+        } else {
+            deleteButton.disabled = true;
+            downloadButton.disabled = true;
+            renameButton.disabled = true;
+        }
+    }
+
+
+    async function deleteSelectedFile() {
+        if (!selectedFile) return;
+        const fileNameSpan = selectedFile.querySelector('.file-name'); // ファイル名を表示しているspan要素を取得
+        const fileName = fileNameSpan.dataset.filename; // data-filename 属性からファイル名を取得
+
+        if (!confirm(`"${fileName}" を削除しますか？`)) return;
+
+        try {
+            await fileManagerRequest("delete", {name: fileName});
+            getFileList(); // リストを更新
+            selectedFile = null; // ファイルの選択を解除
+            updateToolbarState(); // ツールバーのボタンを無効にする
+        } catch (error) {
+            console.error('ファイルの削除に失敗しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    async function downloadSelectedFile() {
+        if (!selectedFile) return;
+        const fileNameSpan = selectedFile.querySelector('.file-name');
+        const fileName = fileNameSpan.dataset.filename;
+
+        try {
+            const response = await fetch(`/admin/download?password=${globalPassword}&path=${currentPath}/${fileName}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                console.error('ファイルのダウンロードに失敗しました。');
+                document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+            }
+        } catch (error) {
+            console.error('ファイルのダウンロード中にエラーが発生しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    // 選択されたファイルの名前変更 (追加)
+    async function renameSelectedFile() {
+        if (!selectedFile) return;
+        const fileNameSpan = selectedFile.querySelector('.file-name');
+        const oldName = fileNameSpan.dataset.filename;
+        const newName = prompt("新しいファイル名を入力してください:", oldName);
+
+        if (newName === null || newName.trim() === "") return; // キャンセルまたは空文字列の場合は処理を中断
+
+        try {
+            // ファイルサイズ表示を一時的に削除
+            selectedFile.innerHTML = ' ' + oldName;
+
+            await fileManagerRequest("rename", {old_name: oldName, new_name: newName});
+            getFileList(); // リストを更新
+
+            // ファイルサイズ表示を復元
+            selectedFile.innerHTML = ' ' + newName + `<div style="font-size: 12px; color: gray;">${selectedFile.dataset.size} bytes</div>`;
+
+            selectedFile = null; // ファイルの選択を解除
+            updateToolbarState(); // ツールバーのボタンを無効にする
+        } catch (error) {
+            console.error('ファイルの名前変更に失敗しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    async function viewFileContent(fileName) {
+        try {
+            const response = await fetch(`/admin/download?password=${globalPassword}&path=${currentPath}/${fileName}`, {
+                headers: {  // headers オブジェクトを追加
+                    'Cache-Control': 'no-cache' // キャッシュを無効にするヘッダー
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const content = await response.text({encoding: 'utf-8'});
+
+            // ファイルビューアウィンドウに内容を表示
+            document.getElementById('file-view-title').textContent = fileName;
+            document.getElementById('file-view-content').value = content;
+            openWindow('file-view-window');
+
+        } catch (error) {
+            console.error('ファイルの読み込み中にエラーが発生しました:', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    async function saveFileContent() {
+        const fileName = document.getElementById('file-view-title').textContent;
+        const content = document.getElementById('file-view-content').value;
+
+        try {
+            const response = await fetch('/admin/file_manager', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    password: globalPassword,
+                    action: 'save',
+                    path: currentPath,
+                    name: fileName,
+                    content: content
+                })
+            });
+
+            if (response.ok) {
+                alert('ファイルが保存されました。');
+                getFileList();
+            } else {
+                const errorData = await response.json();
+                alert(`ファイルの保存に失敗しました: ${errorData.error}`);
+            }
+        } catch (error) {
+            console.error('ファイルの保存中にエラーが発生しました:', error);
+            alert('ファイルの保存中にエラーが発生しました。');
+        }
+    }
+
+    function exportFileContent() {
+        const fileName = document.getElementById('file-view-title').textContent;
+        const content = document.getElementById('file-view-content').value;
+
+        // Blobを作成
+        const blob = new Blob([content], {type: 'text/plain'});
+
+        // ダウンロードリンクを作成
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+
+        // リンクをクリックしてダウンロード
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 移動開始
+    let fileToMove = null;
+    let originalPath = null;
+
+    function initiateMove() {
+        if (!selectedFile) return;
+
+        fileToMove = selectedFile.querySelector('.file-name').dataset.filename;
+        originalPath = currentPath;
+
+        const moveButton = document.getElementById('move-selected-button');
+        moveButton.textContent = "移動完了";
+        moveButton.onclick = completeMove;
+    }
+
+    // 移動完了
+    async function completeMove() {
+        try {
+            const response = await fileManagerRequest("move", {
+                old_path: `${originalPath}/${fileToMove}`,
+                new_path: `${currentPath}/${fileToMove}`
+            });
+
+            // 移動ボタンを元に戻す
+            const moveButton = document.getElementById('move-selected-button');
+            moveButton.textContent = " 移動";
+            moveButton.onclick = initiateMove;
+
+            if (response.message) {
+                getFileList(); // ファイルリストを更新
+                fileToMove = null;
+                originalPath = null;
+            } else {
+                console.error('ファイルの移動中にエラーが発生しました。', response.error);
+                document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+            }
+        } catch (error) {
+            console.error('ファイルの移動中にエラーが発生しました。', error);
+            document.getElementById('file-manager-error').textContent = "エラーが発生しました。";
+        }
+    }
+
+    // サーバー情報の取得
+    function getServerStatus() {
+        fetch('/admin/status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ user_id: userId }) // JSON データとして user_id を送信
-        });
-
-        if (response.ok) {
-            // BAN解除後にBAN履歴を更新
-            updateBanHistory(); 
-        } else {
-            console.error('ユーザーのBAN解除に失敗しました。');
-        }
-    } catch (error) {
-        console.error(error);
+            body: JSON.stringify({password: document.getElementById('password').value})
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 受信したデータを使ってサーバー情報を更新
+                updateServerStatus(data.data);
+            })
+            .catch(error => {
+                console.error('There has been a problem with your fetch operation:', error);
+            });
     }
-}
 
-    // サーバーの再起動
-    async function restartServer() {
+    // サーバー情報の更新
+    function updateServerStatus(data) {
+        // 'server-status-content' などの要素にサーバー情報を出力
+        let output = '';
+        for (const key in data) {
+            output += `<p>${key}: ${data[key]}</p>`;
+        }
+        document.getElementById('server-status-content').innerHTML = output;
+    }
+
+    // コンソールログを取得する関数
+    async function getConsoleLog() {
+        const password = document.getElementById('password').value; // パスワードを取得
+
         try {
-            const response = await fetch('/admin/restart', {
+            const response = await fetch('/admin/console_log', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ password: document.getElementById('password').value })
+                body: JSON.stringify({password: password})
             });
 
             if (response.ok) {
-                console.log('サーバーの再起動リクエストを送信しました。');
+                const data = await response.json();
+                updateConsoleLog(data.console_log); // data.console_log にコンソールログが入っている
             } else {
-                console.error('サーバーの再起動に失敗しました。');
+                console.error('コンソールログの取得に失敗しました');
+            }
+
+        } catch (error) {
+            console.error('コンソールログの取得中にエラーが発生しました:', error);
+        }
+    }
+
+    // コンソールログの更新
+    function updateConsoleLog(data) {
+        // 'console-output' 要素にコンソールログを出力
+        document.getElementById('console-output').textContent = data.join(''); // data.join('') でリストを文字列に変換
+    }
+
+    async function updateBanHistory() {
+        try {
+            const response = await fetch('/antibot/history');
+            const data = await response.json();
+
+            document.getElementById('banned-count').textContent = data.bannedCount;
+            const banHistoryTable = document.getElementById('ban-history').querySelector('tbody');
+
+            // 既存の行を削除
+            while (banHistoryTable.firstChild) {
+                banHistoryTable.removeChild(banHistoryTable.firstChild);
+            }
+
+            data.banHistory.forEach(ban => {
+                const row = banHistoryTable.insertRow();
+                row.insertCell().textContent = ban.user_id;
+                row.insertCell().textContent = ban.ban_time;
+
+                const unbanButton = document.createElement('button');
+                unbanButton.textContent = '解除';
+                unbanButton.classList.add('button');
+                unbanButton.addEventListener('click', () => {
+                    unbanUser(ban.user_id);
+                });
+                row.insertCell().appendChild(unbanButton);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // ユーザーのBAN解除
+    async function unbanUser(userId) {
+        try {
+            const response = await fetch('/antibot/unban', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({user_id: userId}) // JSON データとして user_id を送信
+            });
+
+            if (response.ok) {
+                // BAN解除後にBAN履歴を更新
+                updateBanHistory();
+            } else {
+                console.error('ユーザーのBAN解除に失敗しました。');
             }
         } catch (error) {
             console.error(error);
         }
     }
 
-    // サーバーのシャットダウン
-    async function shutdownServer() {
-        if (!confirm('本当にサーバーをシャットダウンしますか？')) return;
-        try {
-            const response = await fetch('/admin/shutdown', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password: document.getElementById('password').value })
-            });
-
-            if (response.ok) {
-                console.log('サーバーのシャットダウンリクエストを送信しました。');
-            } else {
-                console.error('サーバーのシャットダウンに失敗しました。');
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    }
 
     // ファイル/フォルダの名前変更
     document.getElementById('rename-form').addEventListener('submit', async (event) => {
@@ -914,7 +1584,10 @@ function updateServerStatus(data) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ rename: { old_name: oldName, new_name: newName }, password: document.getElementById('password').value })
+                body: JSON.stringify({
+                    rename: {old_name: oldName, new_name: newName},
+                    password: document.getElementById('password').value
+                })
             });
 
             if (response.ok) {
@@ -930,34 +1603,34 @@ function updateServerStatus(data) {
     });
 
     // ファイルの表示
-document.getElementById('show-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const showFilename = document.getElementById('show-file').value;
-    const password = document.getElementById('password').value;
+    document.getElementById('show-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const showFilename = document.getElementById('show-file').value;
+        const password = document.getElementById('password').value;
 
-    try {
-        const response = await fetch('/admin/showfile', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ file_name: showFilename, password: password })
-        });
+        try {
+            const response = await fetch('/admin/showfile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({file_name: showFilename, password: password})
+            });
 
-        if (response.ok) {
-            const fileContent = await response.text();
-            const formattedContent = fileContent.replace(/\n/g, '<br>'); // 改行コードを <br> タグに変換
-            document.getElementById('show-result').innerHTML = formattedContent; // innerHTML を使用して HTML として設定
-        } else {
-            const errorData = await response.json();
-            document.getElementById('show-result').textContent = errorData.error;
+            if (response.ok) {
+                const fileContent = await response.text();
+                const formattedContent = fileContent.replace(/\n/g, '<br>'); // 改行コードを <br> タグに変換
+                document.getElementById('show-result').innerHTML = formattedContent; // innerHTML を使用して HTML として設定
+            } else {
+                const errorData = await response.json();
+                document.getElementById('show-result').textContent = errorData.error;
+            }
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('show-result').textContent = 'エラーが発生しました。';
         }
-
-    } catch (error) {
-        console.error(error);
-        document.getElementById('show-result').textContent = 'エラーが発生しました。';
-    }
-});
+    });
 
     // BAN解除フォームの送信イベント
     document.getElementById('unban-form').addEventListener('submit', async (event) => {
@@ -967,97 +1640,86 @@ document.getElementById('show-form').addEventListener('submit', async (event) =>
     });
 
     // JSON更新フォームの送信イベント
-document.getElementById('update-json-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
+    document.getElementById('update-json-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-    const filePath = document.getElementById('json-file-path').value;
-    const jsonData = document.getElementById('json-data').value;
-    const password = document.getElementById('password').value;
+        const filePath = document.getElementById('json-file-path').value;
+        const jsonData = document.getElementById('json-data').value;
+        const password = document.getElementById('password').value;
 
-    try {
-        const response = await fetch('/admin/update_json', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                password: password,
-                file_path: filePath, // file_path を追加
-                data: JSON.parse(jsonData) // data を追加
-            })
-        });
+        try {
+            const response = await fetch('/admin/update_json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    password: password,
+                    file_path: filePath, // file_path を追加
+                    data: JSON.parse(jsonData) // data を追加
+                })
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            document.getElementById('update-json-result').textContent = data.message;
-        } else {
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('update-json-result').textContent = data.message;
+            } else {
+                document.getElementById('update-json-result').textContent = 'エラーが発生しました。';
+            }
+        } catch (error) {
+            console.error(error);
             document.getElementById('update-json-result').textContent = 'エラーが発生しました。';
         }
-    } catch (error) {
-        console.error(error);
-        document.getElementById('update-json-result').textContent = 'エラーが発生しました。';
-    }
-});
-
-    function openWebBrowser(url) {
-            const webBrowserWindow = document.getElementById('web-browser-window');
-            const webBrowserIframe = document.getElementById('web-browser-iframe');
-            webBrowserIframe.src = url; // iframe の src 属性を設定
-            webBrowserWindow.style.display = 'block';
-        }
+    });
 
     // サーバー停止
-            document.getElementById('stop-server-form').addEventListener('submit', async (event) => {
-                event.preventDefault();
-                try {
-                    const response = await fetch('/admin/update_server_status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `status=stop&password=${document.getElementById('password').value}`
-                    });
-                    if (response.ok) {
-                        alert("サーバーを停止しました。");
-                        getServerStatus(); // WebSocket でステータス情報を更新
-                    } else {
-                        alert("サーバーの停止に失敗しました。");
-                    }
-                } catch (error) {
-                    console.error(error);
-                    alert("サーバーの停止中にエラーが発生しました。");
-                }
+    document.getElementById('stop-server-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+            const response = await fetch('/admin/update_server_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `status=stop&password=${document.getElementById('password').value}`
             });
+            if (response.ok) {
+                alert("サーバーを停止しました。");
+                getServerStatus(); // WebSocket でステータス情報を更新
+            } else {
+                alert("サーバーの停止に失敗しました。");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("サーバーの停止中にエラーが発生しました。");
+        }
+    });
 
-            // サーバー起動
-            document.getElementById('start-server-form').addEventListener('submit', async (event) => {
-                event.preventDefault();
-                try {
-                    const response = await fetch('/admin/update_server_status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `status=start&password=${document.getElementById('password').value}`
-                    });
-                    if (response.ok) {
-                        alert("サーバーを起動しました。");
-                        getServerStatus(); // WebSocket でステータス情報を更新
-                    } else {
-                        alert("サーバーの起動に失敗しました。");
-                    }
-                } catch (error) {
-                    console.error(error);
-                    alert("サーバーの起動中にエラーが発生しました。");
-                }
+    // サーバー起動
+    document.getElementById('start-server-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+            const response = await fetch('/admin/update_server_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `status=start&password=${document.getElementById('password').value}`
             });
+            if (response.ok) {
+                alert("サーバーを起動しました。");
+                getServerStatus();
+            } else {
+                alert("サーバーの起動に失敗しました。");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("サーバーの起動中にエラーが発生しました。");
+        }
+    });
 
-    function getResources() {
-    ws.send(JSON.stringify({ command: "get_resources" }));
-}
 
-
- // リソース情報の更新
+    // リソース情報の更新
     function updateResourceMonitor(data) {
         drawChart('cpu-usage', 'CPU使用率', [data.cpu_usage, 100 - data.cpu_usage]);
         drawChart('memory-usage', 'メモリ使用率', [data.memory_usage, 100 - data.memory_usage]);
@@ -1071,111 +1733,252 @@ document.getElementById('update-json-form').addEventListener('submit', async (ev
         `;
     }
 
-  // 電卓のJavaScript関数
-let currentInput = '';
-let previousInput = '';
-let currentOperator = '';
+    // 電卓のJavaScript関数
+    let currentInput = '';
+    let previousInput = '';
+    let currentOperator = '';
 
-function appendToDisplay(value) {
-    currentInput += value;
-    document.getElementById('display').value = currentInput;
-}
-
-function inputDigit(digit) {
-    if (currentInput === '0') {
-        currentInput = digit;
-    } else {
-        currentInput += digit;
+    function appendToDisplay(value) {
+        currentInput += value;
+        document.getElementById('display').value = currentInput;
     }
-    updateDisplay();
-}
 
-function inputOperator(operator) {
-    if (currentOperator !== '') {
-        calculate();
+    function inputDigit(digit) {
+        if (currentInput === '0') {
+            currentInput = digit;
+        } else {
+            currentInput += digit;
+        }
+        updateDisplay();
     }
-    previousInput = currentInput;
-    currentOperator = operator;
-    currentInput = '';
-}
 
-function inputDecimal() {
-    if (!currentInput.includes('.')) {
-        currentInput += '.';
+    function inputOperator(operator) {
+        if (currentOperator !== '') {
+            calculate();
+        }
+        previousInput = currentInput;
+        currentOperator = operator;
+        currentInput = '';
     }
-    updateDisplay();
-}
 
-function clearDisplay() {
-    currentInput = '';
-    previousInput = '';
-    currentOperator = '';
-    updateDisplay();
-}
+    function inputDecimal() {
+        if (!currentInput.includes('.')) {
+            currentInput += '.';
+        }
+        updateDisplay();
+    }
 
-function calculate() {
-    let result;
-    const prev = parseFloat(previousInput);
-    const current = parseFloat(currentInput);
-    if (isNaN(prev) || isNaN(current)) return;
-    switch (currentOperator) {
-        case '+':
-            result = prev + current;
-            break;
-        case '-':
-            result = prev - current;
-            break;
-        case '*':
-            result = prev * current;
-            break;
-        case '/':
-            if (current === 0) {
-                alert('0で割ることはできません。');
+    function clearDisplay() {
+        currentInput = '';
+        previousInput = '';
+        currentOperator = '';
+        updateDisplay();
+    }
+
+    function calculate() {
+        let result;
+        const prev = parseFloat(previousInput);
+        const current = parseFloat(currentInput);
+        if (isNaN(prev) || isNaN(current)) return;
+        switch (currentOperator) {
+            case '+':
+                result = prev + current;
+                break;
+            case '-':
+                result = prev - current;
+                break;
+            case '*':
+                result = prev * current;
+                break;
+            case '/':
+                if (current === 0) {
+                    alert('0で割ることはできません。');
+                    return;
+                }
+                result = prev / current;
+                break;
+            default:
                 return;
+        }
+        currentInput = result.toString();
+        previousInput = '';
+        currentOperator = '';
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        document.getElementById('display').value = currentInput;
+    }
+
+    // 時計のJavaScript関数
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+
+
+    // メモ帳の保存機能
+    function saveNotepad() {
+        const notepadContent = document.getElementById('notepad-textarea').value;
+        localStorage.setItem('notepadContent', notepadContent);
+        alert('メモ帳が保存されました。');
+    }
+
+    // メモ帳の読み込み (ページ読み込み時に実行)
+    window.addEventListener('load', () => {
+        const savedContent = localStorage.getItem('notepadContent');
+        if (savedContent) {
+            document.getElementById('notepad-textarea').value = savedContent;
+        }
+    });
+
+
+    async function executeCommand(command) {
+        const password = document.getElementById('password').value;
+        const response = await fetch('/admin/command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                password: password,
+                command: command
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+               const data = await response.json();
+        return data.data.status;
+    }
+
+    function displayCommandResult(event) {
+        event.preventDefault();  // フォームのデフォルトの送信動作をキャンセル
+
+        const commandInput = document.getElementById('command-to-execute');
+        const command = commandInput.value;
+
+        const resultDiv = document.getElementById('command-result');  // 結果を表示するdivを取得
+
+        executeCommand(command)  // コマンドを実行
+            .then(status => {
+                // 結果を表示
+                if (status === 'success') {
+                    resultDiv.textContent = 'コマンドの実行に成功しました。コンソールログを確認してください';
+                    resultDiv.style.color = 'green';
+                } else {
+                    resultDiv.textContent = 'コマンドの実行に失敗しました。サーバーログを確認';
+                    resultDiv.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                resultDiv.textContent = 'エラーが発生しました：' + error.message;
+                resultDiv.style.color = 'red';
+            });
+
+        commandInput.value = '';  // コマンド入力フィールドをクリア
+    }
+
+    document.getElementById('execute-command-form').addEventListener('submit', displayCommandResult);
+
+
+
+    // 設定の保存
+    function saveSettings() {
+        localStorage.setItem('backgroundImageURL', document.getElementById('background-image-url').value);
+        localStorage.setItem('autoLogin', document.getElementById('auto-login').checked ? 'true' : 'false');
+        localStorage.setItem('autoResolution', document.getElementById('auto-resolution').checked ? 'true' : 'false');
+
+        alert('設定が保存されました。');
+        applySettings();
+    }
+
+    // 設定の適用
+    function applySettings() {
+    // 背景画像の適用 (1回のみ)
+    let backgroundImageURL = localStorage.getItem('backgroundImageURL') || '';
+    // URLがhttps://から始まる場合のみ読み込む
+    if (backgroundImageURL.startsWith('https://')) {
+        document.getElementById('background-image-url').value = backgroundImageURL;
+        desktop.style.backgroundImage = `url(${backgroundImageURL})`;
+    } else {
+        desktop.style.background = 'linear-gradient(to bottom, #007bff, #663399)';
+    }
+
+    // 自動ログイン
+    document.getElementById('auto-login').checked = localStorage.getItem('autoLogin') === 'true';
+
+    // 解像度の自動調節
+    document.getElementById('auto-resolution').checked = localStorage.getItem('autoResolution') === 'true';
+    if (localStorage.getItem('autoResolution') === 'true') {
+        window.onresize = function () {
+            const windowWidth = window.innerWidth;
+            const maxWindowWidth = 800;
+            const minWindowWidth = 400;
+            let newWindowWidth = windowWidth;
+
+            if (windowWidth > maxWindowWidth) {
+                newWindowWidth = maxWindowWidth;
+            } else if (windowWidth < minWindowWidth) {
+                newWindowWidth = minWindowWidth;
             }
-            result = prev / current;
-            break;
-        default:
-            return;
+
+            // 各ウィンドウの幅を調整
+            const windows = document.querySelectorAll('.window');
+            windows.forEach(window => {
+                window.style.width = newWindowWidth + 'px';
+            });
+        }
+        // 初期サイズ設定
+        window.onresize();
+    } else {
+        window.onresize = null;
     }
-    currentInput = result.toString();
-    previousInput = '';
-    currentOperator = '';
-    updateDisplay();
 }
 
-function updateDisplay() {
-    document.getElementById('display').value = currentInput;
-}
 
-// 時計のJavaScript関数
-function updateClock() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
-}
-setInterval(updateClock, 1000);
-
-
-// メモ帳の保存機能
-function saveNotepad() {
-    const notepadContent = document.getElementById('notepad-textarea').value;
-    localStorage.setItem('notepadContent', notepadContent);
-    alert('メモ帳が保存されました。');
-}
-
-// メモ帳の読み込み (ページ読み込み時に実行)
-window.addEventListener('load', () => {
-    const savedContent = localStorage.getItem('notepadContent');
-    if (savedContent) {
-        document.getElementById('notepad-textarea').value = savedContent;
+    function loadSettings() {
+    // 背景画像URLの読み込み
+    let backgroundImageURL = localStorage.getItem('backgroundImageURL') || '';
+    // URLがhttps://から始まる場合のみ読み込む
+    if (backgroundImageURL.startsWith('https://')) {
+        document.getElementById('background-image-url').value = backgroundImageURL;
     }
-});
+
+    // 自動ログイン設定の読み込み
+    document.getElementById('auto-login').checked = localStorage.getItem('autoLogin') === 'true';
+
+    // 解像度自動調節設定の読み込み
+    document.getElementById('auto-resolution').checked = localStorage.getItem('autoResolution') === 'true';
+
+    applySettings(); // 設定を適用
+}
 
 
- 
+    // タスクバーに時間と日付を表示する関数
+    function updateTaskbarDatetime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric'
+        };
+        const formattedDate = now.toLocaleDateString('ja-JP', options); // 日本語表記でフォーマット
+        document.getElementById('taskbar-datetime').textContent = formattedDate;
+    }
+
+    // 1秒ごとに更新
+    setInterval(updateTaskbarDatetime, 1000);
+
 </script>
 
 </body>
