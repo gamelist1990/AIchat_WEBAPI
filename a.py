@@ -11,7 +11,7 @@ g4f.debug.logging = True  # Enable debug logging
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Liaobots,
+        provider=OpenaiChat,
         api_key=read_cookie_files(cookies_dir),
     )
 
@@ -20,7 +20,7 @@ response = client.chat.completions.create(
 
     #model="CohereForAI/c4ai-command-r-plus",
 
-    model="gpt-4o",
+    model="auto",
     messages=[{"role": "user", "content": "hello!"}]
 )
 #{"role": "system", "content": system_prompt},
