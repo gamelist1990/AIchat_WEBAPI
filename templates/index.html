@@ -445,6 +445,10 @@
   font-size: 1.5em;
   color: green;
 }
+.ai_name { /* AI名のスタイル */
+  color: #aa0000; /* 例: 赤色 */
+  font-weight: bold;
+}
   </style>
 </head>
 <body>
@@ -454,14 +458,21 @@
       <h2>Open Settings</h2>
       <div class="setting-options">
         <div class="setting-option">
+          <p>現在システムプロンプトに対応しているAIは</p>
+          <oi>
+            <li>claude-3-opus</li>
+            <li>gpt-4o</li>
+          </oi>
+          <p>のみです</p>
           <label for="provider">AI Provider:</label>
           <select id="provider">
-            <option value="ask?text=">Default (修正中)</option>
+            <option value="ask?text=">gpt3.5-tubo</option>
             <option value="chat?provider=Gemini&prompt=">Gemini</option>
-            <option value="chat?provider=OpenAI&prompt=">ChatGPT (修正完了)</option>
-            <option value="chat?provider=Reka&prompt=">Reka (新規)</option>
+            <option value="chat?provider=OpenAI&prompt=">ChatGPT(Custom)</option>
+            <option value="chat?provider=Reka&prompt=">Reka</option>
             <option value="chat?provider=GeminiPro&prompt=">geminiPro</option>
-            <option value="chat?provider=Claude3&prompt=">claude-3-opus (検証中)</option>
+            <option value="chat?provider=Claude3&prompt=">claude-3-opus</option>
+            <option value="chat?provider=gpt-4o&prompt=">gpt-4o(新規)</option>
           </select>
         </div>
         <div class="setting-option">
@@ -537,6 +548,7 @@
           <li>reka-core(reka.AI)</li>
           <li>GeminiPro(Google)</li>
           <li><a href="https://www.anthropic.com/claude">claude-3-opus</a>(Liaobots)</li>
+          <li>gpt-4o(Liaobots)</li>
         </ul>
         また通常の会話なら3秒で回答されます(会話の内容によって変わります)
       </p>
@@ -544,13 +556,9 @@
       <p>!image 生成したい画像 例： !image 猫  で画像を生成できます！画像生成に掛かる時間はおおよそ30秒です。また画像生成のエラーが起きることがありますが<br>何回やっても無理な場合一日の上限を超えてるかもしれません</p>
       <h2>【お知らせ】</h2>
       <p>元のUIが良いって方は<a href="/home/oldindex.html">[旧UI]</a>があるのでそちらを使っても構いません</p>
-      <p>現時点でエラーが起きているAIは
-        <ul>
-          <li>c4ai-command-r-plus</li>
-          <li>GeminiPro（リクエストしすぎでエラーが発生中）</li>
-        </ul><br>
-        6/13の更新でclaude3のみSystemプロンプトに対応させました SystemプロンプトにはAIにこんな動作をさせたい！というリクエストを含める事ができます<br>
-        例：アシスタント： お喋り君 あなたの名前は{アシスタント}です,以下の指令に沿って行動してください {アシスタント}はユーザとお友達です,{アシスタント}の口調には語尾にワン！が付きますまた敬語無しでフレンドリーに接します
+      <br>
+      現在システムプロンプトに対応しているAIはClaude3とgpt-4oです
+   
       </p>
     </div>
   </div>
@@ -773,14 +781,26 @@ function saveCurrentConversation() {
     const hasImage = messageContentElement.querySelector('img') !== null;
 
     if (hasImage) {
+      // 画像メッセージの場合は、これまで通り画像のsrcを保存
       const imageSrc = messageContentElement.querySelector('img').src;
       localStorage.setItem(`message-${index}`, imageSrc);
-      return { content: `message-${index}`, isUser: message.classList.contains('user') };
+      return { 
+        content: `message-${index}`, 
+        isUser: message.classList.contains('user') 
+      };
     } else {
-      // マークダウン形式で保存
+      // テキストメッセージの場合は、プロバイダ名も保存
       const markdownContent = messageContentElement.textContent;
-      const originalMarkdown = messageContentElement.dataset.markdown; // マークダウンの元のテキストを取得
-      return { content: markdownContent, isUser: message.classList.contains('user'), markdown: originalMarkdown };
+      const originalMarkdown = messageContentElement.dataset.markdown;
+      // メッセージに付与されているクラス名からプロバイダ名を取得
+      const provider = message.querySelector('.message-name').textContent.replace(/:$/, ''); // 末尾の ":" を削除
+      
+      return { 
+        content: markdownContent, 
+        isUser: message.classList.contains('user'), 
+        markdown: originalMarkdown,
+        provider: provider  // プロバイダ名を追加
+      };
     }
   });
 
@@ -844,12 +864,13 @@ function loadConversation(index) {
 
           const messageNameElement = document.createElement('div');
           messageNameElement.classList.add('message-name');
-          messageNameElement.textContent = messageData.isUser ? userName : document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+          // 保存されたプロバイダ名を使用する
+          messageNameElement.textContent = messageData.isUser ? userName : messageData.provider;
           imageMessage.prepend(messageNameElement); 
         }
       } else {
-        // 保存したマークダウンを解釈して表示
-        addMessageToChat(messageData.content, messageData.isUser, true); // true を渡してマークダウンとして解釈
+        // 保存されたプロバイダ名を使用してメッセージを表示
+        addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider); // プロバイダ名を渡す
       }
     });
   } else {
@@ -861,16 +882,18 @@ function loadConversation(index) {
 
     
   
-function addMessageToChat(message, isUser, isMarkdown = false) {
+function addMessageToChat(message, isUser, isMarkdown = false, providerName = null) {
   const messageElement = document.createElement('div');
-  messageElement.classList.add('chat-message'); 
+  messageElement.classList.add('chat-message');
   if (isUser) {
     messageElement.classList.add('user');
   }
 
+  // プロバイダ名が渡された場合は、それを利用する
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-  messageNameElement.textContent = isUser ? userName : document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+  messageNameElement.textContent = isUser ? userName : providerName || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text; // プロバイダ名を設定
+
   messageElement.appendChild(messageNameElement);
 
   const messageContent = document.createElement('div');
@@ -888,6 +911,14 @@ function addMessageToChat(message, isUser, isMarkdown = false) {
   } else {
     messageContent.textContent = message;
   }
+
+  // メッセージデータにプロバイダ名を追加
+  const messageData = {
+    content: messageContent.textContent,
+    isUser: isUser,
+    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text // 現在のプロバイダ名を取得
+  };
+
   messageElement.appendChild(messageContent);
 
   document.querySelector('.chat-messages').appendChild(messageElement);
@@ -1087,14 +1118,18 @@ const temporaryDiv = document.createElement('div');
     function convertDivToP(divHtml) {
       let userIds = {};
       let nextUserId = 1;
-      return divHtml.replace(/<div class="chat-message( user)?"/g, (match, isUser) =>
-        isUser ? `<p class="chat-message user">` : `<p class="chat-message ai">`
-      )
-      .replace(/<div class="message-name">([^<]+)<\/div>/g, (match, userName) => {
-        let userId = userName || `名無し${nextUserId++}`;
-        userIds[userId] = userId;
-        return `<span class="user_name">${userId}:</span>`;
-      })
+      return divHtml.replace(/<div class="chat-message( user)?"/g, (match, isUser) => {
+    // isUser が true の場合はユーザーのメッセージ、false の場合はAIのメッセージ
+    const messageClass = isUser ? 'user' : 'ai';
+    return `<p class="chat-message ${messageClass}">`; // メッセージクラスを追加
+  })
+      .replace(/<div class="message-name">([^<]+)<\/div>/g, (match, userName) => { 
+    // userName にはユーザー名またはAI名が含まれている
+    const userId = userName || `名無し${nextUserId++}`;
+    userIds[userId] = userId;
+    const nameClass = userName === userName ? 'user_name' : 'ai_name'; // クラス名でユーザーとAIを区別
+    return `<span class="${nameClass}">${userId}:</span>`; 
+  })
       .replace(/<div class="message-content">/g, '')
       .replace(/<\/div>/g, '</span><br>') 
       .replace(/<p id="message-\d+">/g, '') 

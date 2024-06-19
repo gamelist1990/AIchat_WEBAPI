@@ -13,7 +13,7 @@ from ..requests import raise_for_status
 logging.basicConfig(level=logging.INFO)
 
 models = {
-    "gpt-4o": {
+    "gpt-4o-free": {
         "context": "8K",
         "id": "gpt-4o-free",
         "maxLength": 31200,
@@ -21,6 +21,15 @@ models = {
         "name": "GPT-4o-free",
         "provider": "OpenAI",
         "tokenLimit": 7800,
+    },
+    "gpt-4o": {
+        "context": "128K",
+        "id": "gpt-4o",
+        "maxLength": 124000,
+        "model": "ChatGPT",
+        "name": "GPT-4o",
+        "provider": "OpenAI",
+        "tokenLimit": 62000,
     },
     "gpt-3.5-turbo": {
         "id": "gpt-3.5-turbo",
@@ -91,6 +100,13 @@ models = {
         "maxLength": 400000,
         "tokenLimit": 100000,
         "context": "100K",
+    },
+    "gemini-1.5-pro-latest": {
+        "id": "gemini-1.5-pro-latest",
+        "name": "Gemini-1.5-Pro-1M",
+        "maxLength": 4000000,
+        "tokenLimit": 1000000,
+        "context": "1024K",
     }
 }
 
@@ -144,7 +160,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
             if not cls._auth_code:
                 async with session.post(
                     "https://liaobots.work/recaptcha/api/login",
-                    data={"token": "abcdefghijklmnopqrst"},#こちらもできれば変えるといい
+                    data={"token": "abcdefghijklmnopqrst"},#This one worked without me having to change it.
                     verify_ssl=False
                 ) as response:
                     await raise_for_status(response)
@@ -174,7 +190,7 @@ class Liaobots(AsyncGeneratorProvider, ProviderModelMixin):
             except:
                 async with session.post(
                     "https://liaobots.work/api/user",
-                    json={"authcode": "RSBNJWTer4Orm"},#ここのauthcodeを変えて
+                    json={"authcode": "RSBNJWTer4Orm"},#Change authcode ,gain by Lianobots
                     verify_ssl=False
                 ) as response:
                     await raise_for_status(response)

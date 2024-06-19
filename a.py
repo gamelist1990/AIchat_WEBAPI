@@ -11,16 +11,17 @@ g4f.debug.logging = True  # Enable debug logging
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=Reka,
+        provider=Liaobots,
         api_key=read_cookie_files(cookies_dir),
     )
-system_prompt = "あなたの名前はAIChatです"
 
 response = client.chat.completions.create(
+    #system_prompt = "あなたの名前はAIChatです",
+
     #model="CohereForAI/c4ai-command-r-plus",
 
-    model="reka",
-    messages=[{"role": "user", "content": "こんにちはあなたは何ができるんですか？!"}]
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "hello!"}]
 )
 #{"role": "system", "content": system_prompt},
 # Get the AI's response

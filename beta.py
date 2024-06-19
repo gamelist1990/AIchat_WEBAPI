@@ -160,18 +160,19 @@ async def ask(request: Request):
 
     try:
         client = AsyncClient(
-            provider=g4f.Provider.HuggingChat,
+            provider=g4f.Provider.Liaobots,
             cookies=set_cookies_dir(cookies_dir),
         )
 
         response = await client.chat.completions.create(
-            model="CohereForAI/c4ai-command-r-plus",
+            model="gpt-3.5-turbo",
             messages=messages,
+            systemPrompt="あなたは優秀なAIアシスタントです"
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         # If the ask function fails, return an error message
-        response_error = f"(追記：6/11時点Response 500が返されるというエラーが起きています)HuggingChatプロバイダーでエラーが発生しましたエラー内容:"
+        response_error = f"OpenAI,model gpt3.5-turboプロバイダーでエラーが発生しましたエラー内容:"
         return JSONResponse(content={"response": response_error + str(e)}, status_code=500)
 
     try:
@@ -214,7 +215,7 @@ async def geminipro(user_id: str, prompt: str):
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return "GeminiProのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
+        return "GeminiProのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 # 会話履歴を保持する辞書は関数の外で定義
 
@@ -245,7 +246,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合はServerERRORのため管理者に連絡してください。"  # エラーメッセージを返す
+        return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
@@ -267,7 +268,7 @@ async def g4f_gemini(user_id: str, prompt: str):
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return f"Geminiプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+        return f"Geminiプロバイダーでエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
 async def reka_core(user_id: str, prompt: str):
@@ -291,7 +292,7 @@ async def reka_core(user_id: str, prompt: str):
         return clean_response
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+        return f"Bingプロバイダーでエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
 async def lianocloud(user_id: str, prompt: str, system: str):
@@ -302,6 +303,7 @@ async def lianocloud(user_id: str, prompt: str, system: str):
         client = AsyncClient(
             provider=g4f.Provider.Liaobots,
             auth=Li_auth,
+
         )
         response = await client.chat.completions.create(
                 model="claude-3-opus-20240229",
@@ -311,7 +313,27 @@ async def lianocloud(user_id: str, prompt: str, system: str):
         return response.choices[0].message.content
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return f"Liaobotsプロバイダーでエラーが発生しました: 何度も起きる場合はServerERRORの為管理者に連絡してください"  # エラーメッセージを返す
+        return f"Liaobotsプロバイダー,model claude-3でエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
+
+
+async def gpt_4o(user_id: str, prompt: str, system: str):
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    try:
+        client = AsyncClient(
+            provider=g4f.Provider.Liaobots,
+            auth=Li_auth,
+        )
+        response = await client.chat.completions.create(
+                model="gpt-4o",
+                systemPrompt=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        return response.choices[0].message.content
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        return f"Liaobotsプロバイダーmodel,gpt-4oでエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
 AI_prompt = "あなたは有能なAIです"
@@ -331,6 +353,8 @@ async def process_chat(provider: str, user_id: str, prompt: str, system: str = A
         response = await reka_core(user_id, prompt)
     elif provider == "Claude3":
         response = await lianocloud(user_id, prompt, system)
+    elif provider == "gpt-4o":
+        response = await gpt_4o(user_id, prompt, system)
     else:
         return JSONResponse(content={"error": "Invalid provider specified"}, status_code=400)
 
