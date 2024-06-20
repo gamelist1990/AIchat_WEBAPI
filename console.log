@@ -16,3 +16,6 @@ test
 INFO:     172.40.113.58:26402 - "POST /antibot HTTP/1.1" 200 OK
 INFO:     172.40.113.58:26402 - "POST /admin/status HTTP/1.1" 200 OK
 INFO:     172.40.113.58:26403 - "POST /admin/console_log HTTP/1.1" 200 OK
+INFO:     172.40.113.58:26417 - "POST /admin/file_manager HTTP/1.1" 200 OK
+INFO:     172.40.113.58:26426 - "POST /pusher/auth HTTP/1.1" 200 OK
+INFO:     172.40.113.58:26416 - "GET /antibot/history HTTP/1.1" 200 OK
