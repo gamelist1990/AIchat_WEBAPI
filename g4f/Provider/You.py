@@ -19,7 +19,9 @@ class You(AsyncGeneratorProvider, ProviderModelMixin):
     working = True
     supports_gpt_35_turbo = True
     supports_gpt_4 = True
-    default_model = "gpt-3.5-turbo"
+#  default_model = "command-r"
+ #  default_model = "gpt-3.5-turbo"
+    default_model = "command-r-plus"
     default_vision_model = "agent"
     image_models = ["dall-e"]
     models = [
@@ -36,7 +38,6 @@ class You(AsyncGeneratorProvider, ProviderModelMixin):
         "gemini-1-5-pro",
         "databricks-dbrx-instruct",
         "command-r",
-        "command-r-plus",
         "llama3",
         "zephyr",
         default_vision_model,

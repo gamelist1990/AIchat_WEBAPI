@@ -160,14 +160,14 @@ async def ask(request: Request):
 
     try:
         client = AsyncClient(
-            provider=g4f.Provider.Liaobots,
+            provider=g4f.Provider.You,
             cookies=set_cookies_dir(cookies_dir),
         )
 
         response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="command-r-plus",
             messages=messages,
-            systemPrompt="あなたは優秀なAIアシスタントです"
+        #    systemPrompt="あなたは優秀なAIアシスタントです"
         )
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -470,6 +470,8 @@ def show_status():
         "OS": os_version,
         "Pythonバージョン": python_version,
         "グローバルIPアドレス": global_ip,
+        "サーバーの停止メッセージ":server_status["stop_message"],
+        "サーバーの状態":server_status["running"]
     }
     return status_info  # 状態情報をJSON形式で直接返す
 
@@ -688,7 +690,6 @@ async def update_server_status(request: Request, status: str = Form(...)):
         server_status["stop_message"] = read_json_file("loads.json").get("stop_message", "サーバーは停止中です。") 
     elif status == "start":
         server_status["running"] = True
-        server_status["stop_message"] = ""  # 稼働中は空文字列
     else:
         raise HTTPException(status_code=400, detail="無効なステータスです。")
 

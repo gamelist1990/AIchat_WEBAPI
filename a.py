@@ -11,7 +11,7 @@ g4f.debug.logging = True  # Enable debug logging
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 
 client = Client(
-        provider=OpenaiChat,
+        provider=HuggingChat,
         api_key=read_cookie_files(cookies_dir),
     )
 
@@ -19,9 +19,8 @@ response = client.chat.completions.create(
     #system_prompt = "あなたの名前はAIChatです",
 
     #model="CohereForAI/c4ai-command-r-plus",
-
-    model="auto",
-    messages=[{"role": "user", "content": "hello!"}]
+    model="microsoft/Phi-3-mini-4k-instruct",
+    messages=[{"role": "user", "content": "自己紹介をおねがいします"}]
 )
 #{"role": "system", "content": system_prompt},
 # Get the AI's response
