@@ -13,6 +13,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/rasterizehtml/1.3.0/rasterizeHTML.allinone.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.umd.js"></script> 
 
   <style>
     /* 全体 */
@@ -797,7 +798,7 @@ function saveCurrentConversation() {
       } else {
         // テキストメッセージの場合は、内容とプロバイダ名を保存
         const markdownContent = messageContentElement.textContent;
-        const originalMarkdown = messageContentElement.dataset.markdown;
+        const originalMarkdown = convertHtmlAndMarkdown(messageContentElement.innerHTML, true); // HTMLからMarkdownに変換
         return {
           content: markdownContent,
           isUser: message.classList.contains('user'),
@@ -810,6 +811,53 @@ function saveCurrentConversation() {
     localStorage.setItem(conversationKey, JSON.stringify(conversationData));
     document.cookie = `${conversationKey}=true; path=/`;
   }
+
+  function convertHtmlAndMarkdown(text, toMarkdown) {
+  // 正規表現の定義
+  const htmlToMarkdownRules = {
+    heading: [/<h1>(.*?)<\/h1>/gi, '# $1\n'],
+    subHeading: [/<h2>(.*?)<\/h2>/gi, '## $1\n'],
+    bold: [/<strong>(.*?)<\/strong>/gi, '**$1**'],
+    italic: [/<em>(.*?)<\/em>/gi, '*$1*'],
+    link: [/<a href="(.*?)">(.*?)<\/a>/gi, '[$2'],
+    unorderedList: [/<ul>(.*?)<\/ul>/gsi, (match, listContent) => {
+      return listContent.replace(/<li>(.*?)<\/li>/gsi, '- $1\n');
+    }],
+    orderedList: [/<ol>(.*?)<\/ol>/gsi, (match, listContent) => {
+      let i = 1;
+      return listContent.replace(/<li>(.*?)<\/li>/gsi, () => `${i++}. $1\n`);
+    }],
+    inlineCode: [/<code>(.*?)<\/code>/gi, '`$1`'],
+    blockCode: [/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, '```$1```'],
+    image: [/\<img src\=\"(.*?)\" alt\=\"(.*?)\" style\=\"width\: (.*?)px\"\>/gi, '![$2]($1)'],
+    strikethrough: [/<del>(.*?)<\/del>/gi, '~~$1~~']
+  };
+
+  const markdownToHtmlRules = {
+    heading: [/# (.*?)\n/gi, '<h1>$1</h1>'],
+    subHeading: [/## (.*?)\n/gi, '<h2>$1</h2>'],
+    bold: [/\*\*(.*?)\*\*/gi, '<strong>$1</strong>'],
+    italic: [/\*(.*?)\*/gi, '<em>$1</em>'],
+    link: [/\[(.*?)\]\((.*?)\)/gi, '<a href="$2">$1</a>'],
+    unorderedList: [/- (.*?)\n/gsi, '<ul><li>$1</li></ul>'],
+    orderedList: [/\d+\. (.*?)\n/gsi, '<ol><li>$1</li></ol>'],
+    inlineCode: [/`(.*?)`/gi, '<code>$1</code>'],
+    blockCode: [/```([\s\S]*?)```/gi, '<pre><code>$1</code></pre>'],
+    image: [/!\[(.*?)\]\((.*?)\)/gi, '<img src="$2" alt="$1" style="width: 300px">'],  // imgタグの変換ルールを追加
+    strikethrough: [/~~(.*?)~~/gi, '<del>$1</del>']
+  };
+
+  // 変換処理
+  const rules = toMarkdown ? htmlToMarkdownRules : markdownToHtmlRules;
+  let convertedText = text;
+
+  for (const rule in rules) {
+    convertedText = convertedText.replace(rules[rule][0], rules[rule][1]);
+  }
+
+  return convertedText;
+}
+
 
 
 
@@ -836,42 +884,49 @@ function deleteConversation(index) {
   saveConversationsToCookie();
 }
 
- function loadConversation(index) {
-    clearChatWindow();
+function loadConversation(index) {
+  clearChatWindow();
 
-    const conversationKey = `conversation-${index}`;
-    const conversationData = JSON.parse(localStorage.getItem(conversationKey));
+  const conversationKey = `conversation-${index}`;
+  const conversationData = JSON.parse(localStorage.getItem(conversationKey));
 
-    if (conversationData) {
-      conversationData.forEach((messageData, messageIndex) => {
-        if (messageData.content && messageData.content.startsWith('message-')) {
-          const imageData = JSON.parse(localStorage.getItem(messageData.content)); // JSONデータとして取得
-          if (imageData && imageData.src) {
-            const img = document.createElement('img');
-            img.src = imageData.src;
-            img.alt = imageData.alt; // altテキストを設定
-            img.style.width = '300px';
-            let imageMessage = document.createElement('div');
-            imageMessage.classList.add('chat-message');
-            if (messageData.isUser) {
-              imageMessage.classList.add('user');
-            }
-            imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
-            document.querySelector('.chat-messages').appendChild(imageMessage);
-
-            const messageNameElement = document.createElement('div');
-            messageNameElement.classList.add('message-name');
-            messageNameElement.textContent = messageData.isUser ? userName : messageData.provider; // プロバイダ名を使用
-            imageMessage.prepend(messageNameElement);
+  if (conversationData) {
+    conversationData.forEach((messageData, messageIndex) => {
+      if (messageData.content && messageData.content.startsWith('message-')) {
+        // 画像メッセージの処理
+        const imageData = JSON.parse(localStorage.getItem(messageData.content));
+        if (imageData && imageData.src) {
+          // 画像を表示する処理
+          const img = document.createElement('img');
+          img.src = imageData.src;
+          img.alt = imageData.alt;
+          img.style.width = '300px';
+          let imageMessage = document.createElement('div');
+          imageMessage.classList.add('chat-message');
+          if (messageData.isUser) {
+            imageMessage.classList.add('user');
           }
+          imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
+          document.querySelector('.chat-messages').appendChild(imageMessage);
+
+          const messageNameElement = document.createElement('div');
+          messageNameElement.classList.add('message-name');
+          messageNameElement.textContent = messageData.isUser ? userName : messageData.provider;
+          imageMessage.prepend(messageNameElement);
         } else {
-          addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider); // プロバイダ名を渡す
+          console.error("画像データが不正です:", imageData);
+          displayErrorMessage("画像の読み込みに失敗しました。");
         }
-      });
-    } else {
-      console.error("会話履歴が読み込めません。");
-    }
+      } else {
+        // テキストメッセージの場合、MarkdownをHTMLに変換する
+        const messageContent = messageData.markdown ? convertHtmlAndMarkdown(messageData.markdown, false) : messageData.content;
+        addMessageToChat(messageContent, messageData.isUser, true, messageData.provider); 
+      }
+    });
+  } else {
+    console.error("会話履歴が読み込めません。");
   }
+}
 
 
 
@@ -899,10 +954,13 @@ function addMessageToChat(message, isUser, isMarkdown = false, providerName = nu
   const isMessageMarkdown = markdownRegex.test(message);
 
   if (isMessageMarkdown) {
-    // Markdownを解釈してHTMLに変換
     const converter = new showdown.Converter();
-    messageContent.innerHTML = converter.makeHtml(message);
-    messageContent.dataset.markdown = message; // マークダウンの元のテキストを保存
+    // imgタグのalt属性を適切に設定
+    const htmlWithImages = message.replace(/!\[(.*?)\]\((.*?)\)/gi, '<img src="$2" alt="$1" style="width: 300px">');
+    messageContent.innerHTML = converter.makeHtml(htmlWithImages);
+    messageContent.dataset.markdown = message;
+  } else if (message.startsWith('<img')) { // 画像メッセージの場合
+    messageContent.innerHTML = message; // HTMLをそのまま設定
   } else {
     messageContent.textContent = message;
   }

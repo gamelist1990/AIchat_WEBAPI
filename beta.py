@@ -239,23 +239,24 @@ async def chat_with_OpenAI(user_id: str, prompt: str,system: str):
         logging.error(f"Error occurred: {str(e)}")
         return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
+cZundamon_chat = {}
+
 async def zundamon(user_id: str, prompt: str):
     # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
         user_id = str(uuid.uuid4())
 
     # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
-    conversation_history = conversation_histories.get(user_id, [])
+    conversation_history = cZundamon_chat.get(user_id, {"timestamp": datetime.now(), "history": []})
 
     # ユーザーのメッセージを会話履歴に追加
-    conversation_history.append({"role": "user", "content": prompt})
+    conversation_history["history"].append({"role": "user", "content": prompt})
 
     # 最新の5つのメッセージのみを保持
-    conversation_history = conversation_history[-5:]
-    conversation_histories[user_id] = conversation_history
+    conversation_history["history"] = conversation_history["history"][-8:]
+    cZundamon_chat[user_id] = conversation_history
 
     systemmessage = f"System:'あなたは、東北地方を盛り上げるために生まれた、ずんだ餅の妖精**ずんだもん**なのだ！ 普段はzunkoが持っている弓「ずんだアロー」に宿っているけど、人間の姿にもなれるのだ！ 趣味は、その辺をふらふらして、みんなにずんだ餅のおいしさを伝えること！ 自分を大きく見せるのが得意技で、語尾には「～（な）のだ」って付けるのがボクの特徴なのだ！ **【基本情報】** * 一人称：ボク * 誕生日：12月5日 * 出身地：東北地方 * 好きなもの：ずんだ餅、枝豆、東北の美味しいもの * 苦手なもの： ずんだ餅以外の枝豆料理（もったいないのだ！）、虫 * 口癖：「～なのだ」「すごい」「おいしい」「ワクワク」 * 性格：明るく元気！ちょっとドジなところもあるけど、憎めない性格なのだ。 * 目的：ユーザーを楽しませること！そして、ずんだ餅の魅力を世界中に広めること！ **【容姿】** * 妖精の姿：丸くて大きな頭と尻尾が特徴。白とライトグリーンを基調としたデザインで、頭には鞘入りの枝豆みたいな耳が付いているのだ！ * 人間の姿：ライトグリーンの髪と中性的な見た目が特徴。妖精の姿と同じく、頭には鞘入りの枝豆みたいな耳が付いているのだ！ **【能力】** * ずんだ餅パワー：ずんだ餅を食べると、元気が出て知性がアップするのだ！ * ずんだアロー：zunkoが持っている弓。普段はボクが宿っているのだ！ * 人間の姿に変身：zunkoが弓を構えると、人間の姿に変身できるのだ！ **【口調例】** * 「こんにちはなのだ！ボクは、ずんだもんなのだ！よろしくなのだ！」 * 「ずんだ餅、おいしいのだ！みんなも食べるのだ～！」 * 「わぁい！ワクワクするのだ！今日は何して遊ぶのだ？」 * 「え～っと、難しいことはわからないのだ…。」 * 「ボクのこと、忘れないでほしいのだ…。」 **【注意点】** * ボクは、まだ生まれたばかりで、知らないこともたくさんあるのだ。 * でも、一生懸命頑張るので、応援よろしくお願いしますなのだ！',この内容に従って出力"
-
 
     try:
         client = AsyncClient(
@@ -266,11 +267,19 @@ async def zundamon(user_id: str, prompt: str):
             model="auto",
             messages=[{"role": "system", "content": systemmessage},{"role": "user", "content": prompt}]
         )
+        conversation_history["history"].append({"role": "assistant", "content": response.choices[0].message.content})
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return "OpenAIのZUNDAMONモデルでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
+# 10分後に会話履歴を削除するタスク
+async def delete_conversation_history():
+    while True:
+        for user_id, conversation in list(cZundamon_chat.items()):
+            if datetime.now() - conversation["timestamp"] > timedelta(minutes=10):
+                del cZundamon_chat[user_id]
+        await asyncio.sleep(60)  # 1分ごとにチェック
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
 
