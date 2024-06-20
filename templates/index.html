@@ -792,26 +792,17 @@ function saveCurrentConversation() {
         isUser: message.classList.contains('user') 
       };
     } else {
-      // テキストメッセージの場合、HTMLをマークダウンに変換して保存
-      let markdownContent = messageContentElement.dataset.markdown || messageContentElement.textContent;
+      // テキストメッセージの場合は、プロバイダ名も保存
+      const markdownContent = messageContentElement.textContent;
+      const originalMarkdown = messageContentElement.dataset.markdown;
+      // メッセージに付与されているクラス名からプロバイダ名を取得
+      const provider = message.querySelector('.message-name').textContent.replace(/:$/, ''); // 末尾の ":" を削除
       
-      // HTMLをマークダウンに変換する処理を追加
-      if (!messageContentElement.dataset.markdown) { // 元のマークダウンがない場合のみ変換
-        markdownContent = messageContentElement.innerHTML
-          .replace(/<br\s*\/?>/gi, '\n') // <br> を \n に置換
-          .replace(/<\/?p>/gi, '\n\n') // <p> と </p> を \n\n に置換
-          .replace(/<strong>(.*?)<\/strong>/gi, '**$1**') // <strong> を ** に置換
-          .replace(/<em>(.*?)<\/em>/gi, '*$1*') // <em> を * に置換
-          .replace(/<\/?[^>]+(>|$)/g, ""); // その他のHTMLタグを除去
-      }
-
-      const plainTextContent = markdownContent; // plainTextContent は markdownContent と同じ
-
-      return {
-        content: plainTextContent, 
-        isUser: message.classList.contains('user'),
-        markdown: markdownContent, // 変換後のマークダウンを保存
-        provider: provider
+      return { 
+        content: markdownContent, 
+        isUser: message.classList.contains('user'), 
+        markdown: originalMarkdown,
+        provider: provider  // プロバイダ名を追加
       };
     }
   });
@@ -881,13 +872,8 @@ function loadConversation(index) {
           imageMessage.prepend(messageNameElement); 
         }
       } else {
-        // 常にマークダウンとして処理し、HTMLへの変換は addMessageToChat で行う
-        addMessageToChat(
-          messageData.content,
-          messageData.isUser,
-          true, // isMarkdown を true に設定
-          messageData.provider
-        );
+        // 保存されたプロバイダ名を使用してメッセージを表示
+        addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider); // プロバイダ名を渡す
       }
     });
   } else {
@@ -909,9 +895,9 @@ function addMessageToChat(message, isUser, isMarkdown = false, providerName = nu
   // プロバイダ名が渡された場合は、それを利用する
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-messageNameElement.textContent = isUser 
-  ? userName 
-  : providerName?.name || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;   messageElement.appendChild(messageNameElement);
+  messageNameElement.textContent = isUser ? userName : providerName || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text; // プロバイダ名を設定
+
+  messageElement.appendChild(messageNameElement);
 
   const messageContent = document.createElement('div');
   messageContent.classList.add('message-content');
@@ -920,23 +906,20 @@ messageNameElement.textContent = isUser
   const markdownRegex = /(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*]+\*)|(_[^_]+_)|(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\n\s*\n)|(\r?\n\s*-)|(>\s[^>]+)/;
   const isMessageMarkdown = markdownRegex.test(message);
 
-  // isMarkdown フラグをチェック
-  if (isMarkdown) {
-    // Markdown を HTML に変換
+  if (isMessageMarkdown) {
+    // Markdownを解釈してHTMLに変換
     const converter = new showdown.Converter();
     messageContent.innerHTML = converter.makeHtml(message);
-    messageContent.dataset.markdown = message; // 元のマークダウンを保存
+    messageContent.dataset.markdown = message; // マークダウンの元のテキストを保存
   } else {
-    // Markdown でない場合はそのまま表示
     messageContent.textContent = message;
   }
 
-  // メッセージデータに isMarkdown プロパティを追加
+  // メッセージデータにプロバイダ名を追加
   const messageData = {
     content: messageContent.textContent,
     isUser: isUser,
-    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text,
-    isMarkdown: isMarkdown // マークダウン形式かどうかを追加
+    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text // 現在のプロバイダ名を取得
   };
 
   messageElement.appendChild(messageContent);
@@ -1231,7 +1214,7 @@ const temporaryDiv = document.createElement('div');
           .then(response => response.json())
           .then(data => {
             const decodedData = typeof data === 'object' && data.hasOwnProperty('response') ? unicodeToUtf8(data.response) : unicodeToUtf8(data);
-            addMessageToChat(decodedData, false, true); // isMarkdown を true に設定
+            addMessageToChat(decodedData, false);
             document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
             resetButtonState();
             saveCurrentConversation(); 
