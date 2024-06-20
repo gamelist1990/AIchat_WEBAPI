@@ -792,17 +792,14 @@ function saveCurrentConversation() {
         isUser: message.classList.contains('user') 
       };
     } else {
-      // テキストメッセージの場合は、プロバイダ名も保存
-      const markdownContent = messageContentElement.textContent;
-      const originalMarkdown = messageContentElement.dataset.markdown;
-      // メッセージに付与されているクラス名からプロバイダ名を取得
-      const provider = message.querySelector('.message-name').textContent.replace(/:$/, ''); // 末尾の ":" を削除
-      
-      return { 
-        content: markdownContent, 
-        isUser: message.classList.contains('user'), 
-        markdown: originalMarkdown,
-        provider: provider  // プロバイダ名を追加
+      // テキストメッセージの場合、HTMLタグを改行コードに変換して保存
+      const markdownContent = messageContentElement.dataset.markdown || messageContentElement.textContent;
+      const plainTextContent = messageContentElement.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p><p>/gi, '\n\n').replace(/<\/?[^>]+(>|$)/g, ""); // HTMLタグを改行コードに変換
+      return {
+        content: plainTextContent, // 変換後のテキストコンテンツを保存
+        isUser: message.classList.contains('user'),
+        markdown: markdownContent, // 元のマークダウンがあれば保存
+        provider: provider
       };
     }
   });
@@ -872,8 +869,13 @@ function loadConversation(index) {
           imageMessage.prepend(messageNameElement); 
         }
       } else {
-        // 保存されたプロバイダ名を使用してメッセージを表示
-        addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider); // プロバイダ名を渡す
+        // 常にマークダウンとして処理し、HTMLへの変換は addMessageToChat で行う
+        addMessageToChat(
+          messageData.content,
+          messageData.isUser,
+          true, // isMarkdown を true に設定
+          messageData.provider
+        );
       }
     });
   } else {
@@ -895,8 +897,7 @@ function addMessageToChat(message, isUser, isMarkdown = false, providerName = nu
   // プロバイダ名が渡された場合は、それを利用する
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-  messageNameElement.textContent = isUser ? userName : providerName || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text; // プロバイダ名を設定
-
+  messageNameElement.textContent = isUser ? userName : (typeof providerName === 'object' ? providerName.name : providerName) || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
   messageElement.appendChild(messageNameElement);
 
   const messageContent = document.createElement('div');
@@ -906,20 +907,23 @@ function addMessageToChat(message, isUser, isMarkdown = false, providerName = nu
   const markdownRegex = /(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*]+\*)|(_[^_]+_)|(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\n\s*\n)|(\r?\n\s*-)|(>\s[^>]+)/;
   const isMessageMarkdown = markdownRegex.test(message);
 
-  if (isMessageMarkdown) {
-    // Markdownを解釈してHTMLに変換
+  // isMarkdown フラグをチェック
+  if (isMarkdown) {
+    // Markdown を HTML に変換
     const converter = new showdown.Converter();
     messageContent.innerHTML = converter.makeHtml(message);
-    messageContent.dataset.markdown = message; // マークダウンの元のテキストを保存
+    messageContent.dataset.markdown = message; // 元のマークダウンを保存
   } else {
+    // Markdown でない場合はそのまま表示
     messageContent.textContent = message;
   }
 
-  // メッセージデータにプロバイダ名を追加
+  // メッセージデータに isMarkdown プロパティを追加
   const messageData = {
     content: messageContent.textContent,
     isUser: isUser,
-    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text // 現在のプロバイダ名を取得
+    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text,
+    isMarkdown: isMarkdown // マークダウン形式かどうかを追加
   };
 
   messageElement.appendChild(messageContent);
@@ -1214,7 +1218,7 @@ const temporaryDiv = document.createElement('div');
           .then(response => response.json())
           .then(data => {
             const decodedData = typeof data === 'object' && data.hasOwnProperty('response') ? unicodeToUtf8(data.response) : unicodeToUtf8(data);
-            addMessageToChat(decodedData, false);
+            addMessageToChat(decodedData, false, true); // isMarkdown を true に設定
             document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
             resetButtonState();
             saveCurrentConversation(); 
