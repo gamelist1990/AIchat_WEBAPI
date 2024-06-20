@@ -792,13 +792,25 @@ function saveCurrentConversation() {
         isUser: message.classList.contains('user') 
       };
     } else {
-      // テキストメッセージの場合、HTMLタグを改行コードに変換して保存
-      const markdownContent = messageContentElement.dataset.markdown || messageContentElement.textContent;
-      const plainTextContent = messageContentElement.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p><p>/gi, '\n\n').replace(/<\/?[^>]+(>|$)/g, ""); // HTMLタグを改行コードに変換
+      // テキストメッセージの場合、HTMLをマークダウンに変換して保存
+      let markdownContent = messageContentElement.dataset.markdown || messageContentElement.textContent;
+      
+      // HTMLをマークダウンに変換する処理を追加
+      if (!messageContentElement.dataset.markdown) { // 元のマークダウンがない場合のみ変換
+        markdownContent = messageContentElement.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n') // <br> を \n に置換
+          .replace(/<\/?p>/gi, '\n\n') // <p> と </p> を \n\n に置換
+          .replace(/<strong>(.*?)<\/strong>/gi, '**$1**') // <strong> を ** に置換
+          .replace(/<em>(.*?)<\/em>/gi, '*$1*') // <em> を * に置換
+          .replace(/<\/?[^>]+(>|$)/g, ""); // その他のHTMLタグを除去
+      }
+
+      const plainTextContent = markdownContent; // plainTextContent は markdownContent と同じ
+
       return {
-        content: plainTextContent, // 変換後のテキストコンテンツを保存
+        content: plainTextContent, 
         isUser: message.classList.contains('user'),
-        markdown: markdownContent, // 元のマークダウンがあれば保存
+        markdown: markdownContent, // 変換後のマークダウンを保存
         provider: provider
       };
     }
@@ -897,8 +909,9 @@ function addMessageToChat(message, isUser, isMarkdown = false, providerName = nu
   // プロバイダ名が渡された場合は、それを利用する
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-  messageNameElement.textContent = isUser ? userName : (typeof providerName === 'object' ? providerName.name : providerName) || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-  messageElement.appendChild(messageNameElement);
+messageNameElement.textContent = isUser 
+  ? userName 
+  : providerName?.name || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;   messageElement.appendChild(messageNameElement);
 
   const messageContent = document.createElement('div');
   messageContent.classList.add('message-content');
