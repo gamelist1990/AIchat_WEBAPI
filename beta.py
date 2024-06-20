@@ -26,7 +26,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import g4f.Provider
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat, Gemini, You, Bing, GeminiProChat, Reka
+from g4f.Provider import OpenaiChat, Gemini, You, Bing, GeminiProChat, Reka,Liaobots
 import uuid
 import psutil, socket
 import platform
@@ -55,8 +55,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
 
 cookies_dir = os.path.join(os.path.dirname(__file__), "har")
-set_cookies_dir(cookies_dir)
-read_cookie_files(cookies_dir)
+zundamons = os.path.join(os.path.dirname(__file__), "zundamon")
 
 conversation_histories: Dict[str, List[Dict[str, str]]] = {}
 
@@ -131,61 +130,39 @@ def home(request: Request):
 
 geminis = {}
 
-@app.get('/ask')
-async def ask(request: Request):
+async def ask(user_id: str, prompt: str,system: str):
+    # ユーザー識別子がなければUUIDで新たに作成
+    if not user_id:
+        user_id = str(uuid.uuid4())
 
-    if not server_status["running"]:
-        return JSONResponse(content={"response": server_status["stop_message"]})  # 停止メッセージを返す
-    
-    text = request.query_params.get('text')
-    user_id = request.query_params.get('user_id') or request.client.host
+    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
+    conversation_history = conversation_histories.get(user_id, [])
 
-    if not text:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+    # ユーザーのメッセージを会話履歴に追加
+    conversation_history.append({"role": "user", "content": prompt})
+    UseSystem = [{"role": "system", "content": system}]
 
-    # 同じコメントが繰り返し使われていないかチェック
-    if user_id in last_comment and text == last_comment[user_id]:
-        return JSONResponse(content={"response": "同じコメントは連続して使用できません"}, status_code=400)
-
-    # 最後のコメントを更新
-    last_comment[user_id] = text
-
-    # アンチボットシステムでユーザーをチェック
-    is_banned, reason = check_and_ban(user_id, request)  # antibot.py の関数を呼び出す
-
-    if is_banned:
-        return JSONResponse(content={"response": reason}, status_code=429)
-
-    messages = [{"role": "user", "content": text}]
+    # 最新の5つのメッセージのみを保持
+    conversation_history = conversation_history[-5:]
+    conversation_histories[user_id] = conversation_history
 
     try:
         client = AsyncClient(
-            provider=g4f.Provider.You,
-            cookies=set_cookies_dir(cookies_dir),
+            provider=g4f.Provider.DeepInfra,
+            api_key="JhB5e55aNwzuAKFawXKF47VuGmCWQ3CS",  # 正しい関数名に修正
         )
-
         response = await client.chat.completions.create(
-            model="command-r-plus",
-            messages=messages,
-        #    systemPrompt="あなたは優秀なAIアシスタントです"
+            model="meta-llama/Meta-Llama-3-70B-Instruct",
+            messages=UseSystem+conversation_history,
         )
+        return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        # If the ask function fails, return an error message
-        response_error = f"OpenAI,model gpt3.5-turboプロバイダーでエラーが発生しましたエラー内容:"
-        return JSONResponse(content={"response": response_error + str(e)}, status_code=500)
+        return "Auraプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
-    try:
-        ai_response = response.choices[0].message.content
-        remove_string = "\u0000"
-        clean_response = ai_response.replace(remove_string, "")
-        decoded_response = json.loads(json.dumps(ai_response))
-    except json.decoder.JSONDecodeError:
-        error_message = "Invalid JSON response"
-        logging.error(f"{error_message}: {ai_response}")
-        return JSONResponse(content={"error": error_message}, status_code=500)
 
-    return JSONResponse(content={"response": decoded_response}, status_code=200)
+
+
 
 
 async def geminipro(user_id: str, prompt: str):
@@ -215,20 +192,34 @@ async def geminipro(user_id: str, prompt: str):
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
-        return "GeminiProのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
+        try:
+            # GeminiProが失敗した場合、Liaobotsを試す
+            client = AsyncClient(
+                provider=Liaobots,
+                #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+            )
+            response = await client.chat.completions.create(
+                model="gemini-1.5-pro-latest",
+                messages=conversation_history,
+            )
+            return response.choices[0].message.content  # Liaobotsからの正常な応答を返す
+        except Exception as e:
+            logging.error(f"Error occurred: {str(e)}")
+            return "GeminiProとLiaobotsの両方のプロバイダーでエラーが発生しました。他のプロバイダーを試してみてください"  # エラーメッセージを返す
 
 # 会話履歴を保持する辞書は関数の外で定義
 
-async def chat_with_OpenAI(user_id: str, prompt: str):
+async def chat_with_OpenAI(user_id: str, prompt: str,system: str):
     # ユーザー識別子がなければUUIDで新たに作成
     if not user_id:
         user_id = str(uuid.uuid4())
 
     # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
     conversation_history = conversation_histories.get(user_id, [])
+    systemmessage = f"System:{system},この内容に従って出力"
 
     # ユーザーのメッセージを会話履歴に追加
-    conversation_history.append({"role": "user", "content": prompt})
+    conversation_history.append({"role": "user", "content":systemmessage +prompt})
 
     # 最新の5つのメッセージのみを保持
     conversation_history = conversation_history[-5:]
@@ -247,6 +238,35 @@ async def chat_with_OpenAI(user_id: str, prompt: str):
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return "OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
+
+async def zundamon(user_id: str, prompt: str):
+    # ユーザー識別子がなければUUIDで新たに作成
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
+    conversation_history = conversation_histories.get(user_id, [])
+
+    # ユーザーのメッセージを会話履歴に追加
+    conversation_history.append({"role": "user", "content": prompt})
+
+    # 最新の5つのメッセージのみを保持
+    conversation_history = conversation_history[-5:]
+    conversation_histories[user_id] = conversation_history
+
+    try:
+        client = AsyncClient(
+            provider=g4f.Provider.OpenaiChat,
+            api_key=read_cookie_files(zundamons),  # 正しい関数名に修正
+        )
+        response = await client.chat.completions.create(
+            model="auto",
+            messages=conversation_history,
+        )
+        return response.choices[0].message.content  # 正常な応答を返す
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        return "OpenAIのZUNDAMONモデルでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
@@ -323,10 +343,9 @@ async def gpt_4o(user_id: str, prompt: str, system: str):
     try:
         client = AsyncClient(
             provider=g4f.Provider.Liaobots,
-            auth=Li_auth,
         )
         response = await client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-4o-free",
                 systemPrompt=system,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -336,7 +355,7 @@ async def gpt_4o(user_id: str, prompt: str, system: str):
         return f"Liaobotsプロバイダーmodel,gpt-4oでエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
-AI_prompt = "あなたは有能なAIです"
+AI_prompt = "あなたは優秀なAIです"
 
 
 async def process_chat(provider: str, user_id: str, prompt: str, system: str = AI_prompt):
@@ -344,7 +363,7 @@ async def process_chat(provider: str, user_id: str, prompt: str, system: str = A
     if not server_status["running"]:
         return JSONResponse(content={"response": server_status["stop_message"]})  # 停止メッセージを返す
     if provider == 'OpenAI':
-        response = await chat_with_OpenAI(user_id, prompt)
+        response = await chat_with_OpenAI(user_id, prompt,system)
     elif provider == 'Gemini':
         response = await g4f_gemini(user_id, prompt)
     elif provider == 'GeminiPro':
@@ -355,6 +374,10 @@ async def process_chat(provider: str, user_id: str, prompt: str, system: str = A
         response = await lianocloud(user_id, prompt, system)
     elif provider == "gpt-4o":
         response = await gpt_4o(user_id, prompt, system)
+    elif provider == "ask":
+        response = await ask(user_id, prompt,system)
+    elif provider == "zundamon":
+        response = await zundamon(user_id, prompt)
     else:
         return JSONResponse(content={"error": "Invalid provider specified"}, status_code=400)
 
@@ -369,6 +392,10 @@ async def chat(request: Request, provider: str, prompt: str, system: str = AI_pr
 
     if not prompt:
         return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 文字数制限を設ける
+    if len(prompt) > 300:
+        return JSONResponse(content={"response": "300文字以内に収めてください"}, status_code=400)
 
     if not system:
         system = AI_prompt
@@ -387,6 +414,7 @@ async def chat(request: Request, provider: str, prompt: str, system: str = AI_pr
         return JSONResponse(content={"response": reason}, status_code=429)
 
     return await process_chat(provider, user_id, prompt, system)
+
 
 
 @app.get("/generate_image")
