@@ -877,7 +877,7 @@
 
     // グローバル変数
     let globalPassword = "";
-    let currentPath = "/";
+    let currentPath = "";
     let selectedFile = null; // 選択されたファイル要素を保持する変数
 
 
@@ -1096,10 +1096,12 @@
 
     // パス入力フィールドの処理
     function handlePathInput(event) {
-        if (event.key === "Enter") {
-            getFileList();
-        }
+    if (event.key === "Enter") {
+        // 入力されたパスを取得
+        currentPath = document.getElementById('file-manager-path').value;
+        getFileList();
     }
+}
     // ファイルの削除
     async function deleteFile(fileName) {
         if (!confirm(`"${fileName}" を削除しますか？`)) return;
@@ -1195,10 +1197,11 @@
                 li.innerHTML = ' ';
                 li.appendChild(fileNameSpan); // ファイル名を表示
                 li.addEventListener('click', () => {
-                    currentPath = `${currentPath}/${file.name}`;
-                    document.getElementById('file-manager-path').value = currentPath;
-                    getFileList();
-                });
+                // パス区切り文字を適切に追加
+                currentPath = currentPath.endsWith('/') ? currentPath + file.name : currentPath + '/' + file.name;
+                document.getElementById('file-manager-path').value = currentPath;
+                getFileList();
+            });
             } else {
                 // ファイル名とサイズを表示
                 li.innerHTML = ' ';
