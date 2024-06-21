@@ -468,15 +468,16 @@
           </oi>
           <p>です</p>
           <label for="provider">AI Provider:</label>
-          <select id="provider">
-            <option value="chat?provider=ask&prompt=">DeepinFra</option>
-            <option value="chat?provider=Gemini&prompt=">Gemini</option>
-            <option value="chat?provider=OpenAI&prompt=">ChatGPT(AIchat)</option>
-            <option value="chat?provider=Reka&prompt=">Reka</option>
-            <option value="chat?provider=GeminiPro&prompt=">geminiPro</option>
-            <option value="chat?provider=Claude3&prompt=">claude-3-opus</option>
-            <option value="chat?provider=gpt-4o&prompt=">gpt-4o</option>
-            <option value="chat?provider=zundamon&prompt=">ChatGPT(ずんだもん)</option>
+           <select id="provider">
+            <option value="ask">DeepinFra</option>
+            <option value="Gemini">Gemini</option>
+            <option value="Reka">Reka</option>
+            <option value="GeminiPro">geminiPro</option>
+            <option value="Claude3">claude-3-opus</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="zundamon">ChatGPT(ずんだもん)</option>
+            <option value="dell3">dall-e3(画像生成)</option>
+            <option value="!OpenAI">ChatGPT(stream)</option>
           </select>
         </div>
         <div class="setting-option">
@@ -653,11 +654,11 @@
 }
 
 
-    let conversations = [];
-    let currentConversationIndex = -1; 
-    let userName = 'ユーザー';
-    let messageCount = 0; 
-    let autoSaveInterval;
+let conversations = [];
+let currentConversationIndex = -1;
+let userName = 'ユーザー';
+let messageCount = 0;
+let autoSaveInterval;
 
     function loadConversationsFromCookie() {
       const cookieValue = document.cookie.split('; ').find(row => row.startsWith('conversations='))?.split('=')[1];
@@ -892,109 +893,68 @@ function loadConversation(index) {
 
   if (conversationData) {
     conversationData.forEach((messageData, messageIndex) => {
-      if (messageData.content && messageData.content.startsWith('message-')) {
-        // 画像メッセージの処理
+      if (messageData.content && typeof messageData.content === 'string' && messageData.content.startsWith('message-')) { 
         const imageData = JSON.parse(localStorage.getItem(messageData.content));
         if (imageData && imageData.src) {
-          // 画像を表示する処理
           const img = document.createElement('img');
           img.src = imageData.src;
           img.alt = imageData.alt;
           img.style.width = '300px';
-          let imageMessage = document.createElement('div');
-          imageMessage.classList.add('chat-message');
-          if (messageData.isUser) {
-            imageMessage.classList.add('user');
-          }
-          imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
-          document.querySelector('.chat-messages').appendChild(imageMessage);
-
-          const messageNameElement = document.createElement('div');
-          messageNameElement.classList.add('message-name');
-          messageNameElement.textContent = messageData.isUser ? userName : messageData.provider;
-          imageMessage.prepend(messageNameElement);
+          addMessageToChat(img.outerHTML, messageData.isUser, true, messageData.provider);
         } else {
           console.error("画像データが不正です:", imageData);
           displayErrorMessage("画像の読み込みに失敗しました。");
         }
       } else {
-        // テキストメッセージの場合、MarkdownをHTMLに変換する
-        const messageContent = messageData.markdown ? convertHtmlAndMarkdown(messageData.markdown, false) : messageData.content;
-        addMessageToChat(messageContent, messageData.isUser, true, messageData.provider); 
+        addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider);
       }
     });
   } else {
     console.error("会話履歴が読み込めません。");
   }
 }
+function clearChatWindow() {
+  document.querySelector('.chat-messages').innerHTML = '';
+}
+
+function displayErrorMessage(message) { 
+  const errorMessageElement = document.createElement('div');
+  errorMessageElement.classList.add('chat-message');
+  errorMessageElement.innerHTML = `<div class="message-content"><p>${message}</p></div>`;
+  document.querySelector('.chat-messages').appendChild(errorMessageElement);
+}
 
 
 
     
   
-function addMessageToChat(message, isUser, isMarkdown = false, providerName = null) {
+function addMessageToChat(message, isUser, isReloading = false, providerName = null) {
   const messageElement = document.createElement('div');
   messageElement.classList.add('chat-message');
   if (isUser) {
     messageElement.classList.add('user');
   }
 
-  // プロバイダ名が渡された場合は、それを利用する
   const messageNameElement = document.createElement('div');
   messageNameElement.classList.add('message-name');
-  messageNameElement.textContent = isUser ? userName : providerName || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text; // プロバイダ名を設定
+  messageNameElement.textContent = isUser ? userName : providerName || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
 
-  messageElement.appendChild(messageNameElement);
+  messageElement.appendChild(messageNameElement); 
 
   const messageContent = document.createElement('div');
   messageContent.classList.add('message-content');
 
-  // 正規表現を用いてマークダウンの特徴的な記号（#, *, -, _, `など）が含まれているかチェック
-  const markdownRegex = /(\*\*[^*]+\*\*)|(__[^_]+__)|(\*[^*]+\*)|(_[^_]+_)|(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\n\s*\n)|(\r?\n\s*-)|(>\s[^>]+)/;
-  const isMessageMarkdown = markdownRegex.test(message);
-
-  if (isMessageMarkdown) {
+  if (isReloading && message.startsWith('<img')) {
+    messageContent.innerHTML = message; 
+  } else {
     const converter = new showdown.Converter();
-    // imgタグのalt属性を適切に設定
     const htmlWithImages = message.replace(/!\[(.*?)\]\((.*?)\)/gi, '<img src="$2" alt="$1" style="width: 300px">');
     messageContent.innerHTML = converter.makeHtml(htmlWithImages);
-    messageContent.dataset.markdown = message;
-  } else if (message.startsWith('<img')) { // 画像メッセージの場合
-    messageContent.innerHTML = message; // HTMLをそのまま設定
-  } else {
-    messageContent.textContent = message;
   }
 
-  // メッセージデータにプロバイダ名を追加
-  const messageData = {
-    content: messageContent.textContent,
-    isUser: isUser,
-    provider: document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text // 現在のプロバイダ名を取得
-  };
-
   messageElement.appendChild(messageContent);
-
   document.querySelector('.chat-messages').appendChild(messageElement);
   document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-}
-
-
-    function clearChatWindow() {
-      document.querySelector('.chat-messages').innerHTML = '';
-    }
-
-    function saveTextAsFile() {
-  const messages = Array.from(document.querySelectorAll('.chat-message')).map(message => {
-    const messageContent = message.querySelector('.message-content')?.innerText || '';
-    const isUser = message.classList.contains('user');
-    return (isUser ? 'ユーザー：' : 'AI:') + messageContent;
-  }).join('\n');
-
-  const textFileAsBlob = new Blob([messages], { type: 'text/plain' });
-  const downloadLink = document.createElement("a");
-  downloadLink.download = "chat_history.txt";
-  downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-  downloadLink.click();
 }
 
 
@@ -1203,76 +1163,111 @@ const temporaryDiv = document.createElement('div');
       var text = document.getElementById('question').value;
       var provider = document.getElementById('provider').value;
       var systems = document.getElementById('system-prompt-input').value;
-      button = document.querySelector('#send-message');
-
-      if (isRequesting) {
-        stopRequest();
-        return;
-      }
-
-      isRequesting = true; 
-      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 8.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5z"/></svg> Stop';
-      button.disabled = true;
-      button.innerText = '質問中';
-      button.classList.add('loading');
-
-      dotsInterval = setInterval(function () {
-        dots = (dots + 1) % 4;
-        button.innerText = '質問中' + '.'.repeat(dots);
-      }, 500);
 
       document.getElementById('question').value = '';
       addMessageToChat(text, true);
       document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
-      currentFetchController = new AbortController();
-      const signal = currentFetchController.signal;
+       if (provider.startsWith("!")) { // プロバイダー名が "!" で始まる場合
+        provider = provider.substring(1); // "!" を削除
+        // !がついているの場合はストリーミングを使用
+        fetch('/stream', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'prompt': text,
+            'provider': provider,
+            'system': systems
+        })
+    })
+   .then(response => {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let messageContent = null; // メッセージ内容を格納する要素
 
-      if (text.startsWith('!image ')) {
-        const imagePrompt = text.slice(7);
-        fetch('/generate_image?prompt=' + encodeURIComponent(imagePrompt), { signal })
+      // ストリーミングメッセージを追加する関数
+      const appendStreamingMessage = (char) => {
+        if (messageContent === null) {
+          // 新しいメッセージ要素を作成
+          const messageElement = document.createElement('div');
+          messageElement.classList.add('chat-message');
+
+          // メッセージ名要素を作成
+          const messageNameElement = document.createElement('div');
+          messageNameElement.classList.add('message-name');
+          messageNameElement.textContent = provider || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+          messageElement.appendChild(messageNameElement);
+
+          // メッセージ内容要素を作成
+          messageContent = document.createElement('div');
+          messageContent.classList.add('message-content');
+          messageElement.appendChild(messageContent);
+
+          // チャットメッセージに追加
+          document.querySelector('.chat-messages').appendChild(messageElement);
+        }
+
+        messageContent.innerHTML += char; // メッセージ内容に文字を追加
+        document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight; // スクロールを最新に
+      };
+
+      const processStream = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break; 
+          }
+
+          const chunk = decoder.decode(value);
+
+          if (chunk.startsWith("data: ")) {
+            const char = chunk.replace("data: ", "").trim(); 
+            appendStreamingMessage(char); // ストリーミングメッセージを追加
+          }
+        }
+        saveCurrentConversation();
+      };
+
+      processStream();
+    })
+        .catch(error => {
+            console.error('Error:', error);
+            handleError(); 
+        });
+
+      }  else if (provider === 'dell3') {
+        fetch('/generate_image?prompt=' + encodeURIComponent(text))
           .then(response => response.json())
           .then(data => {
-            saveCurrentConversation(); 
             data.images.forEach(imageData => {
               if (imageData) {
                 const img = document.createElement('img');
                 img.src = 'data:image/png;base64,' + imageData;
                 img.style.width = '300px';
-                const imageMessage = document.createElement('div');
-                imageMessage.classList.add('chat-message');
-                imageMessage.innerHTML = `<div class="message-content">${img.outerHTML}</div>`;
-                document.querySelector('.chat-messages').appendChild(imageMessage);
-
-                const messageNameElement = document.createElement('div');
-                messageNameElement.classList.add('message-name');
-                messageNameElement.textContent = document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-                imageMessage.prepend(messageNameElement); 
+                addMessageToChat(img.outerHTML, false, true, provider); // providerNameを追加
               }
             });
-            resetButtonState();
-            saveCurrentConversation();
-          })
-          .catch(error => {
-            saveCurrentConversation(); 
-            console.error('Error:', error);
-            handleError();
-            saveCurrentConversation();
-          });
-      } else {
-        fetch('/' + provider + encodeURIComponent(text) + '&system=' + encodeURIComponent(systems), { signal })
-          .then(response => response.json())
-          .then(data => {
-            const decodedData = typeof data === 'object' && data.hasOwnProperty('response') ? unicodeToUtf8(data.response) : unicodeToUtf8(data);
-            addMessageToChat(decodedData, false);
-            document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
-            resetButtonState();
-            saveCurrentConversation(); 
           })
           .catch(error => {
             console.error('Error:', error);
             handleError(); 
-            saveCurrentConversation();
+          });
+
+         } else {
+        // それ以外の場合は通常のGETリクエストを使用
+        fetch(`/chat?provider=${provider}&prompt=${encodeURIComponent(text)}&system=${encodeURIComponent(systems)}`)
+          .then(response => response.json())
+          .then(data => {
+            const decodedData = typeof data === 'object' && data.hasOwnProperty('response') ? unicodeToUtf8(data.response) : unicodeToUtf8(data);
+            addMessageToChat(decodedData, false, false, provider); // providerNameを追加
+            document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            handleError(); 
           });
       }
     }
@@ -1299,16 +1294,14 @@ const temporaryDiv = document.createElement('div');
         : unicode;
     }
 
-    function handleError() {
-      clearInterval(dotsInterval);
+     function handleError() {
       const errorMessage = document.createElement('div');
       errorMessage.classList.add('chat-message');
       errorMessage.innerHTML = `<div class="message-content"><p>エラーが発生しました。</p></div>`;
       document.querySelector('.chat-messages').appendChild(errorMessage);
-      button.innerText = 'Run';
-      button.classList.remove('loading');
-      button.disabled = false;
     }
+
+    
 
     // Cookie操作をまとめる
     const cookieManager = {
@@ -1329,7 +1322,7 @@ const temporaryDiv = document.createElement('div');
       }
     };
 
-    window.onload = function () {
+     window.onload = function () {
       const textarea = document.getElementById('question');
       textarea.addEventListener('input', function() {
         this.style.height = 'auto';

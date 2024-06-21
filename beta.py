@@ -3,7 +3,7 @@ import asyncio
 import subprocess
 from fastapi import BackgroundTasks, Body, FastAPI, File, Form, Request, HTTPException, Response, UploadFile, Header
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -281,6 +281,46 @@ async def delete_conversation_history():
                 del cZundamon_chat[user_id]
         await asyncio.sleep(60)  # 1分ごとにチェック
 
+
+async def chat_with_OpenAI_stream(user_id: str, prompt: str,system: str):
+    # ユーザー識別子がなければUUIDで新たに作成
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
+    conversation_history = conversation_histories.get(user_id, [])
+    systemmessage = f"System:{system},この内容に従って出力"
+
+    # ユーザーのメッセージを会話履歴に追加
+    conversation_history.append({"role": "user", "content":systemmessage +prompt})
+
+    # 最新の5つのメッセージのみを保持
+    conversation_history = conversation_history[-5:]
+    conversation_histories[user_id] = conversation_history
+
+    try:
+        client = AsyncClient(
+            provider=g4f.Provider.OpenaiChat,
+            api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+        )
+        buffer = ""
+        async for chunk in client.chat.completions.create(
+            model="auto",
+            messages=conversation_history,
+            stream=True,
+        ):
+            if chunk.choices[0].delta.content:
+                buffer += chunk.choices[0].delta.content
+                for char in buffer:  # 一文字ずつ処理
+                    yield f"data: {char}\n\n"
+                    await asyncio.sleep(0.02)  # 0.02秒待機 (調整可能)
+                buffer = ""  # バッファをクリア
+        if buffer:
+            yield f"data: {buffer}\n\n"
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        yield f"data: OpenAIのプロバイダーでエラーが発生しました。何度も起きる場合は他のプロバイダーを使用してください\n\n"  # エラーメッセージをyieldします
+
 chatlist = {}  # 全ユーザーの会話履歴を保存する辞書
 
 
@@ -426,6 +466,43 @@ async def chat(request: Request, provider: str, prompt: str, system: str = AI_pr
         return JSONResponse(content={"response": reason}, status_code=429)
 
     return await process_chat(provider, user_id, prompt, system)
+
+
+@app.post("/stream")
+async def stream(request: Request):
+    data = await request.json()
+    provider = data.get('provider', "OpenAI")  # デフォルトはOpenAI
+    prompt = data.get('prompt')
+    system = data.get('system', AI_prompt)
+    user_id = data.get('user_id') or request.client.host  # user_idをリクエストから取得
+
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    if not prompt:
+        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+
+    # 文字数制限を設ける
+    if len(prompt) > 300:
+        return JSONResponse(content={"response": "300文字以内に収めてください"}, status_code=400)
+
+    if not system:
+        system = AI_prompt
+
+    # アンチボットシステムでユーザーをチェック
+    is_banned, reason = check_and_ban(user_id, request)  # antibot.py の関数を呼び出す
+
+    if is_banned:
+        return JSONResponse(content={"response": reason}, status_code=429)
+
+    if provider == 'OpenAI':
+        return StreamingResponse(chat_with_OpenAI_stream(user_id, prompt, system),
+                                 media_type="text/event-stream")  # media_type を設定
+    else:
+        return JSONResponse(content={"error": "Invalid provider specified"}, status_code=400)
+
+
+
 
 
 
