@@ -288,15 +288,9 @@ async def chat_with_OpenAI_stream(user_id: str, prompt: str,system: str):
         user_id = str(uuid.uuid4())
 
     # ユーザー識別子に対応する会話履歴を取得、なければ新たに作成
-    conversation_history = conversation_histories.get(user_id, [])
     systemmessage = f"System:{system},この内容に従って出力"
 
-    # ユーザーのメッセージを会話履歴に追加
-    conversation_history.append({"role": "user", "content":systemmessage +prompt})
 
-    # 最新の5つのメッセージのみを保持
-    conversation_history = conversation_history[-5:]
-    conversation_histories[user_id] = conversation_history
 
     try:
         client = AsyncClient(
@@ -306,7 +300,7 @@ async def chat_with_OpenAI_stream(user_id: str, prompt: str,system: str):
         buffer = ""
         async for chunk in client.chat.completions.create(
             model="auto",
-            messages=conversation_history,
+            messages=[{"role": "user", "content":systemmessage +prompt}],
             stream=True,
         ):
             if chunk.choices[0].delta.content:

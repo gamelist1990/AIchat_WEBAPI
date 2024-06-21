@@ -859,6 +859,12 @@ function saveCurrentConversation() {
   return convertedText;
 }
 
+//ライブラリ版
+function markdownToHtml(markdown) {
+  var converter = new showdown.Converter();
+  return converter.makeHtml(markdown);
+}
+
 
 
 
@@ -1197,52 +1203,61 @@ const temporaryDiv = document.createElement('div');
    .then(response => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
-      let messageContent = null; // メッセージ内容を格納する要素
+      let messageContent = ''; // メッセージ内容を格納する要素
+      let messageElement = null; // メッセージ要素
 
       // ストリーミングメッセージを追加する関数
       const appendStreamingMessage = (char) => {
-        if (messageContent === null) {
-          // 新しいメッセージ要素を作成
-          const messageElement = document.createElement('div');
-          messageElement.classList.add('chat-message');
+  if (messageElement === null) {
+    // 新しいメッセージ要素を作成
+    messageElement = document.createElement('div');
+    messageElement.classList.add('chat-message');
 
-          // メッセージ名要素を作成
-          const messageNameElement = document.createElement('div');
-          messageNameElement.classList.add('message-name');
-          messageNameElement.textContent = provider || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-          messageElement.appendChild(messageNameElement);
+    // メッセージ名要素を作成
+    const messageNameElement = document.createElement('div');
+    messageNameElement.classList.add('message-name');
+    messageNameElement.textContent = provider || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
+    messageElement.appendChild(messageNameElement);
 
-          // メッセージ内容要素を作成
-          messageContent = document.createElement('div');
-          messageContent.classList.add('message-content');
-          messageElement.appendChild(messageContent);
+    // メッセージ内容要素を作成
+    messageContentElement = document.createElement('div');
+    messageContentElement.classList.add('message-content');
+    messageElement.appendChild(messageContentElement);
 
-          // チャットメッセージに追加
-          document.querySelector('.chat-messages').appendChild(messageElement);
-        }
+    // チャットメッセージに追加
+    document.querySelector('.chat-messages').appendChild(messageElement);
+  }
 
-        messageContent.innerHTML += char; // メッセージ内容に文字を追加
-        document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight; // スクロールを最新に
-      };
+  messageContent += char; // メッセージ内容に文字を追加
+  messageContentElement.textContent += char; // 素のデータをそのまま出力
+};
 
-      const processStream = async () => {
-        while (true) {
-          const { done, value } = await reader.read();
+// ストリーミングが完了したときに呼び出される関数
+const onStreamEnd = () => {
+  const htmlContent = markdownToHtml(messageContent); // マークダウンをHTMLに変換
+  messageContentElement.innerHTML = htmlContent; // HTMLを表示
+  messageContent = ''; // メッセージ内容をリセット
+};
 
-          if (done) {
-            break; 
-          }
+const processStream = async () => {
+  while (true) {
+    const { done, value } = await reader.read();
 
-          const chunk = decoder.decode(value);
+    if (done) {
+      onStreamEnd(); // ストリーミングが完了したときに呼び出す
+      break;
+    }
 
-          if (chunk.startsWith("data: ")) {
-            const char = chunk.replace("data: ", "").trim(); 
-            appendStreamingMessage(char); // ストリーミングメッセージを追加
-          }
-        }
-        saveCurrentConversation();
-        resetButtonState();
-      };
+    const chunk = decoder.decode(value);
+
+    if (chunk.startsWith("data: ")) {
+      const char = chunk.replace(/^data:\s*/gm,'').trim();
+      appendStreamingMessage(char);
+    }
+  }
+  resetButtonState();
+  saveCurrentConversation();
+};
 
       processStream();
     })
