@@ -3,3 +3,49 @@ INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
 INFO:     Started reloader process [30672] using WatchFiles
 INFO:     Started server process [32104]
 INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+None
+INFO:     192.168.128.167:2032 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.128.167:2056 - "POST /stream HTTP/1.1" 200 OK
+Read .har file: C:\Users\issei\Music\api-1\har\chatgpt.com.har
+Read .har file: C:\Users\issei\Music\api-1\har\gemini.google.com.har
+Cookies added: 18 from .google.com
+Read .har file: C:\Users\issei\Music\api-1\har\huggingface.co.har
+Cookies added: 3 from huggingface.co
+Read .har file: C:\Users\issei\Music\api-1\har\www.bing.com.har
+Cookies added: 28 from .bing.com
+Read cookie file: C:\Users\issei\Music\api-1\har\gemini.json
+Cookies added: 2 from .gemini.google.com
+Cookies added: 18 from .google.com
+Read cookie file: C:\Users\issei\Music\api-1\har\modes.json
+Cookies added: 2 from .huggingface.co
+Cookies added: 2 from huggingface.co
+Read cookie file: C:\Users\issei\Music\api-1\har\rika.json
+Cookies added: 1 from chat.reka.ai
+Read cookie file: C:\Users\issei\Music\api-1\har\youProvider.json
+Cookies added: 2 from .huggingface.co
+Cookies added: 2 from huggingface.co
+Using OpenaiChat provider and auto model
+Arkose: False Proofofwork: gAAAAABWzI1M...
+INFO:     192.168.128.167:2114 - "POST /stream HTTP/1.1" 200 OK
+Read .har file: C:\Users\issei\Music\api-1\har\chatgpt.com.har
+Read .har file: C:\Users\issei\Music\api-1\har\gemini.google.com.har
+Cookies added: 18 from .google.com
+Read .har file: C:\Users\issei\Music\api-1\har\huggingface.co.har
+Cookies added: 3 from huggingface.co
+Read .har file: C:\Users\issei\Music\api-1\har\www.bing.com.har
+Cookies added: 28 from .bing.com
+Read cookie file: C:\Users\issei\Music\api-1\har\gemini.json
+Cookies added: 2 from .gemini.google.com
+Cookies added: 18 from .google.com
+Read cookie file: C:\Users\issei\Music\api-1\har\modes.json
+Cookies added: 2 from .huggingface.co
+Cookies added: 2 from huggingface.co
+Read cookie file: C:\Users\issei\Music\api-1\har\rika.json
+Cookies added: 1 from chat.reka.ai
+Read cookie file: C:\Users\issei\Music\api-1\har\youProvider.json
+Cookies added: 2 from .huggingface.co
+Cookies added: 2 from huggingface.co
+Using OpenaiChat provider and auto model
+Arkose: False Proofofwork: gAAAAABWzI1M...
+INFO:     192.168.128.167:2149 - "POST /stream HTTP/1.1" 200 OK
