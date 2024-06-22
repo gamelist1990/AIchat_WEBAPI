@@ -798,14 +798,13 @@ function saveCurrentConversation() {
         };
       } else {
         // テキストメッセージの場合は、内容とプロバイダ名を保存
-        const markdownContent = messageContentElement.textContent;
-        const originalMarkdown = convertHtmlAndMarkdown(messageContentElement.innerHTML, true); // HTMLからMarkdownに変換
-        return {
-          content: markdownContent,
-          isUser: message.classList.contains('user'),
-          markdown: originalMarkdown,
-          provider: provider // プロバイダ名を追加
-        };
+        const messageContentElement = message.querySelector('.message-content');
+    const markdownContent = convertHtmlAndMarkdown(messageContentElement.innerHTML, true); // HTMLからMarkdownに変換
+    return {
+      content: markdownContent, // Markdown形式で保存
+      isUser: message.classList.contains('user'),
+      provider: provider 
+    };
       }
     });
 
@@ -831,7 +830,9 @@ function saveCurrentConversation() {
     inlineCode: [/<code>(.*?)<\/code>/gi, '`$1`'],
     blockCode: [/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, '```$1```'],
     image: [/\<img src\=\"(.*?)\" alt\=\"(.*?)\" style\=\"width\: (.*?)px\"\>/gi, '![$2]($1)'],
-    strikethrough: [/<del>(.*?)<\/del>/gi, '~~$1~~']
+    strikethrough: [/<del>(.*?)<\/del>/gi, '~~$1~~'],
+    lineBreak: [/<br>/gi, '\n'],
+    newLine: [/\n/gi, '  \n'], // HTMLの改行をMarkdownの改行に変換
   };
 
   const markdownToHtmlRules = {
@@ -861,10 +862,12 @@ function saveCurrentConversation() {
 
 //ライブラリ版
 function markdownToHtml(markdown) {
+  // showdownのオプションを設定
+  showdown.setOption('simpleLineBreaks', true);
+  showdown.setOption('noHeaderId', true); // 見出しタグにIDを付与しないように設定
   var converter = new showdown.Converter();
   return converter.makeHtml(markdown);
 }
-
 
 
 
@@ -912,7 +915,7 @@ function loadConversation(index) {
           displayErrorMessage("画像の読み込みに失敗しました。");
         }
       } else {
-        addMessageToChat(messageData.content, messageData.isUser, true, messageData.provider);
+        addMessageToChat(markdownToHtml(messageData.content), messageData.isUser, true, messageData.provider);
       }
     });
   } else {
@@ -1186,81 +1189,95 @@ const temporaryDiv = document.createElement('div');
       addMessageToChat(text, true);
       document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
 
-       if (provider.startsWith("!")) { // プロバイダー名が "!" で始まる場合
-        provider = provider.substring(1); // "!" を削除
-        // !がついているの場合はストリーミングを使用
-        fetch('/stream', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            'prompt': text,
-            'provider': provider,
-            'system': systems
-        })
+       if (provider.startsWith("!")) { 
+           provider = provider.substring(1); 
+
+    fetch('/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        'prompt': text,
+        'provider': provider,
+        'system': systems
+      })
     })
-   .then(response => {
+    .then(response => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
-      let messageContent = ''; // メッセージ内容を格納する要素
-      let messageElement = null; // メッセージ要素
+
+      const processStream = async () => {
+        let streamedMessage = '';
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+          // ストリーミング完了時の処理
+          const markdownContent = convertHtmlAndMarkdown(messageContentElement.innerHTML, true); // HTMLからMarkdownに変換
+          messageContentElement.innerHTML = markdownToHtml(markdownContent); // MarkdownをHTMLに変換して置き換え
+          saveCurrentConversation();
+          break;
+        }
+
+          const chunk = decoder.decode(value);
+          appendStreamingMessage(chunk); 
+        }
+
+        resetButtonState();
+        saveCurrentConversation(); 
+      };
 
       // ストリーミングメッセージを追加する関数
-      const appendStreamingMessage = (char) => {
-  if (messageElement === null) {
-    // 新しいメッセージ要素を作成
-    messageElement = document.createElement('div');
-    messageElement.classList.add('chat-message');
+      const appendStreamingMessage = (chunk) => {
+        let messageElement = document.querySelector('.chat-messages .chat-message:last-child');
 
-    // メッセージ名要素を作成
-    const messageNameElement = document.createElement('div');
-    messageNameElement.classList.add('message-name');
-    messageNameElement.textContent = provider || document.getElementById('provider').options[document.getElementById('provider').selectedIndex].text;
-    messageElement.appendChild(messageNameElement);
+        if (messageElement === null || messageElement.querySelector('.message-name').textContent !== provider) {
+          // 新しいメッセージ要素を作成
+          messageElement = document.createElement('div');
+          messageElement.classList.add('chat-message');
 
-    // メッセージ内容要素を作成
-    messageContentElement = document.createElement('div');
-    messageContentElement.classList.add('message-content');
-    messageElement.appendChild(messageContentElement);
+          // メッセージ名要素を作成
+          const messageNameElement = document.createElement('div');
+          messageNameElement.classList.add('message-name');
+          messageNameElement.textContent = provider; 
+          messageElement.appendChild(messageNameElement);
 
-    // チャットメッセージに追加
-    document.querySelector('.chat-messages').appendChild(messageElement);
-  }
+          // メッセージ内容要素を作成
+          messageContentElement = document.createElement('div');
+          messageContentElement.classList.add('message-content');
+          messageElement.appendChild(messageContentElement);
 
-  messageContent += char; // メッセージ内容に文字を追加
-  messageContentElement.textContent += char; // 素のデータをそのまま出力
-};
+          // チャットメッセージに追加
+          document.querySelector('.chat-messages').appendChild(messageElement);
+        }
 
-// ストリーミングが完了したときに呼び出される関数
-const onStreamEnd = () => {
-  const htmlContent = markdownToHtml(messageContent); // マークダウンをHTMLに変換
-  messageContentElement.innerHTML = htmlContent; // HTMLを表示
-  messageContent = ''; // メッセージ内容をリセット
-};
+        const lines = chunk.split('\n');
+lines.forEach(line => {
+  if (line.startsWith("data: ")) {
+    const message = line.replace(/^data:\s*/gm, ''); // "data: " のみを削除
+    const formattedMessage = message
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
 
-const processStream = async () => {
-  while (true) {
-    const { done, value } = await reader.read();
 
-    if (done) {
-      onStreamEnd(); // ストリーミングが完了したときに呼び出す
-      break;
-    }
-
-    const chunk = decoder.decode(value);
-
-    if (chunk.startsWith("data: ")) {
-      const char = chunk.replace(/^data:\s*/gm,'').trim();
-      appendStreamingMessage(char);
+      
+    if (formattedMessage === '') {
+      messageContentElement.innerHTML += '<br>'; // メッセージが空の場合は改行を追加
+    } else {
+      messageContentElement.innerHTML += formattedMessage; // メッセージをそのまま追加
     }
   }
-  resetButtonState();
-  saveCurrentConversation();
-};
+});
 
-      processStream();
+      };
+
+      processStream(); 
     })
+
+
+    
         .catch(error => {
             console.error('Error:', error);
             handleError(); 

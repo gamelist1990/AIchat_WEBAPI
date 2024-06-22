@@ -474,11 +474,11 @@ async def stream(request: Request):
         user_id = str(uuid.uuid4())
 
     if not prompt:
-        return JSONResponse(content={"response": "No question asked"}, status_code=200)
+        return StreamingResponse("data: No question asked", status_code=200)
 
     # 文字数制限を設ける
     if len(prompt) > 300:
-        return JSONResponse(content={"response": "300文字以内に収めてください"}, status_code=400)
+        return StreamingResponse("data: 300文字以内に収めてください", status_code=400)
 
     if not system:
         system = AI_prompt
@@ -487,7 +487,7 @@ async def stream(request: Request):
     is_banned, reason = check_and_ban(user_id, request)  # antibot.py の関数を呼び出す
 
     if is_banned:
-        return JSONResponse(content={"response": reason}, status_code=429)
+        return JSONResponse(f"{reason}", status_code=429)
 
     if provider == 'OpenAI':
         return StreamingResponse(chat_with_OpenAI_stream(user_id, prompt, system),
