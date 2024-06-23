@@ -26,7 +26,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import g4f.Provider
 from g4f.client import AsyncClient
-from g4f.Provider import OpenaiChat, Gemini, You, Bing, GeminiProChat, Reka,Liaobots
+from g4f.Provider import OpenaiChat, Gemini, You, Bing, GeminiProChat, Reka,Liaobots,GeminiPro
 import uuid
 import psutil, socket
 import platform
@@ -155,6 +155,7 @@ async def ask(user_id: str, prompt: str,system: str):
             model="meta-llama/Meta-Llama-3-70B-Instruct",
             messages=UseSystem+conversation_history,
         )
+        add_ai_response_to_history(user_id, response.choices[0].message.content)
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -195,18 +196,23 @@ async def geminipro(user_id: str, prompt: str):
         try:
             # GeminiProが失敗した場合、Liaobotsを試す
             client = AsyncClient(
-                provider=Liaobots,
-                #api_key=read_cookie_files(cookies_dir),  # 正しい関数名に修正
+                provider=GeminiPro,
+                api_key=Li_auth,  # 正しい関数名に修正
             )
             response = await client.chat.completions.create(
                 model="gemini-1.5-pro-latest",
                 messages=conversation_history,
             )
+            add_ai_response_to_history(user_id, response.choices[0].message.content)
             return response.choices[0].message.content  # Liaobotsからの正常な応答を返す
         except Exception as e:
             logging.error(f"Error occurred: {str(e)}")
             return "GeminiProとLiaobotsの両方のプロバイダーでエラーが発生しました。他のプロバイダーを試してみてください"  # エラーメッセージを返す
 
+def add_ai_response_to_history(user_id, ai_response):
+    conversation_history = conversation_histories.get(user_id, [])
+    conversation_history.append({"role": "assistant", "content": ai_response})
+    conversation_histories[user_id] = conversation_history[-5:]
 # 会話履歴を保持する辞書は関数の外で定義
 
 async def chat_with_OpenAI(user_id: str, prompt: str,system: str):
@@ -234,6 +240,7 @@ async def chat_with_OpenAI(user_id: str, prompt: str,system: str):
             model="auto",
             messages=conversation_history,
         )
+        add_ai_response_to_history(user_id, response.choices[0].message.content)
         return response.choices[0].message.content  # 正常な応答を返す
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
@@ -401,7 +408,7 @@ async def gpt_4o(user_id: str, prompt: str, system: str):
         return f"Liaobotsプロバイダーmodel,gpt-4oでエラーが発生しました: 何度も起きる場合は他のプロバイダーを使用してください"  # エラーメッセージを返す
 
 
-AI_prompt = "あなたは優秀なAIです"
+AI_prompt = "あなたは優秀なAIですまたユーザーの言語で回答します"
 
 
 async def process_chat(provider: str, user_id: str, prompt: str, system: str = AI_prompt):
