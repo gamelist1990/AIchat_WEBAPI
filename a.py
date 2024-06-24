@@ -14,7 +14,7 @@ cookies_dir = os.path.join(os.path.dirname(__file__), "har")
 client = Client(
         provider=GeminiPro,
         #api_key="AIzaSyA_WGA0iKHarVC_XOEE_GkH4SPPypqWYsg"
-        api_key="AIzaSYDFY_Zs8y0xDoPwjDbXPt5eCm_zN"
+        api_key="AIzaSyA_WGA0iKHarVC_XOEE_GkH4SPPypqWYsg"
 
 
 

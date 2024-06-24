@@ -935,9 +935,9 @@ async def startup_event():
     asyncio.create_task(periodic_resource_update())
 # Pusher のインスタンスを作成
 pusher_client = Pusher(
-  app_id='1820345',
-  key='4cbc3c15bfd521142b7a',
-  secret='e2c6238a65b9b7ae8603',
+  app_id="1820345",
+  key="4cbc3c15bfd521142b7a",
+  secret="e2c6238a65b9b7ae8603",
   cluster='ap3',
 )
 
