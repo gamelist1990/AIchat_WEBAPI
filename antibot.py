@@ -16,8 +16,11 @@ request_count = {}
 # 1秒あたりの最大リクエスト数
 max_requests_per_second = 8
 
+# 1日あたりの最大リクエスト数
+max_requests_per_day = 300
+
 # BANの持続時間（時間）
-ban_duration = timedelta(hours=1)
+ban_duration = timedelta(hours=3)
 
 # BAN履歴を保持するリスト
 ban_history = []
@@ -48,7 +51,17 @@ def check_and_ban(user_id: str, request):
     # 1秒あたりのリクエスト数が最大値を超えた場合、またはBANされている場合
     if (datetime.now() - last_request[user_id] < timedelta(seconds=request_interval) and request_count[user_id] > max_requests_per_second) or (user_id in blocked_users and datetime.now() < blocked_users[user_id]):
         # BANの理由を設定
-        reason = "短時間に大量のリクエストを検知しました。1時間はアクセスできません。"
+        reason = "短時間に大量のリクエストを検知しました。3時間はアクセスできません。"
+
+        # ユーザーをBAN
+        ban_user(user_id)
+
+        return True, reason
+
+    # 1日あたりのリクエスト数が最大値を超えた場合
+    if request_count[user_id] > max_requests_per_day:
+        # BANの理由を設定
+        reason = "1日のリクエスト上限を超えました。3時間はアクセスできません。"
 
         # ユーザーをBAN
         ban_user(user_id)

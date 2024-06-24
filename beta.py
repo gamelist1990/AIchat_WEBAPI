@@ -481,11 +481,11 @@ async def stream(request: Request):
         user_id = str(uuid.uuid4())
 
     if not prompt:
-        return StreamingResponse("data: No question asked", status_code=200)
+        return StreamingResponse(iter(["data: No question asked\n\n"]), media_type="text/event-stream")
 
     # 文字数制限を設ける
     if len(prompt) > 300:
-        return StreamingResponse("data: 300文字以内に収めてください", status_code=400)
+        return StreamingResponse(iter(["data:300文字以内に収めてください"]),media_type="text/event-stream")
 
     if not system:
         system = AI_prompt
@@ -494,13 +494,14 @@ async def stream(request: Request):
     is_banned, reason = check_and_ban(user_id, request)  # antibot.py の関数を呼び出す
 
     if is_banned:
-        return JSONResponse(f"{reason}", status_code=429)
+        return StreamingResponse(iter([f"data:{reason}"]), media_type="text/event-stream")
+
+
 
     if provider == 'OpenAI':
-        return StreamingResponse(chat_with_OpenAI_stream(user_id, prompt, system),
-                                 media_type="text/event-stream")  # media_type を設定
+        return StreamingResponse(chat_with_OpenAI_stream(user_id, prompt, system),media_type="text/event-stream")  # media_type を設定
     else:
-        return JSONResponse(content={"error": "Invalid provider specified"}, status_code=400)
+        return JSONResponse(iter(["data:Invalid provider specified"]),media_type="text/event-stream")
 
 
 
